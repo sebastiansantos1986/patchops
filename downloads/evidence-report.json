@@ -1,0 +1,26 @@
+{
+  "report_id": "evidence_chr_crit_2026_07",
+  "title": "Chrome Critical Exposure Remediation",
+  "generated_at": "2026-07-07T17:30:00Z",
+  "organization": "ACME Production",
+  "finding": {
+    "name": "Chrome remote code execution exposure",
+    "cve_ids": ["CVE-2026-1842"],
+    "severity": "critical",
+    "vulnerable_version": "Below 128.0.6613",
+    "fixed_version": "128.0.6613+"
+  },
+  "summary": {
+    "initial_exposure": 72,
+    "remediated": 61,
+    "approved_exceptions": 6,
+    "remaining_offline": 5
+  },
+  "notifications": {
+    "sent": 72,
+    "acknowledged": 51,
+    "deferred": 16,
+    "expired": 5
+  }
+}
+

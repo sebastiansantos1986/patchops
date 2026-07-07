@@ -1,0 +1,2680 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PatchOps Console Prototype</title>
+    <style>
+      :root {
+        --bg: #eef3f8;
+        --panel: #ffffff;
+        --panel-2: #f6f9fc;
+        --ink: #111827;
+        --muted: #5d6b7c;
+        --line: #d9e2ec;
+        --line-strong: #bfccda;
+        --blue: #2563eb;
+        --teal: #0f988e;
+        --green: #15945c;
+        --amber: #bc6908;
+        --red: #d23f4d;
+        --violet: #7756d7;
+        --orange: #e67b2f;
+        --shadow: 0 18px 45px rgba(28, 43, 65, 0.1);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        color: var(--ink);
+        background:
+          linear-gradient(135deg, rgba(37, 99, 235, 0.12), transparent 34%),
+          linear-gradient(315deg, rgba(15, 152, 142, 0.12), transparent 30%),
+          var(--bg);
+      }
+
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+
+      .app {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: 254px minmax(0, 1fr);
+      }
+
+      .sidebar {
+        background: rgba(255, 255, 255, 0.82);
+        color: var(--ink);
+        padding: 18px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        border-right: 1px solid rgba(188, 204, 220, 0.72);
+        backdrop-filter: blur(18px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 11px;
+        padding: 6px 8px 14px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .logo {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(135deg, #1f8f7d, #2d6bca);
+        color: #fff;
+        font-weight: 800;
+      }
+
+      .brand strong {
+        display: block;
+        color: var(--ink);
+        font-size: 15px;
+        letter-spacing: 0;
+      }
+
+      .brand span {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .nav-group {
+        display: grid;
+        gap: 5px;
+      }
+
+      .nav-title {
+        color: #7a8795;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 0 10px 5px;
+      }
+
+      .nav-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        height: 38px;
+        color: #526174;
+        border: 0;
+        border-radius: 7px;
+        background: transparent;
+        padding: 0 10px;
+        cursor: pointer;
+        text-align: left;
+      }
+
+      .nav-btn svg {
+        width: 18px;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .nav-btn.active,
+      .nav-btn:hover {
+        background: #eaf2ff;
+        color: var(--blue);
+      }
+
+      .sidebar-footer {
+        margin-top: auto;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: linear-gradient(135deg, #f8fbff, #edf6f3);
+      }
+
+      .sidebar-footer strong {
+        color: var(--ink);
+        display: block;
+        font-size: 13px;
+      }
+
+      .sidebar-footer span {
+        color: var(--muted);
+        display: block;
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      .toast-region {
+        position: fixed;
+        right: 18px;
+        bottom: 18px;
+        z-index: 20;
+        display: grid;
+        gap: 10px;
+        width: min(360px, calc(100vw - 28px));
+      }
+
+      .toast {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.96);
+        box-shadow: 0 20px 44px rgba(17, 24, 39, 0.16);
+        padding: 12px 13px;
+        animation: toast-in 0.18s ease-out;
+      }
+
+      .toast strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .toast span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 3px;
+        line-height: 1.35;
+      }
+
+      @keyframes toast-in {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .main {
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .topbar {
+        height: 72px;
+        background: rgba(255, 255, 255, 0.76);
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 0 26px;
+        position: sticky;
+        top: 0;
+        z-index: 5;
+        backdrop-filter: blur(10px);
+      }
+
+      .title-block {
+        min-width: 220px;
+      }
+
+      .title-block h1 {
+        margin: 0;
+        font-size: 20px;
+        line-height: 1.2;
+      }
+
+      .title-block p {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .search {
+        flex: 1;
+        min-width: 190px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        height: 40px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.86);
+        padding: 0 11px;
+      }
+
+      .search svg {
+        width: 17px;
+        height: 17px;
+        color: #6f7e91;
+      }
+
+      .search input {
+        border: 0;
+        outline: 0;
+        width: 100%;
+        color: var(--ink);
+      }
+
+      .icon-btn,
+      .primary-btn,
+      .ghost-btn {
+        height: 38px;
+        border-radius: 8px;
+        border: 1px solid var(--line-strong);
+        background: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        color: var(--ink);
+        cursor: pointer;
+      }
+
+      .icon-btn {
+        width: 38px;
+        padding: 0;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--blue), var(--teal));
+        border-color: transparent;
+        color: #fff;
+        padding: 0 14px;
+        font-weight: 700;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+      }
+
+      .ghost-btn {
+        padding: 0 12px;
+        font-weight: 650;
+      }
+
+      .icon-btn svg,
+      .primary-btn svg,
+      .ghost-btn svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      .content {
+        padding: 24px 28px 32px;
+      }
+
+      .hero-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .command-card {
+        min-height: 194px;
+        padding: 20px;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        border-radius: 8px;
+        background:
+          linear-gradient(135deg, rgba(17, 24, 39, 0.92), rgba(22, 78, 99, 0.9)),
+          linear-gradient(90deg, rgba(37, 99, 235, 0.55), rgba(15, 152, 142, 0.5));
+        box-shadow: 0 22px 55px rgba(17, 24, 39, 0.18);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .command-card::after {
+        content: "";
+        position: absolute;
+        inset: auto -18% -42% 34%;
+        height: 170px;
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.34), rgba(21, 148, 92, 0.26));
+        transform: rotate(-8deg);
+      }
+
+      .command-card > * {
+        position: relative;
+        z-index: 1;
+      }
+
+      .command-card h2 {
+        margin: 0;
+        font-size: 28px;
+        line-height: 1.08;
+        max-width: 680px;
+      }
+
+      .command-card p {
+        margin: 10px 0 0;
+        color: rgba(255, 255, 255, 0.78);
+        max-width: 650px;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .hero-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+        margin-top: 22px;
+        max-width: 720px;
+      }
+
+      .hero-stat {
+        padding: 11px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+      }
+
+      .hero-stat strong {
+        display: block;
+        font-size: 19px;
+      }
+
+      .hero-stat span {
+        display: block;
+        margin-top: 3px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 0.72);
+      }
+
+      .agent-strip {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+
+      .agent-grid {
+        display: grid;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      .agent-card {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 11px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+      }
+
+      .agent-node {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .agent-flow {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .agent-flow span {
+        min-height: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        background: #f1f5f9;
+        border: 1px solid var(--line);
+        color: #526174;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .view {
+        display: none;
+      }
+
+      .view.active {
+        display: block;
+      }
+
+      .toolbar-row,
+      .section-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+
+      .section-head h2 {
+        margin: 0;
+        font-size: 16px;
+      }
+
+      .section-head p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .segmented {
+        display: inline-flex;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        overflow: hidden;
+        background: #fff;
+      }
+
+      .segmented button {
+        border: 0;
+        background: transparent;
+        color: var(--muted);
+        height: 34px;
+        padding: 0 12px;
+        cursor: pointer;
+        border-right: 1px solid var(--line);
+      }
+
+      .segmented button:last-child {
+        border-right: 0;
+      }
+
+      .segmented .selected {
+        color: var(--ink);
+        background: #eaf2ff;
+        font-weight: 700;
+      }
+
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .panel,
+      .metric,
+      .table-panel {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(217, 226, 236, 0.9);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+      }
+
+      .metric {
+        padding: 17px;
+        min-height: 132px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .metric::before {
+        content: "";
+        position: absolute;
+        inset: 0 0 auto;
+        height: 3px;
+        background: linear-gradient(90deg, var(--blue), var(--teal), var(--orange));
+      }
+
+      .metric-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .metric-label {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      .metric-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #eef4fa;
+      }
+
+      .metric-icon svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .metric-value {
+        font-size: 32px;
+        line-height: 1;
+        font-weight: 800;
+        margin: 16px 0 7px;
+      }
+
+      .metric-note {
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .trend-up {
+        color: var(--green);
+        font-weight: 800;
+      }
+
+      .trend-warn {
+        color: var(--amber);
+        font-weight: 800;
+      }
+
+      .trend-danger {
+        color: var(--red);
+        font-weight: 800;
+      }
+
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(340px, 0.75fr);
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .patch-map {
+        display: grid;
+        grid-template-columns: 118px 1fr;
+        gap: 16px;
+        align-items: center;
+      }
+
+      .donut {
+        width: 118px;
+        height: 118px;
+        border-radius: 50%;
+        background:
+          radial-gradient(circle at center, #fff 0 49%, transparent 50%),
+          conic-gradient(var(--green) 0 69%, var(--amber) 69% 84%, var(--red) 84% 93%, #d8e0e8 93% 100%);
+        display: grid;
+        place-items: center;
+      }
+
+      .donut strong {
+        font-size: 25px;
+      }
+
+      .bar-row {
+        margin: 12px 0;
+      }
+
+      .bar-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+
+      .bar {
+        height: 9px;
+        background: #e9eef4;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+
+      .bar span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+      }
+
+      .activity-list,
+      .risk-list,
+      .campaign-list,
+      .policy-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .activity-item,
+      .risk-item,
+      .campaign-item,
+      .policy-item {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+      }
+
+      .pulse {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--green);
+        box-shadow: 0 0 0 5px rgba(22, 138, 82, 0.12);
+      }
+
+      .pulse.warn {
+        background: var(--amber);
+        box-shadow: 0 0 0 5px rgba(180, 107, 5, 0.12);
+      }
+
+      .pulse.danger {
+        background: var(--red);
+        box-shadow: 0 0 0 5px rgba(200, 59, 59, 0.12);
+      }
+
+      .item-title {
+        font-weight: 750;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+
+      .item-sub {
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 2px;
+      }
+
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 0 8px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 800;
+        white-space: nowrap;
+        background: #eef3f7;
+        color: #425268;
+      }
+
+      .badge.good {
+        background: #e6f5ed;
+        color: var(--green);
+      }
+
+      .badge.warn {
+        background: #fff4df;
+        color: var(--amber);
+      }
+
+      .badge.danger {
+        background: #ffe9e9;
+        color: var(--red);
+      }
+
+      .badge.info {
+        background: #eaf2ff;
+        color: var(--blue);
+      }
+
+      .badge.violet {
+        background: #f0edff;
+        color: var(--violet);
+      }
+
+      .two-col {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .table-panel {
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      th,
+      td {
+        padding: 13px 14px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        font-size: 13px;
+        vertical-align: middle;
+      }
+
+      th {
+        color: var(--muted);
+        background: #f9fbfd;
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .device-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 160px;
+      }
+
+      .os-chip {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: #eef4fa;
+        font-weight: 900;
+        color: #385065;
+      }
+
+      .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+
+      .tab-btn {
+        height: 36px;
+        padding: 0 13px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--muted);
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .tab-btn.active {
+        color: var(--blue);
+        border-color: #bcd4fb;
+        background: #edf5ff;
+      }
+
+      .filter-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 14px;
+        flex-wrap: wrap;
+      }
+
+      .select {
+        height: 36px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        padding: 0 10px;
+      }
+
+      .software-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 320px;
+        gap: 14px;
+      }
+
+      .app-risk {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .app-risk:last-child {
+        border-bottom: 0;
+      }
+
+      .app-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .app-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .campaign-item {
+        grid-template-columns: minmax(0, 1fr) 180px auto;
+      }
+
+      .progress-mini {
+        display: grid;
+        gap: 6px;
+      }
+
+      .progress-mini .bar {
+        height: 8px;
+      }
+
+      .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .download-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .integration-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .integration-card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+        display: grid;
+        gap: 12px;
+        min-height: 232px;
+      }
+
+      .integration-top {
+        display: grid;
+        grid-template-columns: 42px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .integration-logo {
+        width: 42px;
+        height: 42px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-weight: 900;
+      }
+
+      .permission-list {
+        display: grid;
+        gap: 7px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .permission-list li {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .permission-list li::before {
+        content: "";
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--green);
+        flex: 0 0 auto;
+      }
+
+      .findings-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 340px;
+        gap: 14px;
+      }
+
+      .severity-strip {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .severity-tile {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 13px;
+      }
+
+      .severity-tile span {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .severity-tile strong {
+        display: block;
+        margin-top: 8px;
+        font-size: 25px;
+        line-height: 1;
+      }
+
+      .finding-title {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        min-width: 210px;
+      }
+
+      .finding-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+      }
+
+      .remediation-card {
+        display: grid;
+        gap: 12px;
+      }
+
+      .remediation-step {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+        padding: 12px;
+      }
+
+      .remediation-step strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .remediation-step span {
+        display: block;
+        color: var(--muted);
+        font-size: 12px;
+        margin-top: 4px;
+      }
+
+      .detail-hero {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+        margin-bottom: 14px;
+      }
+
+      .detail-hero-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+      }
+
+      .detail-hero h2 {
+        margin: 8px 0 6px;
+        font-size: 24px;
+        line-height: 1.15;
+      }
+
+      .detail-hero p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .detail-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .detail-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 14px;
+      }
+
+      .evidence-timeline {
+        display: grid;
+        gap: 10px;
+      }
+
+      .timeline-item {
+        display: grid;
+        grid-template-columns: 92px minmax(0, 1fr);
+        gap: 12px;
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+      }
+
+      .timeline-item time {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .timeline-item strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .timeline-item span {
+        display: block;
+        margin-top: 3px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .notification-preview {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: linear-gradient(180deg, #ffffff, #f7fafc);
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .popup-card {
+        max-width: 420px;
+        margin: 0 auto;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: #fff;
+        box-shadow: 0 24px 50px rgba(17, 24, 39, 0.16);
+        overflow: hidden;
+      }
+
+      .popup-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px;
+        background: #f8fbff;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .popup-head strong {
+        display: block;
+        font-size: 14px;
+      }
+
+      .popup-head span {
+        display: block;
+        margin-top: 2px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .popup-body {
+        padding: 14px;
+      }
+
+      .popup-body p {
+        margin: 0 0 12px;
+        color: #374151;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .popup-actions {
+        display: flex;
+        gap: 9px;
+        flex-wrap: wrap;
+      }
+
+      .template-grid {
+        display: grid;
+        gap: 10px;
+      }
+
+      .builder-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 14px;
+      }
+
+      .builder-section {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+        margin-bottom: 14px;
+      }
+
+      .builder-section h2 {
+        margin: 0 0 4px;
+        font-size: 16px;
+      }
+
+      .builder-section p {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .form-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .field {
+        display: grid;
+        gap: 6px;
+      }
+
+      .field label {
+        color: var(--muted);
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .field input,
+      .field select {
+        height: 38px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        padding: 0 10px;
+      }
+
+      .check-row {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+      }
+
+      .check-row input {
+        width: 16px;
+        height: 16px;
+        accent-color: var(--blue);
+      }
+
+      .ring-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .ring-row {
+        display: grid;
+        grid-template-columns: 34px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        padding: 11px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+      }
+
+      .ring-num {
+        width: 34px;
+        height: 34px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        background: linear-gradient(135deg, var(--blue), var(--teal));
+        font-weight: 900;
+      }
+
+      .review-card {
+        position: sticky;
+        top: 88px;
+        display: grid;
+        gap: 12px;
+      }
+
+      .report-shell {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .report-cover {
+        padding: 22px;
+        color: #fff;
+        background: linear-gradient(135deg, #111827, #164e63);
+      }
+
+      .report-cover h2 {
+        margin: 8px 0 6px;
+        font-size: 26px;
+      }
+
+      .report-cover p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.76);
+        font-size: 13px;
+      }
+
+      .report-body {
+        padding: 18px;
+      }
+
+      .report-section {
+        padding: 16px 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .report-section:last-child {
+        border-bottom: 0;
+      }
+
+      .report-section h3 {
+        margin: 0 0 10px;
+        font-size: 16px;
+      }
+
+      .report-summary {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .admin-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 360px;
+        gap: 14px;
+      }
+
+      .role-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .role-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+        padding: 12px;
+      }
+
+      .role-card strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .role-card span {
+        display: block;
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 12px;
+        line-height: 1.35;
+      }
+
+      .download-card {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+        display: grid;
+        gap: 14px;
+      }
+
+      .download-head {
+        display: grid;
+        grid-template-columns: 48px minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .download-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .download-link {
+        height: 38px;
+        border-radius: 8px;
+        background: linear-gradient(135deg, var(--blue), var(--teal));
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 0 14px;
+        text-decoration: none;
+        font-weight: 800;
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.2);
+      }
+
+      .download-link svg {
+        width: 17px;
+        height: 17px;
+      }
+
+      .code-box {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #111827;
+        color: #d8f5ec;
+        padding: 12px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.45;
+        overflow-x: auto;
+      }
+
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .meta-tile {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel-2);
+        padding: 10px;
+      }
+
+      .meta-tile span {
+        color: var(--muted);
+        display: block;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .meta-tile strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+
+      .report-card {
+        padding: 16px;
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        box-shadow: var(--shadow);
+        min-height: 174px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .report-card svg {
+        width: 26px;
+        height: 26px;
+        color: var(--blue);
+      }
+
+      .report-card h3 {
+        margin: 0;
+        font-size: 15px;
+      }
+
+      .report-card p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .report-card .ghost-btn {
+        margin-top: auto;
+        align-self: flex-start;
+      }
+
+      .policy-list .policy-item {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+      }
+
+      .toggle {
+        width: 44px;
+        height: 24px;
+        border-radius: 999px;
+        background: #c9d3de;
+        padding: 3px;
+        border: 0;
+        cursor: pointer;
+      }
+
+      .toggle::before {
+        content: "";
+        display: block;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: #fff;
+        transition: transform 0.18s ease;
+      }
+
+      .toggle.on {
+        background: var(--green);
+      }
+
+      .toggle.on::before {
+        transform: translateX(20px);
+      }
+
+      @media (max-width: 1100px) {
+        .app {
+          grid-template-columns: 78px minmax(0, 1fr);
+        }
+
+        .brand div:not(.logo),
+        .nav-title,
+        .nav-btn span,
+        .sidebar-footer {
+          display: none;
+        }
+
+        .brand {
+          justify-content: center;
+          padding: 6px 0 14px;
+        }
+
+        .nav-btn {
+          justify-content: center;
+          padding: 0;
+        }
+
+        .hero-grid,
+        .dashboard-grid,
+        .admin-grid,
+        .builder-grid,
+        .detail-grid,
+        .findings-layout,
+        .software-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .kpi-grid,
+        .severity-strip,
+        .download-grid,
+        .integration-grid,
+        .reports-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .app {
+          grid-template-columns: 1fr;
+        }
+
+        .sidebar {
+          position: sticky;
+          top: 0;
+          z-index: 8;
+          flex-direction: row;
+          overflow-x: auto;
+          padding: 10px;
+        }
+
+        .brand {
+          border: 0;
+          padding: 0;
+          flex: 0 0 auto;
+        }
+
+        .nav-group {
+          display: flex;
+          flex: 0 0 auto;
+        }
+
+        .nav-btn {
+          width: 42px;
+        }
+
+        .topbar {
+          height: auto;
+          flex-wrap: wrap;
+          padding: 14px;
+        }
+
+        .title-block {
+          width: 100%;
+        }
+
+        .content {
+          padding: 16px 14px 24px;
+        }
+
+        .kpi-grid,
+        .hero-stats,
+        .agent-flow,
+        .severity-strip,
+        .form-grid,
+        .report-summary,
+        .role-grid,
+        .download-grid,
+        .integration-grid,
+        .meta-grid,
+        .two-col,
+        .reports-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar-row,
+        .detail-hero-top,
+        .section-head {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .patch-map {
+          grid-template-columns: 1fr;
+        }
+
+        .table-panel {
+          overflow-x: auto;
+        }
+
+        .campaign-item {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">P</div>
+          <div>
+            <strong>PatchOps</strong>
+            <span>Exposure and patch compliance</span>
+          </div>
+        </div>
+
+        <nav class="nav-group" aria-label="Primary">
+          <div class="nav-title">Operate</div>
+          <button class="nav-btn active" data-view="overview" title="Overview">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3v10Z"/><path d="M13 21h8V11h-8v10Z"/><path d="M13 3v6h8V3h-8Z"/><path d="M3 21h8v-6H3v6Z"/></svg>
+            <span>Overview</span>
+          </button>
+          <button class="nav-btn" data-view="findings" title="Findings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.4 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+            <span>Findings</span>
+          </button>
+          <button class="nav-btn" data-view="devices" title="Devices">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
+            <span>Devices</span>
+          </button>
+          <button class="nav-btn" data-view="software" title="Software">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+            <span>Software</span>
+          </button>
+          <button class="nav-btn" data-view="campaigns" title="Patch Campaigns">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6"/><path d="M12 16v6"/><path d="M4.93 4.93l4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M2 12h6"/><path d="M16 12h6"/><path d="m4.93 19.07 4.24-4.24"/><path d="m14.83 9.17 4.24-4.24"/></svg>
+            <span>Campaigns</span>
+          </button>
+          <button class="nav-btn" data-view="agents" title="Agents">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/><path d="m15 5 3 3"/></svg>
+            <span>Agents</span>
+          </button>
+          <button class="nav-btn" data-view="notifications" title="Notifications">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
+            <span>Notifications</span>
+          </button>
+        </nav>
+
+        <nav class="nav-group" aria-label="Govern">
+          <div class="nav-title">Govern</div>
+          <button class="nav-btn" data-view="reports" title="Reports">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15v2"/><path d="M12 9v8"/><path d="M17 5v12"/></svg>
+            <span>Reports</span>
+          </button>
+          <button class="nav-btn" data-view="integrations" title="Integrations">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1 0l2.8-2.8a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.8 2.8a5 5 0 0 0 7.1 7.1L13 19.1"/></svg>
+            <span>Integrations</span>
+          </button>
+          <button class="nav-btn" data-view="policies" title="Policies">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/></svg>
+            <span>Policies</span>
+          </button>
+          <button class="nav-btn" data-view="admin" title="Admin">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9c.2.6.8 1 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+            <span>Admin</span>
+          </button>
+          <button class="nav-btn" data-view="audit" title="Audit">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+            <span>Audit</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <strong>Fleet heartbeat</strong>
+          <span>7,842 online · 318 installing · 58 reboot pending</span>
+        </div>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div class="title-block">
+            <h1 id="page-title">Overview</h1>
+            <p id="page-subtitle">Live vulnerability exposure, patch posture, and compliance reporting.</p>
+          </div>
+          <label class="search">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input placeholder="Search devices, software, CVEs, findings" />
+          </label>
+          <button class="icon-btn" title="Refresh metrics">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.5 5.8L21 8"/><path d="M21 3v5h-5"/></svg>
+          </button>
+          <button class="icon-btn" title="Alerts">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9"/></svg>
+          </button>
+          <button class="primary-btn" data-open-view="campaign-builder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            New Campaign
+          </button>
+        </header>
+
+        <section class="content">
+          <div class="view active" id="overview">
+            <div class="toolbar-row">
+              <div class="segmented" aria-label="Time range">
+                <button>24h</button>
+                <button class="selected">7d</button>
+                <button>30d</button>
+                <button>90d</button>
+              </div>
+              <button class="ghost-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                Export Snapshot
+              </button>
+            </div>
+
+            <div class="hero-grid">
+              <article class="command-card">
+                <span class="badge good">Unified patch command</span>
+                <h2>Find vulnerable software, patch OS and apps, and prove compliance from one place.</h2>
+                <p>Windows and macOS devices run OS-native agents that scan software exposure, execute approved remediation, and send audit-ready evidence to the same reporting backend.</p>
+                <div class="hero-stats">
+                  <div class="hero-stat"><strong>7,842</strong><span>managed endpoints</span></div>
+                  <div class="hero-stat"><strong>1,286</strong><span>software titles tracked</span></div>
+                  <div class="hero-stat"><strong>318</strong><span>active installs right now</span></div>
+                </div>
+              </article>
+
+              <aside class="agent-strip">
+                <div class="section-head">
+                  <div>
+                    <h2>Scan and patch agents</h2>
+                    <p>Two native adapters, one shared vulnerability and patch engine.</p>
+                  </div>
+                  <span class="badge info">Recommended</span>
+                </div>
+                <div class="agent-grid">
+                  <div class="agent-card">
+                    <div class="agent-node" style="background: var(--blue)">W</div>
+                    <div>
+                      <div class="item-title">Windows agent</div>
+                      <div class="item-sub">Windows Update, Microsoft Update, app inventory, CVE exposure, MSI/MSIX, package catalog.</div>
+                    </div>
+                    <span class="badge good">Online</span>
+                  </div>
+                  <div class="agent-card">
+                    <div class="agent-node" style="background: var(--teal)">M</div>
+                    <div>
+                      <div class="item-title">macOS agent</div>
+                      <div class="item-sub">softwareupdate, PKG/DMG patching, app inventory, CVE exposure, FileVault-aware flows.</div>
+                    </div>
+                    <span class="badge good">Online</span>
+                  </div>
+                </div>
+                <div class="agent-flow">
+                  <span>Scan</span>
+                  <span>Patch</span>
+                  <span>Prove</span>
+                </div>
+              </aside>
+            </div>
+
+            <div class="kpi-grid">
+              <article class="metric">
+                <div class="metric-top">
+                  <span class="metric-label">Fleet compliance</span>
+                  <span class="metric-icon" style="color: var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
+                </div>
+                <div class="metric-value">87%</div>
+                <div class="metric-note"><span class="trend-up">+4.2%</span> since last week</div>
+              </article>
+              <article class="metric">
+                <div class="metric-top">
+                  <span class="metric-label">Critical exposure</span>
+                  <span class="metric-icon" style="color: var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.4 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></span>
+                </div>
+                <div class="metric-value">143</div>
+                <div class="metric-note"><span class="trend-danger">27 internet-facing</span> devices</div>
+              </article>
+              <article class="metric">
+                <div class="metric-top">
+                  <span class="metric-label">Installing now</span>
+                  <span class="metric-icon" style="color: var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
+                </div>
+                <div class="metric-value">318</div>
+                <div class="metric-note">OS: 192 · Apps: 126</div>
+              </article>
+              <article class="metric">
+                <div class="metric-top">
+                  <span class="metric-label">Pending reboots</span>
+                  <span class="metric-icon" style="color: var(--amber)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg></span>
+                </div>
+                <div class="metric-value">58</div>
+                <div class="metric-note"><span class="trend-warn">12 forced tonight</span> by policy</div>
+              </article>
+            </div>
+
+            <div class="dashboard-grid">
+              <article class="panel">
+                <div class="section-head">
+                  <div>
+                    <h2>Patch posture by platform</h2>
+                    <p>OS updates, browser updates, productivity apps, and developer tools.</p>
+                  </div>
+                </div>
+                <div class="patch-map">
+                  <div class="donut"><strong>87%</strong></div>
+                  <div>
+                    <div class="bar-row">
+                      <div class="bar-label"><span>Windows OS</span><strong>91%</strong></div>
+                      <div class="bar"><span style="width:91%; background: var(--green)"></span></div>
+                    </div>
+                    <div class="bar-row">
+                      <div class="bar-label"><span>macOS OS</span><strong>88%</strong></div>
+                      <div class="bar"><span style="width:88%; background: var(--teal)"></span></div>
+                    </div>
+                    <div class="bar-row">
+                      <div class="bar-label"><span>Third-party apps</span><strong>82%</strong></div>
+                      <div class="bar"><span style="width:82%; background: var(--blue)"></span></div>
+                    </div>
+                    <div class="bar-row">
+                      <div class="bar-label"><span>Unsupported versions</span><strong>6%</strong></div>
+                      <div class="bar"><span style="width:6%; background: var(--red)"></span></div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="section-head">
+                  <div>
+                    <h2>Live patch activity</h2>
+                    <p>Streaming agent events from managed endpoints.</p>
+                  </div>
+                  <span class="badge good">Live</span>
+                </div>
+                <div class="activity-list">
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">MAC-1442 installed Chrome 128.0.6613</div><div class="item-sub">10:42 · Retail Ops · 37 seconds</div></div><span class="badge good">Success</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">WIN-LAP-8821 failed KB5039212</div><div class="item-sub">10:41 · Finance · retry scheduled</div></div><span class="badge warn">Retry</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">WIN-DESK-0912 updated Zoom</div><div class="item-sub">10:40 · Engineering · user deferred reboot</div></div><span class="badge good">Done</span></div>
+                  <div class="activity-item"><span class="pulse danger"></span><div><div class="item-title">MAC-0098 blocked by low battery</div><div class="item-sub">10:38 · Executive · below 30%</div></div><span class="badge danger">Blocked</span></div>
+                </div>
+              </article>
+            </div>
+
+            <div class="two-col">
+              <article class="panel">
+                <div class="section-head"><div><h2>Top risk software</h2><p>Prioritized by severity, exploitability, and install count.</p></div></div>
+                <div class="risk-list">
+                  <div class="risk-item"><div class="app-icon" style="background:#d94841">C</div><div><div class="item-title">Google Chrome</div><div class="item-sub">72 outdated · 19 critical CVEs</div></div><span class="badge danger">Critical</span></div>
+                  <div class="risk-item"><div class="app-icon" style="background:#f59d23">J</div><div><div class="item-title">Oracle Java Runtime</div><div class="item-sub">19 outdated · unsupported versions found</div></div><span class="badge danger">Critical</span></div>
+                  <div class="risk-item"><div class="app-icon" style="background:#2d8cff">Z</div><div><div class="item-title">Zoom Workplace</div><div class="item-sub">31 outdated · 14 active users</div></div><span class="badge warn">High</span></div>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="section-head"><div><h2>Deployment rings</h2><p>Current rollout health across staged groups.</p></div></div>
+                <div class="campaign-list">
+                  <div class="campaign-item"><div><div class="item-title">Pilot Ring</div><div class="item-sub">IT and security champions</div></div><div class="progress-mini"><span class="item-sub">96% complete</span><div class="bar"><span style="width:96%; background:var(--green)"></span></div></div><span class="badge good">Healthy</span></div>
+                  <div class="campaign-item"><div><div class="item-title">Department Ring</div><div class="item-sub">Finance, sales, engineering</div></div><div class="progress-mini"><span class="item-sub">88% complete</span><div class="bar"><span style="width:88%; background:var(--teal)"></span></div></div><span class="badge info">Active</span></div>
+                  <div class="campaign-item"><div><div class="item-title">Company Ring</div><div class="item-sub">All eligible devices</div></div><div class="progress-mini"><span class="item-sub">starts 11:00 PM</span><div class="bar"><span style="width:14%; background:var(--amber)"></span></div></div><span class="badge warn">Queued</span></div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="view" id="findings">
+            <div class="section-head">
+              <div><h2>Exposure findings</h2><p>Prioritized vulnerabilities and unsupported software found across OS and third-party applications.</p></div>
+              <button class="primary-btn" data-open-view="campaign-builder">Create Remediation Campaign</button>
+            </div>
+            <div class="severity-strip">
+              <div class="severity-tile"><span>Critical open</span><strong style="color: var(--red)">143</strong><div class="item-sub">27 internet-facing</div></div>
+              <div class="severity-tile"><span>High open</span><strong style="color: var(--amber)">386</strong><div class="item-sub">118 due this week</div></div>
+              <div class="severity-tile"><span>Unsupported apps</span><strong style="color: var(--violet)">89</strong><div class="item-sub">Java, Reader, legacy VPN</div></div>
+              <div class="severity-tile"><span>Remediated 7d</span><strong style="color: var(--green)">1,204</strong><div class="item-sub">92% within SLA</div></div>
+            </div>
+
+            <div class="findings-layout">
+              <div class="table-panel">
+                <table>
+                  <thead><tr><th>Finding</th><th>Affected</th><th>Fixed Version</th><th>Severity</th><th>SLA</th><th>Action</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td><div class="finding-title"><span class="finding-dot" style="background:var(--red)"></span><div><strong>Chrome remote code execution exposure</strong><div class="item-sub">CVE-2026-1842 · detected in browser catalog</div></div></div></td>
+                      <td>72 devices</td><td>128.0.6613+</td><td><span class="badge danger">Critical</span></td><td><span class="badge danger">16h left</span></td><td><button class="ghost-btn" data-open-view="finding-detail">Patch</button></td>
+                    </tr>
+                    <tr>
+                      <td><div class="finding-title"><span class="finding-dot" style="background:var(--red)"></span><div><strong>Oracle Java unsupported runtime</strong><div class="item-sub">EOL runtime · policy exception required</div></div></div></td>
+                      <td>19 devices</td><td>Remove or 8u421</td><td><span class="badge danger">Critical</span></td><td><span class="badge warn">2d left</span></td><td><button class="ghost-btn">Remediate</button></td>
+                    </tr>
+                    <tr>
+                      <td><div class="finding-title"><span class="finding-dot" style="background:var(--amber)"></span><div><strong>Adobe Reader security update missing</strong><div class="item-sub">Multiple CVEs · Finance and Retail Ops</div></div></div></td>
+                      <td>26 devices</td><td>24.002+</td><td><span class="badge warn">High</span></td><td><span class="badge warn">4d left</span></td><td><button class="ghost-btn">Patch</button></td>
+                    </tr>
+                    <tr>
+                      <td><div class="finding-title"><span class="finding-dot" style="background:var(--blue)"></span><div><strong>Windows cumulative update missing</strong><div class="item-sub">July security baseline · workstation group</div></div></div></td>
+                      <td>214 devices</td><td>KB July baseline</td><td><span class="badge info">Medium</span></td><td><span class="badge good">7d left</span></td><td><button class="ghost-btn">Schedule</button></td>
+                    </tr>
+                    <tr>
+                      <td><div class="finding-title"><span class="finding-dot" style="background:var(--amber)"></span><div><strong>Zoom Workplace outdated</strong><div class="item-sub">High severity app update · active users</div></div></div></td>
+                      <td>31 devices</td><td>6.1.7+</td><td><span class="badge warn">High</span></td><td><span class="badge warn">3d left</span></td><td><button class="ghost-btn">Patch</button></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <aside class="panel remediation-card">
+                <div class="section-head"><div><h2>Recommended remediation</h2><p>Suggested campaign based on current exposure.</p></div></div>
+                <div class="remediation-step"><strong>1. Patch browsers first</strong><span>Chrome, Edge, and Firefox findings affect the highest number of active endpoints.</span></div>
+                <div class="remediation-step"><strong>2. Isolate unsupported Java</strong><span>Require business justification or remove from devices outside approved groups.</span></div>
+                <div class="remediation-step"><strong>3. Export evidence</strong><span>Generate a compliance report after remediation to capture before/after posture.</span></div>
+                <button class="primary-btn" data-open-view="campaign-builder">Build Campaign From Findings</button>
+              </aside>
+            </div>
+          </div>
+
+          <div class="view" id="finding-detail">
+            <div class="detail-hero">
+              <div class="detail-hero-top">
+                <div>
+                  <button class="ghost-btn" data-open-view="findings">Back to Findings</button>
+                  <h2>Chrome remote code execution exposure</h2>
+                  <p>CVE-2026-1842 and related Chromium advisories detected on devices running Chrome below 128.0.6613. Fixed version is available through the approved browser remediation catalog.</p>
+                </div>
+                <div class="detail-actions">
+                  <button class="ghost-btn" data-open-view="evidence-report">Export Evidence</button>
+                  <button class="primary-btn" data-open-view="campaign-builder">Create Remediation Campaign</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="severity-strip">
+              <div class="severity-tile"><span>Severity</span><strong style="color: var(--red)">Critical</strong><div class="item-sub">Known exploited pattern</div></div>
+              <div class="severity-tile"><span>Affected</span><strong>72</strong><div class="item-sub">27 internet-facing</div></div>
+              <div class="severity-tile"><span>Fixed version</span><strong>128.0.6613+</strong><div class="item-sub">Approved catalog version</div></div>
+              <div class="severity-tile"><span>SLA remaining</span><strong style="color: var(--red)">16h</strong><div class="item-sub">Critical policy window</div></div>
+            </div>
+
+            <div class="detail-grid">
+              <div>
+                <div class="table-panel">
+                  <table>
+                    <thead><tr><th>Device</th><th>User</th><th>Installed</th><th>Uptime</th><th>Last Reboot</th><th>Status</th></tr></thead>
+                    <tbody>
+                      <tr><td><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-LAP-8821</strong><div class="item-sub">Finance laptop</div></div></div></td><td>Maya I.</td><td>127.0.6533</td><td>18d 4h</td><td>Jun 19, 2026</td><td><span class="badge warn">Queued</span></td></tr>
+                      <tr><td><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-DESK-4431</strong><div class="item-sub">Sales desktop</div></div></div></td><td>Reed P.</td><td>126.0.6478</td><td>42d 9h</td><td>May 26, 2026</td><td><span class="badge danger">Failed</span></td></tr>
+                      <tr><td><div class="device-cell"><span class="os-chip">M</span><div><strong>MAC-1442</strong><div class="item-sub">Retail Ops MacBook</div></div></div></td><td>Evan B.</td><td>127.0.6533</td><td>2d 1h</td><td>Jul 5, 2026</td><td><span class="badge good">Remediated</span></td></tr>
+                      <tr><td><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-FLD-2280</strong><div class="item-sub">Field laptop</div></div></div></td><td>Ari T.</td><td>125.0.6422</td><td>67d 2h</td><td>May 1, 2026</td><td><span class="badge warn">Offline</span></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div class="two-col">
+                  <article class="panel">
+                    <div class="section-head"><div><h2>CVE context</h2><p>Normalized vulnerability metadata for reporting.</p></div></div>
+                    <div class="activity-list">
+                      <div class="activity-item"><span class="pulse danger"></span><div><div class="item-title">CVE-2026-1842</div><div class="item-sub">Remote code execution · browser sandbox escape risk.</div></div><span class="badge danger">Critical</span></div>
+                      <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Chromium advisory bundle</div><div class="item-sub">Multiple high severity memory safety fixes included.</div></div><span class="badge warn">High</span></div>
+                    </div>
+                  </article>
+                  <article class="panel">
+                    <div class="section-head"><div><h2>Campaign plan</h2><p>Suggested safe rollout sequence.</p></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Pilot ring</span><strong>25 devices</strong></div><div class="bar"><span style="width:35%; background:var(--green)"></span></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Finance and Sales</span><strong>31 devices</strong></div><div class="bar"><span style="width:48%; background:var(--blue)"></span></div></div>
+                    <div class="bar-row"><div class="bar-label"><span>Offline retry queue</span><strong>16 devices</strong></div><div class="bar"><span style="width:22%; background:var(--amber)"></span></div></div>
+                  </article>
+                </div>
+              </div>
+
+              <aside class="panel">
+                <div class="section-head"><div><h2>Compliance evidence</h2><p>Before/after proof for audit and cyber insurance review.</p></div></div>
+                <div class="evidence-timeline">
+                  <div class="timeline-item"><time>09:18</time><div><strong>Finding opened</strong><span>72 devices below fixed version, 27 internet-facing.</span></div></div>
+                  <div class="timeline-item"><time>09:24</time><div><strong>Risk accepted for pilot</strong><span>Pilot ring created with 25 devices and 2-hour observation window.</span></div></div>
+                  <div class="timeline-item"><time>10:42</time><div><strong>First remediation proof</strong><span>MAC-1442 updated to Chrome 128.0.6613 and rescanned compliant.</span></div></div>
+                  <div class="timeline-item"><time>Next</time><div><strong>Export after closure</strong><span>Report will include affected devices, timestamps, fixed versions, and exceptions.</span></div></div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div class="view" id="devices">
+            <div class="section-head">
+              <div><h2>Device inventory</h2><p>Live endpoint posture, ownership, patch status, and restart state.</p></div>
+              <button class="ghost-btn">Enroll Device</button>
+            </div>
+            <div class="filter-row">
+              <select class="select"><option>All platforms</option><option>Windows</option><option>macOS</option></select>
+              <select class="select"><option>All risk levels</option><option>Critical</option><option>High</option><option>Healthy</option></select>
+              <select class="select"><option>All departments</option><option>Engineering</option><option>Finance</option><option>Retail Ops</option></select>
+            </div>
+            <div class="table-panel">
+              <table>
+                <thead><tr><th>Device</th><th>User</th><th>OS</th><th>Uptime</th><th>Last Reboot</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody>
+                  <tr><td><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-LAP-8821</strong><div class="item-sub">14 outdated · seen 1 min ago</div></div></div></td><td>Maya I.</td><td>Windows 11 23H2</td><td>18d 4h</td><td>Jun 19, 2026</td><td><span class="badge warn">Retry scheduled</span></td><td><button class="ghost-btn">Open</button></td></tr>
+                  <tr><td><div class="device-cell"><span class="os-chip">M</span><div><strong>MAC-1442</strong><div class="item-sub">0 outdated · seen 37 sec ago</div></div></div></td><td>Evan B.</td><td>macOS 15.5</td><td>2d 1h</td><td>Jul 5, 2026</td><td><span class="badge good">Compliant</span></td><td><button class="ghost-btn">Open</button></td></tr>
+                  <tr><td><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-DESK-0912</strong><div class="item-sub">2 outdated · seen 2 min ago</div></div></div></td><td>Nora C.</td><td>Windows 11 24H2</td><td>39d 6h</td><td>May 29, 2026</td><td><span class="badge warn">Reboot pending</span></td><td><button class="ghost-btn">Open</button></td></tr>
+                  <tr><td><div class="device-cell"><span class="os-chip">M</span><div><strong>MAC-0098</strong><div class="item-sub">6 outdated · seen 18 min ago</div></div></div></td><td>Jon R.</td><td>macOS 14.7</td><td>24d 8h</td><td>Jun 13, 2026</td><td><span class="badge danger">Blocked</span></td><td><button class="ghost-btn">Open</button></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="view" id="software">
+            <div class="section-head">
+              <div><h2>Installed software reporting</h2><p>Every discovered app, version, publisher, install base, and patch exposure.</p></div>
+              <button class="ghost-btn">Export CSV</button>
+            </div>
+            <div class="software-layout">
+              <div class="table-panel">
+                <table>
+                  <thead><tr><th>Application</th><th>Publisher</th><th>Installed</th><th>Latest</th><th>Outdated</th><th>Risk</th></tr></thead>
+                  <tbody>
+                    <tr><td>Google Chrome</td><td>Google</td><td>6,402</td><td>128.0.6613</td><td>72</td><td><span class="badge danger">Critical</span></td></tr>
+                    <tr><td>Zoom Workplace</td><td>Zoom</td><td>3,018</td><td>6.1.7</td><td>31</td><td><span class="badge warn">High</span></td></tr>
+                    <tr><td>Slack</td><td>Salesforce</td><td>2,774</td><td>4.39.95</td><td>44</td><td><span class="badge info">Medium</span></td></tr>
+                    <tr><td>Oracle Java Runtime</td><td>Oracle</td><td>318</td><td>8u421</td><td>19</td><td><span class="badge danger">Critical</span></td></tr>
+                    <tr><td>Visual Studio Code</td><td>Microsoft</td><td>1,144</td><td>1.92.2</td><td>11</td><td><span class="badge info">Medium</span></td></tr>
+                    <tr><td>Adobe Acrobat Reader</td><td>Adobe</td><td>2,016</td><td>24.002</td><td>26</td><td><span class="badge warn">High</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <aside class="panel">
+                <div class="section-head"><div><h2>Software signals</h2><p>Live inventory metrics.</p></div></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--blue)">A</span><div><div class="item-title">Total apps</div><div class="item-sub">Unique titles found</div></div></div><strong>1,286</strong></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--red)">!</span><div><div class="item-title">Unauthorized</div><div class="item-sub">Policy violations</div></div></div><strong>42</strong></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--amber)">E</span><div><div class="item-title">End of life</div><div class="item-sub">Unsupported versions</div></div></div><strong>89</strong></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--green)">P</span><div><div class="item-title">Auto-patchable</div><div class="item-sub">Catalog coverage</div></div></div><strong>74%</strong></div>
+              </aside>
+            </div>
+          </div>
+
+          <div class="view" id="campaigns">
+            <div class="section-head">
+              <div><h2>Patch campaigns</h2><p>OS and third-party app rollouts with rings, windows, retry rules, and restart policy.</p></div>
+              <button class="primary-btn" data-open-view="campaign-builder">Create Campaign</button>
+            </div>
+            <div class="campaign-list">
+              <div class="campaign-item"><div><div class="item-title">July Critical Browser Updates</div><div class="item-sub">Chrome, Edge, Firefox · all platforms</div></div><div class="progress-mini"><span class="item-sub">5,917 of 6,124 complete</span><div class="bar"><span style="width:97%; background:var(--green)"></span></div></div><span class="badge good">Healthy</span></div>
+              <div class="campaign-item"><div><div class="item-title">Windows July Security Baseline</div><div class="item-sub">KB rollup · Windows 10/11</div></div><div class="progress-mini"><span class="item-sub">3,214 of 4,090 complete</span><div class="bar"><span style="width:79%; background:var(--blue)"></span></div></div><span class="badge info">Active</span></div>
+              <div class="campaign-item"><div><div class="item-title">macOS 15.5 Minor Update</div><div class="item-sub">supervised Macs · deferral expires Friday</div></div><div class="progress-mini"><span class="item-sub">1,203 of 1,771 complete</span><div class="bar"><span style="width:68%; background:var(--teal)"></span></div></div><span class="badge warn">Deferrals</span></div>
+              <div class="campaign-item"><div><div class="item-title">Java Runtime Removal</div><div class="item-sub">remove unsupported JRE from non-approved groups</div></div><div class="progress-mini"><span class="item-sub">awaiting approval</span><div class="bar"><span style="width:12%; background:var(--amber)"></span></div></div><span class="badge violet">Approval</span></div>
+            </div>
+          </div>
+
+          <div class="view" id="campaign-builder">
+            <div class="detail-hero">
+              <div class="detail-hero-top">
+                <div>
+                  <button class="ghost-btn" data-open-view="finding-detail">Back to Finding</button>
+                  <h2>Create remediation campaign</h2>
+                  <p>Build a safe staged rollout from the Chrome critical exposure finding. Configure targets, rings, user prompts, reboot behavior, safety thresholds, and evidence output.</p>
+                </div>
+                <div class="detail-actions">
+                  <button class="ghost-btn">Save Draft</button>
+                  <button class="primary-btn">Launch Campaign</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="builder-grid">
+              <div>
+                <section class="builder-section">
+                  <h2>1. Source and scope</h2>
+                  <p>Start from the finding and select which devices should be included.</p>
+                  <div class="form-grid">
+                    <div class="field"><label>Campaign name</label><input value="Chrome critical exposure remediation" /></div>
+                    <div class="field"><label>Source finding</label><input value="Chrome remote code execution exposure" /></div>
+                    <div class="field"><label>Target group</label><select><option>All 72 affected devices</option><option>Online devices only</option><option>Internet-facing devices first</option><option>Finance and Sales only</option></select></div>
+                    <div class="field"><label>Fixed version</label><input value="Chrome 128.0.6613+" /></div>
+                  </div>
+                </section>
+
+                <section class="builder-section">
+                  <h2>2. Deployment rings</h2>
+                  <p>Use staged rollout to catch failures before broader deployment.</p>
+                  <div class="ring-list">
+                    <div class="ring-row"><div class="ring-num">1</div><div><div class="item-title">Pilot ring</div><div class="item-sub">IT champions and low-risk devices · 25 endpoints</div></div><span class="badge good">Auto approve</span></div>
+                    <div class="ring-row"><div class="ring-num">2</div><div><div class="item-title">Department ring</div><div class="item-sub">Finance and Sales · 31 endpoints</div></div><span class="badge info">After 2h</span></div>
+                    <div class="ring-row"><div class="ring-num">3</div><div><div class="item-title">Offline retry ring</div><div class="item-sub">Retry when devices check in · 16 endpoints</div></div><span class="badge warn">Retry</span></div>
+                  </div>
+                </section>
+
+                <section class="builder-section">
+                  <h2>3. Schedule and user experience</h2>
+                  <p>Choose when users see prompts and how much control they have.</p>
+                  <div class="form-grid">
+                    <div class="field"><label>Start</label><select><option>Start after approval</option><option>Tonight at 11:00 PM</option><option>Next maintenance window</option></select></div>
+                    <div class="field"><label>Maintenance window</label><select><option>Local time 7:00 PM - 5:00 AM</option><option>Business hours allowed</option><option>Weekend only</option></select></div>
+                    <div class="field"><label>Popup template</label><select><option>Critical app update prompt</option><option>Maintenance window notice</option><option>Reboot deadline warning</option></select></div>
+                    <div class="field"><label>Deferrals</label><select><option>Allow 3 deferrals, 2 hours each</option><option>Allow 1 deferral</option><option>No deferrals for critical</option></select></div>
+                  </div>
+                </section>
+
+                <section class="builder-section">
+                  <h2>4. Safety and evidence</h2>
+                  <p>Pause automatically if the rollout gets noisy and generate proof when closed.</p>
+                  <div class="template-grid">
+                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Pause if failures exceed 8%</div><div class="item-sub">Protects broad rollout if installer or app-close behavior breaks.</div></div><span class="badge good">On</span></label>
+                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Require AC power for laptops</div><div class="item-sub">Defer installs when battery is below policy threshold.</div></div><span class="badge good">On</span></label>
+                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Generate compliance evidence report</div><div class="item-sub">Includes affected devices, user prompts, install timestamps, fixed versions, and exceptions.</div></div><span class="badge good">On</span></label>
+                  </div>
+                </section>
+              </div>
+
+              <aside class="panel review-card">
+                <div class="section-head"><div><h2>Campaign review</h2><p>Ready-to-launch summary.</p></div><span class="badge danger">Critical</span></div>
+                <div class="meta-grid">
+                  <div class="meta-tile"><span>Devices</span><strong>72</strong></div>
+                  <div class="meta-tile"><span>Rings</span><strong>3</strong></div>
+                  <div class="meta-tile"><span>SLA</span><strong>16h</strong></div>
+                </div>
+                <div class="activity-list">
+                  <div class="activity-item"><span class="pulse danger"></span><div><div class="item-title">Finding</div><div class="item-sub">Chrome remote code execution exposure.</div></div><span class="badge danger">Critical</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">User prompt</div><div class="item-sub">Critical app update prompt with uptime and last reboot.</div></div><span class="badge good">Enabled</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Reboot behavior</div><div class="item-sub">No OS reboot required; browser restart may be requested.</div></div><span class="badge info">App only</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Evidence output</div><div class="item-sub">Generate report after all reachable devices are remediated or excepted.</div></div><span class="badge good">On</span></div>
+                </div>
+                <button class="primary-btn" data-open-view="evidence-report">Launch Campaign</button>
+              </aside>
+            </div>
+          </div>
+
+          <div class="view" id="agents">
+            <div class="section-head">
+              <div><h2>Agent downloads</h2><p>Deploy scan-and-patch agents to collect exposure data, run remediation jobs, and report compliance evidence.</p></div>
+              <button class="ghost-btn">Rotate Enrollment Token</button>
+            </div>
+            <div class="download-grid">
+              <article class="download-card">
+                <div class="download-head">
+                  <div class="agent-node" style="background: var(--blue)">W</div>
+                  <div>
+                    <div class="item-title">Windows Agent</div>
+                    <div class="item-sub">Windows 10/11 · Server support later · x64</div>
+                  </div>
+                  <span class="badge good">v0.1 POC</span>
+                </div>
+                <div class="meta-grid">
+                  <div class="meta-tile"><span>Package</span><strong>PowerShell bootstrap</strong></div>
+                  <div class="meta-tile"><span>Service</span><strong>PatchOpsAgent</strong></div>
+                  <div class="meta-tile"><span>Token</span><strong>POC-WINDOWS</strong></div>
+                </div>
+                <div class="code-box">powershell -ExecutionPolicy Bypass -File .\install-windows-agent.ps1 -Tenant acme-prod -EnrollToken POC-WINDOWS-ENROLL-TOKEN</div>
+                <div class="download-actions">
+                  <a class="download-link" href="downloads/install-windows-agent.ps1" download>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                    Download Windows Bootstrap
+                  </a>
+                  <button class="ghost-btn">Copy Command</button>
+                </div>
+              </article>
+
+              <article class="download-card">
+                <div class="download-head">
+                  <div class="agent-node" style="background: var(--teal)">M</div>
+                  <div>
+                    <div class="item-title">macOS Agent</div>
+                    <div class="item-sub">macOS 13+ · Apple silicon and Intel</div>
+                  </div>
+                  <span class="badge good">v0.1 POC</span>
+                </div>
+                <div class="meta-grid">
+                  <div class="meta-tile"><span>Package</span><strong>Shell bootstrap</strong></div>
+                  <div class="meta-tile"><span>Daemon</span><strong>com.patchops.agent</strong></div>
+                  <div class="meta-tile"><span>Token</span><strong>POC-MACOS</strong></div>
+                </div>
+                <div class="code-box">TENANT=acme-prod ENROLL_TOKEN=POC-MACOS-ENROLL-TOKEN sh ./install-macos-agent.sh</div>
+                <div class="download-actions">
+                  <a class="download-link" href="downloads/install-macos-agent.sh" download>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                    Download macOS Bootstrap
+                  </a>
+                  <button class="ghost-btn">Copy Command</button>
+                </div>
+              </article>
+            </div>
+
+            <div class="two-col">
+              <article class="panel">
+                <div class="section-head"><div><h2>Deployment health</h2><p>Agent rollout coverage by platform.</p></div></div>
+                <div class="bar-row"><div class="bar-label"><span>Windows enrolled</span><strong>5,219 / 5,640</strong></div><div class="bar"><span style="width:92%; background:var(--blue)"></span></div></div>
+                <div class="bar-row"><div class="bar-label"><span>macOS enrolled</span><strong>2,112 / 2,202</strong></div><div class="bar"><span style="width:96%; background:var(--teal)"></span></div></div>
+                <div class="bar-row"><div class="bar-label"><span>Agents current</span><strong>94%</strong></div><div class="bar"><span style="width:94%; background:var(--green)"></span></div></div>
+              </article>
+              <article class="panel">
+                <div class="section-head"><div><h2>Installer roadmap</h2><p>What production downloads should become.</p></div></div>
+                <div class="activity-list">
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Signed Windows MSI</div><div class="item-sub">Installer, service registration, checksum verification.</div></div><span class="badge warn">Next</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Signed and notarized macOS PKG</div><div class="item-sub">LaunchDaemon install, permissions, uninstall receipt.</div></div><span class="badge warn">Next</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Agent self-update channel</div><div class="item-sub">Signed metadata, staged rollout, rollback guard.</div></div><span class="badge info">Planned</span></div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="view" id="notifications">
+            <div class="section-head">
+              <div><h2>User notifications</h2><p>Send polished endpoint popups for reboot deadlines, maintenance windows, and remediation prompts.</p></div>
+              <button class="primary-btn">Send Notification</button>
+            </div>
+
+            <div class="two-col">
+              <article class="notification-preview">
+                <div class="section-head"><div><h2>Popup preview</h2><p>What users see on Windows or macOS.</p></div><span class="badge info">Reboot prompt</span></div>
+                <div class="popup-card">
+                  <div class="popup-head">
+                    <div class="logo">P</div>
+                    <div><strong>PatchOps Security Update</strong><span>Chrome critical update requires restart</span></div>
+                  </div>
+                  <div class="popup-body">
+                    <p>Your device has a critical browser security update ready. Please restart Chrome now or defer until the next maintenance window.</p>
+                    <div class="meta-grid">
+                      <div class="meta-tile"><span>Deadline</span><strong>Today 6:00 PM</strong></div>
+                      <div class="meta-tile"><span>Uptime</span><strong>18d 4h</strong></div>
+                      <div class="meta-tile"><span>Last reboot</span><strong>Jun 19</strong></div>
+                    </div>
+                    <div class="popup-actions" style="margin-top: 12px">
+                      <button class="primary-btn">Restart Chrome</button>
+                      <button class="ghost-btn">Defer 2 Hours</button>
+                      <button class="ghost-btn">Details</button>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <article class="panel">
+                <div class="section-head"><div><h2>Notification templates</h2><p>Reusable prompts controlled by remediation policy.</p></div></div>
+                <div class="template-grid">
+                  <div class="activity-item"><span class="pulse danger"></span><div><div class="item-title">Critical app update prompt</div><div class="item-sub">For Chrome, Edge, Zoom, Adobe, and Slack updates.</div></div><span class="badge good">Active</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Reboot deadline warning</div><div class="item-sub">Shows uptime, last reboot, and forced restart deadline.</div></div><span class="badge good">Active</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Maintenance window notice</div><div class="item-sub">Friendly heads-up before scheduled patch campaign.</div></div><span class="badge info">Draft</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Blocked remediation</div><div class="item-sub">Low battery, offline too long, app running, or user deferrals exhausted.</div></div><span class="badge warn">Review</span></div>
+                </div>
+              </article>
+            </div>
+
+            <div class="dashboard-grid">
+              <article class="panel">
+                <div class="section-head"><div><h2>Delivery status</h2><p>Recent endpoint popup activity.</p></div></div>
+                <div class="table-panel">
+                  <table>
+                    <thead><tr><th>Campaign</th><th>Sent</th><th>Acknowledged</th><th>Deferred</th><th>Expired</th></tr></thead>
+                    <tbody>
+                      <tr><td>Chrome critical update</td><td>72</td><td>51</td><td>16</td><td>5</td></tr>
+                      <tr><td>Windows reboot deadline</td><td>58</td><td>38</td><td>12</td><td>8</td></tr>
+                      <tr><td>macOS maintenance notice</td><td>44</td><td>41</td><td>3</td><td>0</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </article>
+              <article class="panel">
+                <div class="section-head"><div><h2>Stale reboot signals</h2><p>Devices with high uptime and pending remediation.</p></div></div>
+                <div class="activity-list">
+                  <div class="activity-item"><span class="pulse danger"></span><div><div class="item-title">WIN-FLD-2280</div><div class="item-sub">67d 2h uptime · last reboot May 1, 2026</div></div><span class="badge danger">Critical</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">WIN-DESK-0912</div><div class="item-sub">39d 6h uptime · reboot pending</div></div><span class="badge warn">Pending</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">MAC-0098</div><div class="item-sub">24d 8h uptime · blocked by low battery</div></div><span class="badge warn">Blocked</span></div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="view" id="reports">
+            <div class="section-head">
+              <div><h2>Reports</h2><p>Operational, executive, and audit-ready reporting for patch and software posture.</p></div>
+              <button class="ghost-btn">Schedule Report</button>
+            </div>
+            <div class="reports-grid">
+              <article class="report-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15v2"/><path d="M12 9v8"/><path d="M17 5v12"/></svg><h3>Executive Compliance</h3><p>Board-friendly posture summary with trend, risk, and exception counts.</p><button class="ghost-btn" data-open-view="evidence-report">Open</button></article>
+              <article class="report-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg><h3>Device-Level Detail</h3><p>Patch status, missing updates, failed installs, and reboot state per endpoint.</p><button class="ghost-btn">Open</button></article>
+              <article class="report-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/></svg><h3>Software Exposure</h3><p>Outdated apps, unauthorized software, end-of-life versions, and install base.</p><button class="ghost-btn">Open</button></article>
+              <article class="report-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/></svg><h3>Patch History</h3><p>Installation timelines, retry history, manual overrides, and policy enforcement.</p><button class="ghost-btn">Open</button></article>
+              <article class="report-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.4 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0Z"/></svg><h3>CVE Exposure</h3><p>Known vulnerability coverage across OS updates and third-party applications.</p><button class="ghost-btn" data-open-view="evidence-report">Open</button></article>
+              <article class="report-card"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg><h3>Policy Exceptions</h3><p>Approved delays, blocked installs, VIP devices, and maintenance-window conflicts.</p><button class="ghost-btn">Open</button></article>
+            </div>
+          </div>
+
+          <div class="view" id="evidence-report">
+            <div class="section-head">
+              <div><h2>Evidence report preview</h2><p>Audit-ready proof of exposure, remediation, user notification, exceptions, and final compliance state.</p></div>
+              <div class="detail-actions">
+                <a class="ghost-btn" href="downloads/evidence-report.json" download>Download JSON</a>
+                <a class="ghost-btn" href="downloads/evidence-report.csv" download>Export CSV</a>
+                <button class="primary-btn">Share Report</button>
+              </div>
+            </div>
+
+            <div class="report-shell">
+              <div class="report-cover">
+                <span class="badge good">Compliance evidence</span>
+                <h2>Chrome Critical Exposure Remediation</h2>
+                <p>Generated July 7, 2026 · ACME Production · Finding CVE-2026-1842 · Campaign CHR-CRIT-2026-07</p>
+              </div>
+              <div class="report-body">
+                <section class="report-section">
+                  <h3>Executive summary</h3>
+                  <div class="report-summary">
+                    <div class="meta-tile"><span>Initial exposure</span><strong>72 devices</strong></div>
+                    <div class="meta-tile"><span>Remediated</span><strong>61 devices</strong></div>
+                    <div class="meta-tile"><span>Exceptions</span><strong>6 approved</strong></div>
+                    <div class="meta-tile"><span>Remaining</span><strong>5 offline</strong></div>
+                  </div>
+                </section>
+
+                <section class="report-section">
+                  <h3>Exposure and fix</h3>
+                  <div class="table-panel">
+                    <table>
+                      <thead><tr><th>Finding</th><th>CVE</th><th>Vulnerable Version</th><th>Fixed Version</th><th>Severity</th><th>SLA</th></tr></thead>
+                      <tbody>
+                        <tr><td>Chrome remote code execution exposure</td><td>CVE-2026-1842</td><td>Below 128.0.6613</td><td>128.0.6613+</td><td><span class="badge danger">Critical</span></td><td>Met</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section class="report-section">
+                  <h3>Remediation evidence</h3>
+                  <div class="table-panel">
+                    <table>
+                      <thead><tr><th>Device</th><th>Before</th><th>After</th><th>Installed At</th><th>Rescan</th><th>Evidence</th></tr></thead>
+                      <tbody>
+                        <tr><td>MAC-1442</td><td>127.0.6533</td><td>128.0.6613</td><td>Jul 7, 10:42 AM</td><td><span class="badge good">Compliant</span></td><td>Agent event + inventory snapshot</td></tr>
+                        <tr><td>WIN-LAP-8821</td><td>127.0.6533</td><td>128.0.6613</td><td>Jul 7, 11:08 AM</td><td><span class="badge good">Compliant</span></td><td>Agent event + restart acknowledgement</td></tr>
+                        <tr><td>WIN-DESK-4431</td><td>126.0.6478</td><td>Pending</td><td>Retry scheduled</td><td><span class="badge warn">Exception</span></td><td>Install failure log attached</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+
+                <section class="report-section">
+                  <h3>User notification proof</h3>
+                  <div class="report-summary">
+                    <div class="meta-tile"><span>Prompts sent</span><strong>72</strong></div>
+                    <div class="meta-tile"><span>Acknowledged</span><strong>51</strong></div>
+                    <div class="meta-tile"><span>Deferred</span><strong>16</strong></div>
+                    <div class="meta-tile"><span>Expired</span><strong>5</strong></div>
+                  </div>
+                </section>
+
+                <section class="report-section">
+                  <h3>Exception register</h3>
+                  <div class="activity-list">
+                    <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">WIN-FLD-2280</div><div class="item-sub">Offline for campaign window · retry when agent checks in.</div></div><span class="badge warn">Temporary</span></div>
+                    <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">WIN-DESK-4431</div><div class="item-sub">Install failed twice · package retry scheduled after reboot.</div></div><span class="badge warn">Retry</span></div>
+                    <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Finance pilot group</div><div class="item-sub">Approved 2-hour observation window before broad rollout.</div></div><span class="badge good">Approved</span></div>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+
+          <div class="view" id="integrations">
+            <div class="section-head">
+              <div><h2>MDM and endpoint integrations</h2><p>Use existing tools for deployment context while PatchOps remains the scan, patch, and compliance system.</p></div>
+              <button class="primary-btn">Add Integration</button>
+            </div>
+            <div class="integration-grid">
+              <article class="integration-card">
+                <div class="integration-top">
+                  <div class="integration-logo" style="background: var(--blue)">IN</div>
+                  <div><div class="item-title">Microsoft Intune</div><div class="item-sub">Windows and mixed fleet context</div></div>
+                  <span class="badge good">Connected</span>
+                </div>
+                <ul class="permission-list">
+                  <li>Import device groups and ownership</li>
+                  <li>Cross-check Windows update posture</li>
+                  <li>Deploy PatchOps bootstrap package</li>
+                </ul>
+                <button class="ghost-btn">Configure</button>
+              </article>
+              <article class="integration-card">
+                <div class="integration-top">
+                  <div class="integration-logo" style="background: var(--teal)">JF</div>
+                  <div><div class="item-title">Jamf Pro</div><div class="item-sub">Apple fleet deployment and inventory</div></div>
+                  <span class="badge good">Connected</span>
+                </div>
+                <ul class="permission-list">
+                  <li>Import macOS smart groups</li>
+                  <li>Deploy signed macOS agent package</li>
+                  <li>Optional macOS update handoff</li>
+                </ul>
+                <button class="ghost-btn">Configure</button>
+              </article>
+              <article class="integration-card">
+                <div class="integration-top">
+                  <div class="integration-logo" style="background: var(--violet)">KD</div>
+                  <div><div class="item-title">Kandji</div><div class="item-sub">Apple device posture and groups</div></div>
+                  <span class="badge warn">Ready</span>
+                </div>
+                <ul class="permission-list">
+                  <li>Map Blueprints to PatchOps policies</li>
+                  <li>Import serials and assigned users</li>
+                  <li>Deploy macOS enrollment command</li>
+                </ul>
+                <button class="ghost-btn">Connect</button>
+              </article>
+              <article class="integration-card">
+                <div class="integration-top">
+                  <div class="integration-logo" style="background: var(--orange)">WS</div>
+                  <div><div class="item-title">Workspace ONE</div><div class="item-sub">Enterprise UEM environments</div></div>
+                  <span class="badge warn">Ready</span>
+                </div>
+                <ul class="permission-list">
+                  <li>Import device assignment groups</li>
+                  <li>Sync platform and ownership metadata</li>
+                  <li>Use UEM deployment channels</li>
+                </ul>
+                <button class="ghost-btn">Connect</button>
+              </article>
+              <article class="integration-card">
+                <div class="integration-top">
+                  <div class="integration-logo" style="background: var(--green)">MO</div>
+                  <div><div class="item-title">Mosyle</div><div class="item-sub">Apple SMB and education fleets</div></div>
+                  <span class="badge info">Planned</span>
+                </div>
+                <ul class="permission-list">
+                  <li>Import Apple device inventory</li>
+                  <li>Deploy macOS agent package</li>
+                  <li>Map groups to remediation rings</li>
+                </ul>
+                <button class="ghost-btn">Request Access</button>
+              </article>
+              <article class="integration-card">
+                <div class="integration-top">
+                  <div class="integration-logo" style="background: #314056">AD</div>
+                  <div><div class="item-title">Addigy</div><div class="item-sub">Apple MSP deployment workflows</div></div>
+                  <span class="badge info">Planned</span>
+                </div>
+                <ul class="permission-list">
+                  <li>Support MSP tenant mapping</li>
+                  <li>Sync device labels and groups</li>
+                  <li>Deploy agent through policy</li>
+                </ul>
+                <button class="ghost-btn">Request Access</button>
+              </article>
+            </div>
+
+            <div class="two-col">
+              <article class="panel">
+                <div class="section-head"><div><h2>Integration boundary</h2><p>Keep PatchOps focused on vulnerability and patch compliance.</p></div></div>
+                <div class="activity-list">
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Use MDMs to deploy the agent</div><div class="item-sub">Installers, bootstrap commands, device groups, and ownership data.</div></div><span class="badge good">Yes</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Use PatchOps to scan and patch</div><div class="item-sub">Exposure findings, remediation jobs, compliance snapshots, reports.</div></div><span class="badge good">Yes</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Avoid becoming another MDM</div><div class="item-sub">No profiles, remote wipe, Wi-Fi, VPN, or full lifecycle management.</div></div><span class="badge warn">Boundary</span></div>
+                </div>
+              </article>
+              <article class="panel">
+                <div class="section-head"><div><h2>Synced fields</h2><p>Useful context from connected systems.</p></div></div>
+                <div class="meta-grid">
+                  <div class="meta-tile"><span>Identity</span><strong>User, department, owner</strong></div>
+                  <div class="meta-tile"><span>Targeting</span><strong>Groups, labels, rings</strong></div>
+                  <div class="meta-tile"><span>Device</span><strong>Serial, OS, platform</strong></div>
+                </div>
+              </article>
+            </div>
+          </div>
+
+          <div class="view" id="policies">
+            <div class="section-head">
+              <div><h2>Patch policies</h2><p>Control rollout timing, user deferrals, restart behavior, and third-party app rules.</p></div>
+              <button class="primary-btn">New Policy</button>
+            </div>
+            <div class="policy-list">
+              <div class="policy-item"><button class="toggle on" aria-label="Enabled"></button><div><div class="item-title">Critical updates install within 24 hours</div><div class="item-sub">Applies to exploitable OS and browser updates on all devices.</div></div><span class="badge good">Enabled</span></div>
+              <div class="policy-item"><button class="toggle on" aria-label="Enabled"></button><div><div class="item-title">Allow three user deferrals before enforced reboot</div><div class="item-sub">Windows and macOS, 15 minute final warning.</div></div><span class="badge good">Enabled</span></div>
+              <div class="policy-item"><button class="toggle on" aria-label="Enabled"></button><div><div class="item-title">Patch Chrome, Edge, Firefox, Zoom, Slack automatically</div><div class="item-sub">Third-party app catalog scope for all employees.</div></div><span class="badge good">Enabled</span></div>
+              <div class="policy-item"><button class="toggle" aria-label="Disabled"></button><div><div class="item-title">Remove unauthorized remote access tools</div><div class="item-sub">Require approval before automatic uninstall.</div></div><span class="badge warn">Review</span></div>
+            </div>
+          </div>
+
+          <div class="view" id="admin">
+            <div class="section-head">
+              <div><h2>Administration</h2><p>Tenant security, roles, approvals, compliance defaults, API access, and notification branding.</p></div>
+              <button class="primary-btn">Save Settings</button>
+            </div>
+
+            <div class="admin-grid">
+              <div>
+                <section class="builder-section">
+                  <h2>Roles and access</h2>
+                  <p>Use least-privilege roles so patching, reporting, and audit access are separated.</p>
+                  <div class="role-grid">
+                    <div class="role-card"><strong>Owner</strong><span>Full tenant, billing, security, and approval control.</span></div>
+                    <div class="role-card"><strong>Security Admin</strong><span>Findings, policies, reports, and emergency remediation.</span></div>
+                    <div class="role-card"><strong>Patch Admin</strong><span>Campaigns, agents, notifications, and device actions.</span></div>
+                    <div class="role-card"><strong>Auditor</strong><span>Read-only reports, evidence, audit log, and exports.</span></div>
+                  </div>
+                </section>
+
+                <section class="builder-section">
+                  <h2>Approval workflow</h2>
+                  <p>Control high-impact actions before they affect users or production devices.</p>
+                  <div class="template-grid">
+                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Require approval before forced reboot</div><div class="item-sub">Two-person approval for reboot deadlines under 24 hours.</div></div><span class="badge good">On</span></label>
+                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Allow emergency auto-patch for critical browser CVEs</div><div class="item-sub">Starts pilot ring immediately, pauses on failure threshold.</div></div><span class="badge warn">Guarded</span></label>
+                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Require exception reason for unresolved findings</div><div class="item-sub">Exception register appears in compliance evidence reports.</div></div><span class="badge good">On</span></label>
+                  </div>
+                </section>
+
+                <section class="builder-section">
+                  <h2>Default SLAs</h2>
+                  <p>Severity-driven remediation windows used by Findings, Campaign Builder, and Reports.</p>
+                  <div class="form-grid">
+                    <div class="field"><label>Critical</label><select><option>24 hours</option><option>12 hours</option><option>48 hours</option></select></div>
+                    <div class="field"><label>High</label><select><option>7 days</option><option>3 days</option><option>14 days</option></select></div>
+                    <div class="field"><label>Medium</label><select><option>30 days</option><option>14 days</option><option>45 days</option></select></div>
+                    <div class="field"><label>Unsupported software</label><select><option>Custom by policy</option><option>7 days</option><option>Require approval</option></select></div>
+                  </div>
+                </section>
+
+                <section class="builder-section">
+                  <h2>Notification branding</h2>
+                  <p>Make endpoint popups feel trusted and recognizable to users.</p>
+                  <div class="form-grid">
+                    <div class="field"><label>Display name</label><input value="ACME Security Updates" /></div>
+                    <div class="field"><label>Support contact</label><input value="helpdesk@acme.example" /></div>
+                    <div class="field"><label>Tone</label><select><option>Clear and friendly</option><option>Strict compliance</option><option>Minimal</option></select></div>
+                    <div class="field"><label>Logo</label><select><option>Use organization logo</option><option>Use PatchOps logo</option></select></div>
+                  </div>
+                </section>
+              </div>
+
+              <aside class="panel review-card">
+                <div class="section-head"><div><h2>Security posture</h2><p>Tenant-level controls.</p></div><span class="badge good">Healthy</span></div>
+                <div class="activity-list">
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">SSO / OIDC</div><div class="item-sub">Okta connected · SCIM planned.</div></div><span class="badge good">On</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">MFA required</div><div class="item-sub">All privileged roles must use MFA.</div></div><span class="badge good">On</span></div>
+                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">API tokens</div><div class="item-sub">2 active tokens · rotate every 90 days.</div></div><span class="badge warn">Review</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Audit retention</div><div class="item-sub">365 days online, 7 years archive.</div></div><span class="badge good">Set</span></div>
+                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Agent package trust</div><div class="item-sub">Signed Windows MSI and notarized macOS PKG required.</div></div><span class="badge info">Planned</span></div>
+                </div>
+
+                <div class="section-head" style="margin-top: 16px"><div><h2>Webhooks</h2><p>Send events to SIEM or ticketing.</p></div></div>
+                <div class="meta-grid">
+                  <div class="meta-tile"><span>Findings</span><strong>Enabled</strong></div>
+                  <div class="meta-tile"><span>Campaigns</span><strong>Enabled</strong></div>
+                  <div class="meta-tile"><span>Reports</span><strong>Draft</strong></div>
+                </div>
+              </aside>
+            </div>
+          </div>
+
+          <div class="view" id="audit">
+            <div class="section-head">
+              <div><h2>Audit trail</h2><p>Every policy change, deployment action, manual override, and agent-reported event.</p></div>
+              <button class="ghost-btn">Export Log</button>
+            </div>
+            <div class="table-panel">
+              <table>
+                <thead><tr><th>Time</th><th>Actor</th><th>Action</th><th>Scope</th><th>Result</th></tr></thead>
+                <tbody>
+                  <tr><td>10:45</td><td>Ana S.</td><td>Approved Java removal campaign</td><td>Finance · Engineering</td><td><span class="badge good">Recorded</span></td></tr>
+                  <tr><td>10:31</td><td>System</td><td>Forced reboot warning issued</td><td>12 Windows devices</td><td><span class="badge info">Notified</span></td></tr>
+                  <tr><td>09:54</td><td>Ben T.</td><td>Changed maintenance window</td><td>Retail Ops Macs</td><td><span class="badge good">Recorded</span></td></tr>
+                  <tr><td>09:22</td><td>System</td><td>Blocked install due to battery</td><td>MAC-0098</td><td><span class="badge warn">Deferred</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+    <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
+
+    <script>
+      const labels = {
+        overview: ["Overview", "Live vulnerability exposure, patch posture, and compliance reporting."],
+        findings: ["Findings", "Prioritized CVEs, unsupported software, SLAs, and remediation actions."],
+        "finding-detail": ["Finding Detail", "Affected devices, fixed versions, remediation status, and compliance evidence."],
+        devices: ["Devices", "Endpoint inventory, status, ownership, and remediation."],
+        software: ["Software", "Installed software metrics, versions, publishers, and exposure."],
+        campaigns: ["Patch Campaigns", "Staged OS and app deployments across rings."],
+        "campaign-builder": ["Campaign Builder", "Configure targeting, rings, user prompts, safety controls, and evidence."],
+        agents: ["Agents", "Download scan-and-patch agents and copy deployment commands."],
+        notifications: ["Notifications", "User-facing popups, reboot prompts, deferrals, and stale uptime signals."],
+        reports: ["Reports", "Compliance, exposure, patch history, and executive summaries."],
+        "evidence-report": ["Evidence Report", "Audit-ready remediation proof, exceptions, notifications, and final state."],
+        integrations: ["Integrations", "Connect MDMs and endpoint systems for deployment context."],
+        policies: ["Policies", "Deployment rules, restart behavior, and application governance."],
+        admin: ["Admin", "Tenant security, roles, approvals, SLAs, API access, and branding."],
+        audit: ["Audit", "Immutable administrative and endpoint activity trail."]
+      };
+
+      const actionMessages = {
+        "Save Draft": ["Draft saved", "Campaign configuration is stored for later review."],
+        "Launch Campaign": ["Campaign launched", "Demo campaign moved to evidence generation with staged rollout enabled."],
+        "Send Notification": ["Notification queued", "Endpoint popup will be sent to the selected remediation scope."],
+        "Schedule Report": ["Report scheduled", "Compliance report will be delivered to stakeholders weekly."],
+        "Share Report": ["Share link copied", "Evidence report link is ready to paste."],
+        "Add Integration": ["Integration flow opened", "Choose an MDM/UEM connector and scoped permissions."],
+        "Connect": ["Connector ready", "Demo connector moved into ready-to-configure state."],
+        "Configure": ["Configuration opened", "Review permissions, group mapping, and sync schedule."],
+        "Request Access": ["Access request noted", "Connector request added to the integration roadmap."],
+        "Save Settings": ["Settings saved", "Admin defaults, approvals, and branding have been updated."],
+        "Export Log": ["Audit export started", "Audit log export is being prepared for download."],
+        "Export Snapshot": ["Snapshot exported", "Current dashboard posture snapshot was generated."],
+        "Enroll Device": ["Enrollment opened", "Use the Agents page to download installers and copy deployment commands."],
+        "New Policy": ["Policy draft created", "A new patch policy draft is ready for configuration."],
+        "Open": ["Detail opened", "Demo detail drawer would open in the production app."],
+        "Patch": ["Finding selected", "Opening remediation workflow for this exposure."],
+        "Remediate": ["Remediation queued", "Unsupported software remediation would require approval."],
+        "Schedule": ["Schedule selected", "Campaign Builder can schedule this remediation window."]
+      };
+
+      function showToast(title, message) {
+        const region = document.querySelector(".toast-region");
+        const toast = document.createElement("div");
+        toast.className = "toast";
+        toast.innerHTML = `<strong>${title}</strong><span>${message}</span>`;
+        region.appendChild(toast);
+        setTimeout(() => toast.remove(), 2800);
+      }
+
+      function showView(view) {
+        document.querySelectorAll(".nav-btn").forEach((item) => item.classList.toggle("active", item.dataset.view === view));
+        document.querySelectorAll(".view").forEach((item) => item.classList.toggle("active", item.id === view));
+        document.getElementById("page-title").textContent = labels[view][0];
+        document.getElementById("page-subtitle").textContent = labels[view][1];
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
+      document.querySelectorAll(".nav-btn").forEach((button) => {
+        button.addEventListener("click", () => {
+          showView(button.dataset.view);
+        });
+      });
+
+      document.querySelectorAll("[data-open-view]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const text = button.textContent.trim();
+          showView(button.dataset.openView);
+          if (text.includes("Launch")) {
+            showToast("Campaign launched", "Evidence report is generated from the completed remediation flow.");
+          }
+        });
+      });
+
+      document.querySelectorAll(".toggle").forEach((toggle) => {
+        toggle.addEventListener("click", () => toggle.classList.toggle("on"));
+      });
+
+      document.querySelectorAll(".download-card .ghost-btn").forEach((button) => {
+        button.addEventListener("click", async () => {
+          const command = button.closest(".download-card").querySelector(".code-box").textContent;
+          await navigator.clipboard?.writeText(command);
+          showToast("Command copied", "Deployment command is ready to paste into your MDM or terminal.");
+          button.textContent = "Copied";
+          setTimeout(() => {
+            button.textContent = "Copy Command";
+          }, 1400);
+        });
+      });
+
+      document.querySelectorAll("button").forEach((button) => {
+        button.addEventListener("click", async () => {
+          if (button.classList.contains("nav-btn") || button.dataset.openView || button.closest(".download-card")) return;
+          const text = button.textContent.trim();
+          const message = actionMessages[text];
+          if (!message) return;
+          if (text === "Share Report") {
+            await navigator.clipboard?.writeText(`${location.href.split("#")[0]}#evidence-report`);
+          }
+          showToast(message[0], message[1]);
+        });
+      });
+
+      document.querySelectorAll('a[download]').forEach((link) => {
+        link.addEventListener("click", () => {
+          showToast("Download started", `${link.textContent.trim()} is downloading from the demo package.`);
+        });
+      });
+    </script>
+  </body>
+</html>

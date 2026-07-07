@@ -1,0 +1,5 @@
+device,before_version,after_version,status,evidence
+MAC-1442,127.0.6533,128.0.6613,compliant,agent event and inventory snapshot
+WIN-LAP-8821,127.0.6533,128.0.6613,compliant,agent event and restart acknowledgement
+WIN-DESK-4431,126.0.6478,pending,exception,install failure log attached
+

@@ -1,0 +1,50 @@
+{
+  "tenant_id": "acme-prod",
+  "enrollment_token": "POC-WINDOWS-ENROLL-TOKEN",
+  "hostname": "WIN-LAP-8821",
+  "platform": "windows",
+  "serial_number": "WIN-8821-SERIAL",
+  "agent_version": "0.1.0",
+  "uptime_seconds": 1576800,
+  "last_reboot_at": "2026-06-19T11:12:00Z",
+  "reboot_pending": false,
+  "battery_percent": 84,
+  "os": {
+    "name": "Windows 11 Pro",
+    "version": "23H2",
+    "build": "22631.3880"
+  },
+  "software": [
+    {
+      "name": "Google Chrome",
+      "publisher": "Google",
+      "version": "127.0.6533",
+      "install_source": "registry"
+    },
+    {
+      "name": "Zoom Workplace",
+      "publisher": "Zoom",
+      "version": "6.0.2",
+      "install_source": "registry"
+    }
+  ],
+  "findings": [
+    {
+      "software_name": "Google Chrome",
+      "installed_version": "127.0.6533",
+      "fixed_version": "128.0.6613",
+      "severity": "critical",
+      "cve_ids": ["CVE-2026-1842"],
+      "finding_type": "vulnerable_version"
+    },
+    {
+      "software_name": "Zoom Workplace",
+      "installed_version": "6.0.2",
+      "fixed_version": "6.1.7",
+      "severity": "high",
+      "cve_ids": [],
+      "finding_type": "outdated_version"
+    }
+  ]
+}
+

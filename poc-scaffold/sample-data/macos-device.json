@@ -1,0 +1,42 @@
+{
+  "tenant_id": "acme-prod",
+  "enrollment_token": "POC-MACOS-ENROLL-TOKEN",
+  "hostname": "MAC-1442",
+  "platform": "macos",
+  "serial_number": "MAC-1442-SERIAL",
+  "agent_version": "0.1.0",
+  "uptime_seconds": 176400,
+  "last_reboot_at": "2026-07-05T09:22:00Z",
+  "reboot_pending": false,
+  "battery_percent": 67,
+  "os": {
+    "name": "macOS",
+    "version": "15.5",
+    "build": "24F74"
+  },
+  "software": [
+    {
+      "name": "Google Chrome",
+      "publisher": "Google",
+      "version": "128.0.6613",
+      "install_source": "application_bundle"
+    },
+    {
+      "name": "Slack",
+      "publisher": "Salesforce",
+      "version": "4.38.121",
+      "install_source": "application_bundle"
+    }
+  ],
+  "findings": [
+    {
+      "software_name": "Slack",
+      "installed_version": "4.38.121",
+      "fixed_version": "4.39.95",
+      "severity": "medium",
+      "cve_ids": [],
+      "finding_type": "outdated_version"
+    }
+  ]
+}
+
