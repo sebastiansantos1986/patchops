@@ -13,11 +13,8 @@
 
 ## Backend Commands
 
-Placeholder:
-
 ```bash
-cd backend
-start-api
+npm run dev
 ```
 
 ## Agent Simulator Commands
@@ -25,7 +22,6 @@ start-api
 Placeholder:
 
 ```bash
-cd agent
 PATCHOPS_API_URL=http://127.0.0.1:3000/api node simulator.js
 ```
 
@@ -34,8 +30,7 @@ PATCHOPS_API_URL=http://127.0.0.1:3000/api node simulator.js
 Current prototype:
 
 ```bash
-cd outputs/patchops-ui
-serve .
+open http://127.0.0.1:8765
 ```
 
 ## Review Script
@@ -49,4 +44,3 @@ Use this flow with stakeholders:
 5. Show Notifications popup preview.
 6. Show Evidence Report.
 7. Close on Admin settings to show governance and safety.
-
