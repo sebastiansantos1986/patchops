@@ -59,6 +59,16 @@ async function simulateDevice(device) {
 }
 
 async function main() {
+  try {
+    const health = await fetch(`${API_URL}/health`);
+    if (!health.ok) throw new Error(`health check returned ${health.status}`);
+  } catch (error) {
+    throw new Error(
+      `PatchOps API is not reachable at ${API_URL}. Start it in another terminal with "npm run dev" or "npm run api", then retry "npm run simulate".`,
+      { cause: error }
+    );
+  }
+
   const windows = await import("../sample-data/windows-device.json", { with: { type: "json" } });
   const macos = await import("../sample-data/macos-device.json", { with: { type: "json" } });
 
@@ -67,7 +77,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(error);
+  console.error(`\nSimulation failed: ${error.message}\n`);
   process.exit(1);
 });
-

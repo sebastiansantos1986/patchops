@@ -1,29 +1,35 @@
-# PatchOps Prototype
+# PatchOps
 
-PatchOps is a concept prototype for a vulnerability exposure, OS/app patching, user notification, and compliance reporting platform for Windows and macOS fleets.
+PatchOps is a security-focused patch orchestration platform for Windows and macOS fleets. It combines third-party and OS patch visibility, safe staged deployments, user notifications, and audit-ready compliance evidence while working alongside Jamf and Intune.
 
 This repository contains:
 
-- A clickable static web UI prototype.
+- A clickable PatchPilot-style web console prototype.
+- A runnable control-plane API foundation.
+- A shared Go agent lifecycle scaffold for Windows and macOS adapters.
 - Placeholder Windows/macOS agent bootstrap downloads.
 - Evidence report sample exports.
 - MVP technical specification.
 - 6-week POC build plan.
 - Backend/agent/data-contract scaffold for the first working proof of concept.
 
-## Open The Prototype
+## Run the local foundation
 
-Open `index.html` directly in a browser, or serve the folder with any static file server.
+Requires Node.js 20+. Go 1.22+ is needed only to build or test the agent.
 
 ```bash
-python3 -m http.server 8765
+npm run dev
 ```
 
-Then open:
+Open the dashboard at `http://127.0.0.1:8765`. The API health endpoint is `http://127.0.0.1:3000/api/health`.
 
-```text
-http://127.0.0.1:8765
+In another terminal, seed the API with the simulated Windows and macOS devices:
+
+```bash
+npm run simulate
 ```
+
+Run API tests with `npm run check` and agent tests with `npm run check:agent`. Run one safe agent lifecycle cycle with `go run ./agents/cmd/patchops-agent --once`.
 
 ## Demo Flow
 
@@ -47,7 +53,7 @@ Scan -> Find exposure -> Review impact -> Notify users -> Patch -> Prove complia
 
 ## What Works In This Prototype
 
-This is a static prototype, but most primary interactions are wired:
+The dashboard remains a static design prototype, but most primary interactions are wired:
 
 - Sidebar navigation.
 - Finding to detail flow.
@@ -61,34 +67,51 @@ This is a static prototype, but most primary interactions are wired:
 
 ## What Is Not Real Yet
 
-- No real backend API.
+- The API is a POC seam with an in-memory store, not a production service.
 - No real device agent.
 - No real patch installation.
 - No real MDM integration.
 - No real auth/SSO.
 - No real PDF generation.
 
-The POC scaffold under `poc-scaffold/` describes how to build the first working version.
+The POC scaffold under `poc-scaffold/` describes how to build the first working version. The runnable foundation lives under `services/` and `agents/`.
 
 ## Key Documents
 
 - [MVP Technical Spec](docs/mvp-technical-spec.md)
+- [Product Architecture](docs/architecture.md)
+- [Security Model](docs/security-model.md)
+- [Delivery Roadmap](docs/roadmap.md)
 - [6-Week POC Plan](docs/poc-plan.md)
 - [Backend API Contract](poc-scaffold/backend/api-contract.md)
 - [Database Schema](poc-scaffold/backend/schema.sql)
 - [Web Data Contract](poc-scaffold/web/data-contract.md)
 
-## GitHub Pages
+## Free development hosting
 
-Because `index.html` is at the repository root, this can be published with GitHub Pages:
+The repository includes two deployment definitions:
 
-1. Go to repository Settings.
-2. Open Pages.
-3. Select the default branch.
-4. Select root folder.
-5. Save.
+- `.github/workflows/pages.yml` publishes the dashboard to GitHub Pages after changes reach `main`.
+- `render.yaml` provisions the Node control-plane API as a free Render web service.
+
+### Publish the dashboard
+
+After merging the deployment pull request, open **Settings → Pages** in GitHub and set **Source** to **GitHub Actions**. The workflow publishes the site at:
+
+```text
+https://sebastiansantos1986.github.io/patchops/
+```
+
+### Publish the API
+
+In Render, choose **New → Blueprint**, connect this repository, and apply `render.yaml`. The configured service URL is:
+
+```text
+https://patchops-api-sebastiansantos1986.onrender.com
+```
+
+The dashboard reads that URL from `config.js`. If Render assigns a different service name, update `config.js` to match. The free API sleeps when idle and uses in-memory data, so simulated devices disappear after a restart or redeploy.
 
 ## Security Note
 
 The files in `downloads/` are placeholders for demo purposes only. Production agents must use signed Windows installers and signed/notarized macOS packages.
-

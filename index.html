@@ -305,6 +305,33 @@
         padding: 24px 28px 32px;
       }
 
+      .api-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .api-status::before {
+        content: "";
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #94a3b8;
+        box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.14);
+      }
+
+      .api-status.online::before {
+        background: var(--green);
+        box-shadow: 0 0 0 3px rgba(21, 148, 92, 0.14);
+      }
+
+      .api-status.offline::before {
+        background: var(--red);
+      }
+
       .hero-grid {
         display: grid;
         grid-template-columns: minmax(0, 1.12fr) minmax(340px, 0.88fr);
@@ -1554,7 +1581,25 @@
         }
 
         .nav-btn {
-          width: 42px;
+          width: auto;
+          min-width: 68px;
+          height: 52px;
+          flex-direction: column;
+          gap: 3px;
+          padding: 5px 8px;
+          font-size: 10px;
+        }
+
+        .nav-btn span {
+          display: block;
+          max-width: 64px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+
+        .nav-title {
+          display: none;
         }
 
         .topbar {
@@ -1603,6 +1648,70 @@
 
         .campaign-item {
           grid-template-columns: 1fr;
+        }
+
+        #devices .table-panel {
+          border: 0;
+          background: transparent;
+          box-shadow: none;
+          overflow: visible;
+        }
+
+        #devices table,
+        #devices tbody {
+          display: block;
+          width: 100%;
+        }
+
+        #devices thead {
+          display: none;
+        }
+
+        #devices tbody {
+          display: grid;
+          gap: 10px;
+        }
+
+        #devices tbody tr {
+          display: grid;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+          gap: 12px;
+          padding: 15px;
+          border: 1px solid var(--line);
+          border-radius: 10px;
+          background: #fff;
+          box-shadow: 0 8px 24px rgba(28, 43, 65, 0.06);
+        }
+
+        #devices tbody td {
+          display: grid;
+          gap: 4px;
+          padding: 0;
+          border: 0;
+          min-width: 0;
+        }
+
+        #devices tbody td::before {
+          color: #7a8795;
+          content: attr(data-label);
+          font-size: 10px;
+          font-weight: 750;
+          letter-spacing: 0.05em;
+          text-transform: uppercase;
+        }
+
+        #devices tbody td:first-child {
+          grid-column: 1 / -1;
+          padding-bottom: 12px;
+          border-bottom: 1px solid var(--line);
+        }
+
+        #devices tbody td:first-child::before {
+          display: none;
+        }
+
+        #devices tbody td:last-child {
+          align-items: end;
         }
       }
     </style>
@@ -1693,6 +1802,7 @@
           <button class="icon-btn" title="Refresh metrics">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.5 5.8L21 8"/><path d="M21 3v5h-5"/></svg>
           </button>
+          <span class="api-status" id="api-status">Connecting</span>
           <button class="icon-btn" title="Alerts">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9"/></svg>
           </button>
@@ -1996,11 +2106,11 @@
             <div class="table-panel">
               <table>
                 <thead><tr><th>Device</th><th>User</th><th>OS</th><th>Uptime</th><th>Last Reboot</th><th>Status</th><th>Action</th></tr></thead>
-                <tbody>
-                  <tr><td><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-LAP-8821</strong><div class="item-sub">14 outdated · seen 1 min ago</div></div></div></td><td>Maya I.</td><td>Windows 11 23H2</td><td>18d 4h</td><td>Jun 19, 2026</td><td><span class="badge warn">Retry scheduled</span></td><td><button class="ghost-btn">Open</button></td></tr>
-                  <tr><td><div class="device-cell"><span class="os-chip">M</span><div><strong>MAC-1442</strong><div class="item-sub">0 outdated · seen 37 sec ago</div></div></div></td><td>Evan B.</td><td>macOS 15.5</td><td>2d 1h</td><td>Jul 5, 2026</td><td><span class="badge good">Compliant</span></td><td><button class="ghost-btn">Open</button></td></tr>
-                  <tr><td><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-DESK-0912</strong><div class="item-sub">2 outdated · seen 2 min ago</div></div></div></td><td>Nora C.</td><td>Windows 11 24H2</td><td>39d 6h</td><td>May 29, 2026</td><td><span class="badge warn">Reboot pending</span></td><td><button class="ghost-btn">Open</button></td></tr>
-                  <tr><td><div class="device-cell"><span class="os-chip">M</span><div><strong>MAC-0098</strong><div class="item-sub">6 outdated · seen 18 min ago</div></div></div></td><td>Jon R.</td><td>macOS 14.7</td><td>24d 8h</td><td>Jun 13, 2026</td><td><span class="badge danger">Blocked</span></td><td><button class="ghost-btn">Open</button></td></tr>
+                <tbody id="device-rows">
+                  <tr><td data-label="Device"><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-LAP-8821</strong><div class="item-sub">14 outdated · seen 1 min ago</div></div></div></td><td data-label="User">Maya I.</td><td data-label="OS">Windows 11 23H2</td><td data-label="Uptime">18d 4h</td><td data-label="Last reboot">Jun 19, 2026</td><td data-label="Status"><span class="badge warn">Retry scheduled</span></td><td data-label="Action"><button class="ghost-btn">Open</button></td></tr>
+                  <tr><td data-label="Device"><div class="device-cell"><span class="os-chip">M</span><div><strong>MAC-1442</strong><div class="item-sub">0 outdated · seen 37 sec ago</div></div></div></td><td data-label="User">Evan B.</td><td data-label="OS">macOS 15.5</td><td data-label="Uptime">2d 1h</td><td data-label="Last reboot">Jul 5, 2026</td><td data-label="Status"><span class="badge good">Compliant</span></td><td data-label="Action"><button class="ghost-btn">Open</button></td></tr>
+                  <tr><td data-label="Device"><div class="device-cell"><span class="os-chip">W</span><div><strong>WIN-DESK-0912</strong><div class="item-sub">2 outdated · seen 2 min ago</div></div></div></td><td data-label="User">Nora C.</td><td data-label="OS">Windows 11 24H2</td><td data-label="Uptime">39d 6h</td><td data-label="Last reboot">May 29, 2026</td><td data-label="Status"><span class="badge warn">Reboot pending</span></td><td data-label="Action"><button class="ghost-btn">Open</button></td></tr>
+                  <tr><td data-label="Device"><div class="device-cell"><span class="os-chip">M</span><div><strong>MAC-0098</strong><div class="item-sub">6 outdated · seen 18 min ago</div></div></div></td><td data-label="User">Jon R.</td><td data-label="OS">macOS 14.7</td><td data-label="Uptime">24d 8h</td><td data-label="Last reboot">Jun 13, 2026</td><td data-label="Status"><span class="badge danger">Blocked</span></td><td data-label="Action"><button class="ghost-btn">Open</button></td></tr>
                 </tbody>
               </table>
             </div>
@@ -2568,6 +2678,7 @@
     </div>
     <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
 
+    <script src="config.js"></script>
     <script>
       const labels = {
         overview: ["Overview", "Live vulnerability exposure, patch posture, and compliance reporting."],
@@ -2625,11 +2736,71 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
+      const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
+      })[character]);
+
+      const formatUptime = (seconds) => {
+        if (!Number.isFinite(seconds)) return "—";
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        return `${days}d ${hours}h`;
+      };
+
+      const apiBaseUrl = ["localhost", "127.0.0.1"].includes(location.hostname)
+        ? "http://127.0.0.1:3000/api"
+        : window.PATCHOPS_CONFIG?.apiUrl;
+
+      async function refreshLiveDevices({ notify = false } = {}) {
+        const status = document.getElementById("api-status");
+        status.className = "api-status";
+        status.textContent = "Refreshing";
+        try {
+          if (!apiBaseUrl) throw new Error("No hosted API URL configured");
+          const response = await fetch(`${apiBaseUrl}/devices`);
+          if (!response.ok) throw new Error(`API returned ${response.status}`);
+          const { devices = [] } = await response.json();
+          status.className = "api-status online";
+          status.textContent = `Live · ${devices.length} device${devices.length === 1 ? "" : "s"}`;
+
+          if (devices.length) {
+            document.getElementById("device-rows").innerHTML = devices.map((device) => {
+              const findings = device.findings?.length ?? 0;
+              const platform = device.platform === "windows" ? "W" : "M";
+              const os = [device.os?.name, device.os?.version].filter(Boolean).join(" ") || device.platform;
+              const reboot = device.last_reboot_at ? new Date(device.last_reboot_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
+              const statusClass = device.reboot_pending ? "warn" : findings ? "danger" : "good";
+              const statusText = device.reboot_pending ? "Reboot pending" : findings ? `${findings} finding${findings === 1 ? "" : "s"}` : "Compliant";
+              return `<tr>
+                <td data-label="Device"><div class="device-cell"><span class="os-chip">${platform}</span><div><strong>${escapeHtml(device.hostname)}</strong><div class="item-sub">${findings} open · live API</div></div></div></td>
+                <td data-label="User">${escapeHtml(device.assigned_user || "Unassigned")}</td>
+                <td data-label="OS">${escapeHtml(os)}</td>
+                <td data-label="Uptime">${formatUptime(device.uptime_seconds)}</td>
+                <td data-label="Last reboot">${escapeHtml(reboot)}</td>
+                <td data-label="Status"><span class="badge ${statusClass}">${escapeHtml(statusText)}</span></td>
+                <td data-label="Action"><button class="ghost-btn" data-device-id="${escapeHtml(device.id)}">Open</button></td>
+              </tr>`;
+            }).join("");
+          }
+          if (notify) showToast("Metrics refreshed", `Loaded ${devices.length} live endpoint records.`);
+        } catch {
+          status.className = "api-status offline";
+          status.textContent = "Demo data · API offline";
+          if (notify) showToast("API unavailable", "The dashboard is showing built-in demo data. Start npm run dev to reconnect.");
+        }
+      }
+
       document.querySelectorAll(".nav-btn").forEach((button) => {
         button.addEventListener("click", () => {
           showView(button.dataset.view);
         });
       });
+
+      document.querySelector('[title="Refresh metrics"]').addEventListener("click", () => refreshLiveDevices({ notify: true }));
+      document.getElementById("device-rows").addEventListener("click", (event) => {
+        if (event.target.matches("[data-device-id]")) showToast("Device selected", "A production build will open the live device timeline and assigned policies.");
+      });
+      refreshLiveDevices();
 
       document.querySelectorAll("[data-open-view]").forEach((button) => {
         button.addEventListener("click", () => {
