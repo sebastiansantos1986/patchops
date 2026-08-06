@@ -1,4 +1,6 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+
+const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
 
 export class Store {
   constructor() {
@@ -11,9 +13,19 @@ export class Store {
     const existing = [...this.devices.values()].find((device) => device.serial_number === input.serial_number);
     const id = existing?.id ?? `dev_${randomUUID()}`;
     const { enrollment_token: _enrollmentToken, agent_token: _agentToken, ...safeInput } = input;
-    const device = { ...existing, ...safeInput, id, enrollment_status: "active", last_seen_at: new Date().toISOString(), software: existing?.software ?? [], findings: existing?.findings ?? [] };
+    const agentToken = `pat_${randomUUID()}_${randomUUID()}`;
+    const device = { ...existing, ...safeInput, id, agent_token_hash: tokenHash(agentToken), enrollment_status: "active", last_seen_at: new Date().toISOString(), software: existing?.software ?? [], findings: existing?.findings ?? [] };
     this.devices.set(id, device);
-    return { device_id: id, agent_token: `poc_${randomUUID()}`, policy_version: "pol_001" };
+    return { device_id: id, agent_token: agentToken, policy_version: "pol_001" };
+  }
+
+  authenticateDevice(id, token) {
+    const device = this.devices.get(id);
+    return Boolean(device?.agent_token_hash && token && device.agent_token_hash === tokenHash(token));
+  }
+
+  listDevices() {
+    return [...this.devices.values()].map(({ agent_token_hash: _agentTokenHash, ...device }) => device);
   }
 
   updateDevice(id, changes) {

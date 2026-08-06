@@ -14,7 +14,7 @@
     "macos:install": "bash clients/macos/PatchOpsAgent/scripts/install.sh",
     "macos:probe": "bash clients/macos/PatchOpsAgent/scripts/probe.sh",
     "macos:sync-probe": "bash clients/macos/PatchOpsAgent/scripts/sync-probe.sh",
-    "check": "node --check services/control-plane/src/server.mjs && node --test services/control-plane/test/store.test.mjs",
+    "check": "node --check services/control-plane/src/server.mjs && node --test services/control-plane/test/*.test.mjs",
     "check:agent": "go test ./agents/..."
   }
 }

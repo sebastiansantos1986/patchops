@@ -30,3 +30,9 @@ services:
         value: 22
       - key: HOST
         value: 0.0.0.0
+      - key: PATCHOPS_ENROLLMENT_TOKEN
+        sync: false
+      - key: PATCHOPS_DASHBOARD_PASSWORD
+        sync: false
+      - key: PATCHOPS_SESSION_SECRET
+        generateValue: true

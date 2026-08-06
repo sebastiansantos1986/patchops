@@ -6,7 +6,11 @@ test("agent enrollment and inventory loop", () => {
   const store = new Store();
   const enrollment = store.enroll({ hostname: "MAC-01", platform: "macos", serial_number: "ABC", enrollment_token: "secret" });
   assert.match(enrollment.device_id, /^dev_/);
+  assert.match(enrollment.agent_token, /^pat_/);
   assert.equal(store.devices.get(enrollment.device_id).enrollment_token, undefined);
+  assert.equal(store.authenticateDevice(enrollment.device_id, enrollment.agent_token), true);
+  assert.equal(store.authenticateDevice(enrollment.device_id, "wrong"), false);
+  assert.equal(store.listDevices()[0].agent_token_hash, undefined);
   store.updateDevice(enrollment.device_id, { software: [{ name: "Chrome", version: "1" }] });
   assert.equal(store.devices.get(enrollment.device_id).software[0].name, "Chrome");
 });

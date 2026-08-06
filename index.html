@@ -1939,9 +1939,54 @@
           align-items: end;
         }
       }
+
+      .auth-gate {
+        position: fixed;
+        inset: 0;
+        z-index: 1000;
+        display: grid;
+        place-items: center;
+        padding: 24px;
+        background: radial-gradient(circle at 75% 15%, rgba(13, 148, 136, .28), transparent 35%), linear-gradient(145deg, #071525, #102a43 55%, #0b3b43);
+      }
+      .auth-gate[hidden] { display: none; }
+      .auth-card {
+        width: min(430px, 100%);
+        padding: 34px;
+        color: white;
+        border: 1px solid rgba(255,255,255,.18);
+        border-radius: 24px;
+        background: rgba(8, 24, 40, .78);
+        box-shadow: 0 28px 80px rgba(0,0,0,.38);
+        backdrop-filter: blur(22px);
+      }
+      .auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 30px; }
+      .auth-brand .logo { box-shadow: 0 12px 34px rgba(37,99,235,.35); }
+      .auth-card h1 { margin: 0 0 8px; font-size: 30px; letter-spacing: -.03em; }
+      .auth-card > p { margin: 0 0 24px; color: #b9c8d8; line-height: 1.55; }
+      .auth-card label { display: grid; gap: 8px; color: #dce7f2; font-size: 14px; font-weight: 700; }
+      .auth-card input {
+        width: 100%; padding: 13px 14px; color: white; border: 1px solid rgba(255,255,255,.2);
+        border-radius: 11px; outline: none; background: rgba(255,255,255,.08); font: inherit;
+      }
+      .auth-card input:focus { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96,165,250,.16); }
+      .auth-card button { width: 100%; justify-content: center; margin-top: 18px; }
+      .auth-error { min-height: 20px; margin-top: 12px; color: #fda4af; font-size: 13px; }
+      .sign-out-btn { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-weight: 700; }
+      .sign-out-btn:hover { color: var(--ink); }
     </style>
   </head>
   <body>
+    <section class="auth-gate" id="auth-gate" aria-labelledby="auth-title">
+      <form class="auth-card" id="auth-form">
+        <div class="auth-brand"><div class="logo">P</div><strong>PatchOps Console</strong></div>
+        <h1 id="auth-title">Welcome back</h1>
+        <p>Sign in to view enrolled devices, software inventory, findings, and patch activity.</p>
+        <label>Console password<input id="auth-password" type="password" autocomplete="current-password" required autofocus /></label>
+        <button class="primary-btn" type="submit">Sign in securely</button>
+        <div class="auth-error" id="auth-error" role="alert"></div>
+      </form>
+    </section>
     <div class="app">
       <aside class="sidebar">
         <div class="brand">
@@ -2028,6 +2073,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.5 5.8L21 8"/><path d="M21 3v5h-5"/></svg>
           </button>
           <span class="api-status" id="api-status">Connecting</span>
+          <button class="sign-out-btn" id="sign-out" type="button">Sign out</button>
           <button class="icon-btn" title="Alerts">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9"/></svg>
           </button>
@@ -3008,6 +3054,47 @@
       const apiBaseUrl = ["localhost", "127.0.0.1"].includes(location.hostname)
         ? "http://127.0.0.1:3000/api"
         : window.PATCHOPS_CONFIG?.apiUrl;
+      let dashboardToken = sessionStorage.getItem("patchops_dashboard_token");
+      const authGate = document.getElementById("auth-gate");
+      const authForm = document.getElementById("auth-form");
+      const authError = document.getElementById("auth-error");
+
+      function showAuthGate(message = "") {
+        dashboardToken = null;
+        sessionStorage.removeItem("patchops_dashboard_token");
+        authError.textContent = message;
+        authGate.hidden = false;
+        document.getElementById("auth-password").focus();
+      }
+
+      function hideAuthGate() {
+        authError.textContent = "";
+        authGate.hidden = true;
+        document.getElementById("auth-password").value = "";
+      }
+
+      authForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        authError.textContent = "Signing in…";
+        try {
+          if (!apiBaseUrl) throw new Error("The hosted API is not configured.");
+          const response = await fetch(`${apiBaseUrl}/auth/login`, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({ password: document.getElementById("auth-password").value })
+          });
+          if (!response.ok) throw new Error(response.status === 401 ? "That password was not accepted." : `Sign-in failed (${response.status}).`);
+          const result = await response.json();
+          dashboardToken = result.token;
+          sessionStorage.setItem("patchops_dashboard_token", dashboardToken);
+          hideAuthGate();
+          await refreshLiveDevices();
+        } catch (error) {
+          authError.textContent = error.message;
+        }
+      });
+
+      document.getElementById("sign-out").addEventListener("click", () => showAuthGate("You have been signed out."));
 
       function renderLiveSoftware(devices) {
         const applications = new Map();
@@ -3053,7 +3140,12 @@
         status.textContent = "Refreshing";
         try {
           if (!apiBaseUrl) throw new Error("No hosted API URL configured");
-          const response = await fetch(`${apiBaseUrl}/devices`);
+          if (!dashboardToken) return showAuthGate();
+          const response = await fetch(`${apiBaseUrl}/devices`, { headers: { authorization: `Bearer ${dashboardToken}` } });
+          if (response.status === 401) {
+            showAuthGate("Your session expired. Please sign in again.");
+            return;
+          }
           if (!response.ok) throw new Error(`API returned ${response.status}`);
           const { devices = [] } = await response.json();
           status.className = "api-status online";
@@ -3095,7 +3187,12 @@
       document.getElementById("device-rows").addEventListener("click", (event) => {
         if (event.target.matches("[data-device-id]")) showToast("Device selected", "A production build will open the live device timeline and assigned policies.");
       });
-      refreshLiveDevices();
+      if (dashboardToken) {
+        hideAuthGate();
+        refreshLiveDevices();
+      } else {
+        showAuthGate();
+      }
 
       document.querySelectorAll("[data-open-view]").forEach((button) => {
         button.addEventListener("click", () => {

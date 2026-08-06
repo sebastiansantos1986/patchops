@@ -23,6 +23,7 @@ npm run dev
 ```
 
 Open the dashboard at `http://127.0.0.1:8765`. The API health endpoint is `http://127.0.0.1:3000/api/health`.
+Sign in to the local dashboard with the development password `patchops-dev`.
 
 In another terminal, seed the API with the simulated Windows and macOS devices:
 
@@ -65,7 +66,7 @@ Scan -> Find exposure -> Review impact -> Notify users -> Patch -> Prove complia
 
 ## What Works In This Prototype
 
-The dashboard remains a static design prototype, but most primary interactions are wired:
+The dashboard is a static frontend backed by the development API, and most primary interactions are wired:
 
 - Sidebar navigation.
 - Finding to detail flow.
@@ -83,7 +84,7 @@ The dashboard remains a static design prototype, but most primary interactions a
 - The native macOS agent is a user-launched lab build, not yet a production daemon.
 - No real patch installation.
 - No real MDM integration.
-- No real auth/SSO.
+- Development password authentication is implemented; production SSO, user accounts, and RBAC remain.
 - No real PDF generation.
 
 The POC scaffold under `poc-scaffold/` describes how to build the first working version. The runnable foundation lives under `services/` and `agents/`.
@@ -116,6 +117,13 @@ https://patchops-api-sebastiansantos1986.onrender.com
 ```
 
 The dashboard is a free static site served from Render's CDN. The API is a free web service and can take approximately one minute to wake after 15 minutes without traffic. Its POC data is held in memory and resets when the API restarts or redeploys.
+
+Before syncing the Blueprint, configure the two prompted secret values:
+
+- `PATCHOPS_ENROLLMENT_TOKEN`: a long random secret used only to enroll test agents.
+- `PATCHOPS_DASHBOARD_PASSWORD`: the password used by the hosted console sign-in screen.
+
+Render generates `PATCHOPS_SESSION_SECRET` automatically. Never commit any of these values. After the API deploys, enter the same enrollment token in the macOS agent Settings screen. The agent exchanges it for a device-scoped credential and stores both secrets in macOS Keychain.
 
 ### Publish the dashboard
 

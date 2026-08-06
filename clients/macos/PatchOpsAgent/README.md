@@ -42,9 +42,11 @@ In the app:
 
 1. Select **Overview** and choose **Scan now**.
 2. Review the **Inventory** list.
-3. Choose **Sync to PatchOps** while the local API is running.
+3. Choose **Sync to PatchOps** while the local API is running. The local development enrollment token is `POC-MACOS-ENROLL-TOKEN`.
 4. Select **Notifications**, grant permission, and send a test notification.
-5. Click a notification action and confirm its simulation result in the app or at `http://127.0.0.1:3000/api/notifications/actions`.
+5. Click a notification action and confirm its simulation result in the app. API action history now requires a dashboard session.
+
+For the hosted development environment, open **Settings**, choose **Use hosted development API**, enter the enrollment token configured in Render, and save. Enrollment and device credentials are stored in macOS Keychain; they are not written to the settings JSON file.
 
 To verify API enrollment without opening the app, run `npm run macos:sync-probe` while the API is running.
 
@@ -52,8 +54,8 @@ To verify API enrollment without opening the app, run `npm run macos:sync-probe`
 
 - The app runs when opened; it is not yet a LaunchAgent or root LaunchDaemon.
 - The app has a local ad-hoc signature and is not notarized for distribution.
-- POC settings and tokens are stored in a user settings file, not Keychain.
+- Non-secret settings are stored in a user settings file; enrollment and agent tokens use macOS Keychain.
 - The API uses an in-memory POC store.
 - Application inventory is bundle-based; package receipts and vulnerability matching come next.
 
-Before production use, add a Developer ID signature and notarization, Keychain-backed enrollment identity, mutually authenticated transport, a launch service, signed policy verification, and a separately privileged helper for approved patch operations.
+Before production use, add a Developer ID signature and notarization, mutually authenticated transport, a launch service, signed policy verification, token rotation/revocation, and a separately privileged helper for approved patch operations.

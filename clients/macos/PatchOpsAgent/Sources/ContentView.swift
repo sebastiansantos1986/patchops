@@ -175,8 +175,13 @@ private struct SettingsView: View {
     var body: some View {
         Form {
             PageHeader(title: "Agent settings", subtitle: "Local POC connection settings")
-            Section("Control plane") { TextField("API URL", text: $model.settings.apiURL); TextField("Tenant", text: $model.settings.tenantID); SecureField("Enrollment token", text: $model.settings.enrollmentToken) }
-            Section("Identity") { LabeledContent("Device ID", value: model.settings.deviceID ?? "Not enrolled"); LabeledContent("Mode", value: "Simulation only") }
+            Section("Control plane") {
+                TextField("API URL", text: $model.settings.apiURL)
+                TextField("Tenant", text: $model.settings.tenantID)
+                SecureField("Enrollment token", text: $model.settings.enrollmentToken)
+                Button("Use hosted development API") { model.settings.apiURL = "https://patchops-api-sebastiansantos1986.onrender.com/api" }
+            }
+            Section("Identity") { LabeledContent("Device ID", value: model.settings.deviceID ?? "Not enrolled"); LabeledContent("Credentials", value: "Protected by macOS Keychain") }
             HStack { Spacer(); Button("Save settings") { model.saveSettings() }.buttonStyle(.borderedProminent) }
         }.formStyle(.grouped)
     }

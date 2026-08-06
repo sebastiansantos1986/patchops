@@ -6,11 +6,12 @@
 */
 
 const API_URL = process.env.PATCHOPS_API_URL || "http://127.0.0.1:3000/api";
+const ENROLLMENT_TOKEN = process.env.PATCHOPS_ENROLLMENT_TOKEN || "POC-MACOS-ENROLL-TOKEN";
 
-async function post(path, body) {
+async function post(path, body, authorization) {
   const response = await fetch(`${API_URL}${path}`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: { "content-type": "application/json", ...(authorization ? { authorization } : {}) },
     body: JSON.stringify(body, null, 2)
   });
 
@@ -24,36 +25,34 @@ async function post(path, body) {
 async function simulateDevice(device) {
   const enrollment = await post("/agent/enroll", {
     tenant_id: device.tenant_id,
-    enrollment_token: device.enrollment_token,
     hostname: device.hostname,
     platform: device.platform,
     serial_number: device.serial_number,
     agent_version: device.agent_version
-  });
+  }, `Enrollment ${ENROLLMENT_TOKEN}`);
 
   await post("/agent/heartbeat", {
     device_id: enrollment.device_id,
-    agent_token: enrollment.agent_token,
     seen_at: new Date().toISOString(),
     uptime_seconds: device.uptime_seconds,
     last_reboot_at: device.last_reboot_at,
     reboot_pending: device.reboot_pending,
     battery_percent: device.battery_percent,
     online: true
-  });
+  }, `Bearer ${enrollment.agent_token}`);
 
   await post("/agent/inventory", {
     device_id: enrollment.device_id,
     captured_at: new Date().toISOString(),
     os: device.os,
     software: device.software
-  });
+  }, `Bearer ${enrollment.agent_token}`);
 
   await post("/agent/findings", {
     device_id: enrollment.device_id,
     captured_at: new Date().toISOString(),
     findings: device.findings
-  });
+  }, `Bearer ${enrollment.agent_token}`);
 
   console.log(`Simulated ${device.hostname}`);
 }

@@ -13,6 +13,7 @@ final class AgentModel: ObservableObject {
 
     private let collector = InventoryCollector()
     private let client = APIClient()
+    private let keychain = KeychainStore()
 
     init() {
         loadSettings()
@@ -58,13 +59,24 @@ final class AgentModel: ObservableObject {
     }
 
     func saveSettings() {
-        guard let data = try? JSONEncoder().encode(settings) else { return }
+        keychain.write(settings.enrollmentToken, account: "enrollment-token")
+        keychain.write(settings.agentToken, account: "agent-token")
+        var publicSettings = settings
+        publicSettings.enrollmentToken = ""
+        publicSettings.agentToken = nil
+        guard let data = try? JSONEncoder().encode(publicSettings) else { return }
         try? data.write(to: settingsURL, options: .atomic)
     }
 
     private func loadSettings() {
-        guard let data = try? Data(contentsOf: settingsURL), let value = try? JSONDecoder().decode(AgentSettings.self, from: data) else { return }
-        settings = value
+        var containedLegacySecrets = false
+        if let data = try? Data(contentsOf: settingsURL), let value = try? JSONDecoder().decode(AgentSettings.self, from: data) {
+            settings = value
+            containedLegacySecrets = !value.enrollmentToken.isEmpty || value.agentToken != nil
+        }
+        settings.enrollmentToken = keychain.read("enrollment-token") ?? settings.enrollmentToken
+        settings.agentToken = keychain.read("agent-token") ?? settings.agentToken
+        if containedLegacySecrets { saveSettings() }
     }
 
     private func saveSnapshot(_ value: DeviceSnapshot) {
