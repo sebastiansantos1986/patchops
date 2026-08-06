@@ -21,7 +21,8 @@ export function createApp(store = new Store()) {
       if (request.method === "POST" && request.url === "/api/agent/enroll") return send(201, store.enroll(await body()));
       if (request.method === "POST" && request.url === "/api/agent/heartbeat") {
         const input = await body();
-        return store.updateDevice(input.device_id, input) ? send(200, { accepted: true, pending_jobs: [] }) : send(404, { error: "device_not_found" });
+        const { agent_token: _agentToken, ...safeHeartbeat } = input;
+        return store.updateDevice(input.device_id, safeHeartbeat) ? send(200, { accepted: true, pending_jobs: [] }) : send(404, { error: "device_not_found" });
       }
       if (request.method === "POST" && request.url === "/api/agent/inventory") {
         const input = await body();

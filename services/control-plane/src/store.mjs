@@ -10,7 +10,8 @@ export class Store {
   enroll(input) {
     const existing = [...this.devices.values()].find((device) => device.serial_number === input.serial_number);
     const id = existing?.id ?? `dev_${randomUUID()}`;
-    const device = { ...existing, ...input, id, enrollment_status: "active", last_seen_at: new Date().toISOString(), software: existing?.software ?? [], findings: existing?.findings ?? [] };
+    const { enrollment_token: _enrollmentToken, agent_token: _agentToken, ...safeInput } = input;
+    const device = { ...existing, ...safeInput, id, enrollment_status: "active", last_seen_at: new Date().toISOString(), software: existing?.software ?? [], findings: existing?.findings ?? [] };
     this.devices.set(id, device);
     return { device_id: id, agent_token: `poc_${randomUUID()}`, policy_version: "pol_001" };
   }
