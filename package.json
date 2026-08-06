@@ -5,6 +5,7 @@
   "description": "Cross-platform patch orchestration proof of concept",
   "scripts": {
     "dev": "node scripts/dev.mjs",
+    "build:web": "node scripts/build-web.mjs",
     "api": "node services/control-plane/src/server.mjs",
     "simulate": "node poc-scaffold/agent/simulator.js",
     "notification:macos": "bash tools/notification-lab/macos-popup.sh",
