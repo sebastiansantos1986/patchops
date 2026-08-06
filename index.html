@@ -2678,6 +2678,7 @@
     </div>
     <div class="toast-region" aria-live="polite" aria-atomic="true"></div>
 
+    <script src="config.js"></script>
     <script>
       const labels = {
         overview: ["Overview", "Live vulnerability exposure, patch posture, and compliance reporting."],
@@ -2746,12 +2747,17 @@
         return `${days}d ${hours}h`;
       };
 
+      const apiBaseUrl = ["localhost", "127.0.0.1"].includes(location.hostname)
+        ? "http://127.0.0.1:3000/api"
+        : window.PATCHOPS_CONFIG?.apiUrl;
+
       async function refreshLiveDevices({ notify = false } = {}) {
         const status = document.getElementById("api-status");
         status.className = "api-status";
         status.textContent = "Refreshing";
         try {
-          const response = await fetch("http://127.0.0.1:3000/api/devices");
+          if (!apiBaseUrl) throw new Error("No hosted API URL configured");
+          const response = await fetch(`${apiBaseUrl}/devices`);
           if (!response.ok) throw new Error(`API returned ${response.status}`);
           const { devices = [] } = await response.json();
           status.className = "api-status online";

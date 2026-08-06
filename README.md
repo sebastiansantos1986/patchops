@@ -87,15 +87,30 @@ The POC scaffold under `poc-scaffold/` describes how to build the first working 
 - [Database Schema](poc-scaffold/backend/schema.sql)
 - [Web Data Contract](poc-scaffold/web/data-contract.md)
 
-## GitHub Pages
+## Free development hosting
 
-Because `index.html` is at the repository root, this can be published with GitHub Pages:
+The repository includes two deployment definitions:
 
-1. Go to repository Settings.
-2. Open Pages.
-3. Select the default branch.
-4. Select root folder.
-5. Save.
+- `.github/workflows/pages.yml` publishes the dashboard to GitHub Pages after changes reach `main`.
+- `render.yaml` provisions the Node control-plane API as a free Render web service.
+
+### Publish the dashboard
+
+After merging the deployment pull request, open **Settings → Pages** in GitHub and set **Source** to **GitHub Actions**. The workflow publishes the site at:
+
+```text
+https://sebastiansantos1986.github.io/patchops/
+```
+
+### Publish the API
+
+In Render, choose **New → Blueprint**, connect this repository, and apply `render.yaml`. The configured service URL is:
+
+```text
+https://patchops-api-sebastiansantos1986.onrender.com
+```
+
+The dashboard reads that URL from `config.js`. If Render assigns a different service name, update `config.js` to match. The free API sleeps when idle and uses in-memory data, so simulated devices disappear after a restart or redeploy.
 
 ## Security Note
 
