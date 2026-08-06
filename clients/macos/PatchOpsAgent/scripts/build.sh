@@ -23,6 +23,7 @@ xcrun swiftc \
   "$PROJECT_DIRECTORY"/Sources/*.swift \
   -framework SwiftUI \
   -framework AppKit \
+  -framework Security \
   -framework UserNotifications
 
 cp "$PROJECT_DIRECTORY/Info.plist" "$TEMP_APP_DIRECTORY/Contents/Info.plist"

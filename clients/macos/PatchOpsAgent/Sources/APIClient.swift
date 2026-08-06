@@ -22,20 +22,18 @@ struct APIClient {
     func enroll(snapshot: DeviceSnapshot, settings: AgentSettings) async throws -> EnrollmentResponse {
         let body: [String: String] = [
             "tenant_id": settings.tenantID,
-            "enrollment_token": settings.enrollmentToken,
             "hostname": snapshot.hostname,
             "platform": "macos",
             "serial_number": snapshot.serialNumber,
             "agent_version": "0.2.0"
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
-        return try await send(path: "/agent/enroll", data: data, settings: settings)
+        return try await send(path: "/agent/enroll", data: data, settings: settings, authorization: "Enrollment \(settings.enrollmentToken)")
     }
 
     func upload(snapshot: DeviceSnapshot, enrollment: EnrollmentResponse, settings: AgentSettings) async throws {
         var heartbeat: [String: Any] = [
             "device_id": enrollment.deviceId,
-            "agent_token": enrollment.agentToken,
             "seen_at": snapshot.capturedAt,
             "uptime_seconds": snapshot.uptimeSeconds,
             "last_reboot_at": snapshot.lastRebootAt,
@@ -43,10 +41,10 @@ struct APIClient {
             "online": true
         ]
         heartbeat["battery_percent"] = snapshot.batteryPercent ?? NSNull()
-        _ = try await sendRaw(path: "/agent/heartbeat", data: try JSONSerialization.data(withJSONObject: heartbeat), settings: settings)
+        _ = try await sendRaw(path: "/agent/heartbeat", data: try JSONSerialization.data(withJSONObject: heartbeat), settings: settings, authorization: "Bearer \(enrollment.agentToken)")
 
         let inventory = InventoryUpload(deviceID: enrollment.deviceId, capturedAt: snapshot.capturedAt, os: snapshot.os, software: snapshot.software)
-        _ = try await sendRaw(path: "/agent/inventory", data: try encoder.encode(inventory), settings: settings)
+        _ = try await sendRaw(path: "/agent/inventory", data: try encoder.encode(inventory), settings: settings, authorization: "Bearer \(enrollment.agentToken)")
     }
 
     func recordNotification(action: String, settings: AgentSettings) async throws {
@@ -57,19 +55,20 @@ struct APIClient {
             "platform": "macos",
             "action": action
         ]
-        _ = try await sendRaw(path: "/notifications/actions", data: try JSONSerialization.data(withJSONObject: payload), settings: settings)
+        _ = try await sendRaw(path: "/notifications/actions", data: try JSONSerialization.data(withJSONObject: payload), settings: settings, authorization: settings.agentToken.map { "Bearer \($0)" })
     }
 
-    private func send<T: Decodable>(path: String, data: Data, settings: AgentSettings) async throws -> T {
-        let response = try await sendRaw(path: path, data: data, settings: settings)
+    private func send<T: Decodable>(path: String, data: Data, settings: AgentSettings, authorization: String? = nil) async throws -> T {
+        let response = try await sendRaw(path: path, data: data, settings: settings, authorization: authorization)
         return try JSONDecoder().decode(T.self, from: response)
     }
 
-    private func sendRaw(path: String, data: Data, settings: AgentSettings) async throws -> Data {
+    private func sendRaw(path: String, data: Data, settings: AgentSettings, authorization: String? = nil) async throws -> Data {
         guard let url = URL(string: settings.apiURL + path) else { throw APIError.invalidURL }
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let authorization { request.setValue(authorization, forHTTPHeaderField: "Authorization") }
         request.httpBody = data
         let (responseData, response) = try await URLSession(configuration: .ephemeral).data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
