@@ -2218,7 +2218,7 @@
               <div class="table-panel">
                 <table>
                   <thead><tr><th>Finding</th><th>Affected</th><th>Fixed Version</th><th>Severity</th><th>SLA</th><th>Action</th></tr></thead>
-                  <tbody>
+                  <tbody id="software-rows">
                     <tr>
                       <td><div class="finding-title"><span class="finding-dot" style="background:var(--red)"></span><div><strong>Chrome remote code execution exposure</strong><div class="item-sub">CVE-2026-1842 · detected in browser catalog</div></div></div></td>
                       <td>72 devices</td><td>128.0.6613+</td><td><span class="badge danger">Critical</span></td><td><span class="badge danger">16h left</span></td><td><button class="ghost-btn" data-open-view="finding-detail">Patch</button></td>
@@ -2362,10 +2362,10 @@
               </div>
               <aside class="panel">
                 <div class="section-head"><div><h2>Software signals</h2><p>Live inventory metrics.</p></div></div>
-                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--blue)">A</span><div><div class="item-title">Total apps</div><div class="item-sub">Unique titles found</div></div></div><strong>1,286</strong></div>
-                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--red)">!</span><div><div class="item-title">Unauthorized</div><div class="item-sub">Policy violations</div></div></div><strong>42</strong></div>
-                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--amber)">E</span><div><div class="item-title">End of life</div><div class="item-sub">Unsupported versions</div></div></div><strong>89</strong></div>
-                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--green)">P</span><div><div class="item-title">Auto-patchable</div><div class="item-sub">Catalog coverage</div></div></div><strong>74%</strong></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--blue)">A</span><div><div class="item-title">Total apps</div><div class="item-sub">Unique titles found</div></div></div><strong id="software-total">1,286</strong></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--teal)">D</span><div><div class="item-title">Reporting devices</div><div class="item-sub">Inventory received</div></div></div><strong id="software-devices">7,842</strong></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--amber)">V</span><div><div class="item-title">Version variants</div><div class="item-sub">Distinct observed releases</div></div></div><strong id="software-versions">—</strong></div>
+                <div class="app-risk"><div class="app-left"><span class="app-icon" style="background:var(--green)">P</span><div><div class="item-title">Patch analysis</div><div class="item-sub">Catalog matching is next</div></div></div><strong id="software-analysis">Demo</strong></div>
               </aside>
             </div>
           </div>
@@ -3009,6 +3009,44 @@
         ? "http://127.0.0.1:3000/api"
         : window.PATCHOPS_CONFIG?.apiUrl;
 
+      function renderLiveSoftware(devices) {
+        const applications = new Map();
+        const versions = new Set();
+        devices.forEach((device) => (device.software ?? []).forEach((software) => {
+          const key = software.bundle_identifier || software.name;
+          if (!key) return;
+          const current = applications.get(key) ?? {
+            name: software.name || key,
+            publisher: software.publisher || "Unknown",
+            installs: 0,
+            versions: new Set()
+          };
+          current.installs += 1;
+          if (software.version) {
+            current.versions.add(software.version);
+            versions.add(`${key}:${software.version}`);
+          }
+          applications.set(key, current);
+        }));
+
+        const rows = [...applications.values()].sort((left, right) => right.installs - left.installs || left.name.localeCompare(right.name));
+        document.getElementById("software-rows").innerHTML = rows.length ? rows.map((application) => {
+          const observed = [...application.versions].sort().reverse().slice(0, 2).join(", ") || "—";
+          return `<tr>
+            <td>${escapeHtml(application.name)}</td>
+            <td>${escapeHtml(application.publisher)}</td>
+            <td>${application.installs}</td>
+            <td>${escapeHtml(observed)}</td>
+            <td>—</td>
+            <td><span class="badge info">Inventory</span></td>
+          </tr>`;
+        }).join("") : `<tr><td colspan="6">No application inventory has been uploaded yet.</td></tr>`;
+        document.getElementById("software-total").textContent = applications.size.toLocaleString();
+        document.getElementById("software-devices").textContent = devices.filter((device) => device.software?.length).length.toLocaleString();
+        document.getElementById("software-versions").textContent = versions.size.toLocaleString();
+        document.getElementById("software-analysis").textContent = "Pending";
+      }
+
       async function refreshLiveDevices({ notify = false } = {}) {
         const status = document.getElementById("api-status");
         status.className = "api-status";
@@ -3021,8 +3059,7 @@
           status.className = "api-status online";
           status.textContent = `Live · ${devices.length} device${devices.length === 1 ? "" : "s"}`;
 
-          if (devices.length) {
-            document.getElementById("device-rows").innerHTML = devices.map((device) => {
+          document.getElementById("device-rows").innerHTML = devices.length ? devices.map((device) => {
               const findings = device.findings?.length ?? 0;
               const platform = device.platform === "windows" ? "W" : "M";
               const os = [device.os?.name, device.os?.version].filter(Boolean).join(" ") || device.platform;
@@ -3038,8 +3075,8 @@
                 <td data-label="Status"><span class="badge ${statusClass}">${escapeHtml(statusText)}</span></td>
                 <td data-label="Action"><button class="ghost-btn" data-device-id="${escapeHtml(device.id)}">Open</button></td>
               </tr>`;
-            }).join("");
-          }
+            }).join("") : `<tr><td colspan="7">No enrolled devices yet. Sync the macOS agent to populate this view.</td></tr>`;
+          renderLiveSoftware(devices);
           if (notify) showToast("Metrics refreshed", `Loaded ${devices.length} live endpoint records.`);
         } catch {
           status.className = "api-status offline";
