@@ -17,10 +17,12 @@ export function createApp(store = new Store()) {
     try {
       if (request.method === "GET" && request.url === "/api/health") return send(200, { status: "ok", service: "patchops-control-plane" });
       if (request.method === "GET" && request.url === "/api/devices") return send(200, { devices: [...store.devices.values()] });
+      if (request.method === "GET" && request.url === "/api/notifications/actions") return send(200, { mode: "simulation", actions: [...store.notificationActions.values()] });
       if (request.method === "POST" && request.url === "/api/agent/enroll") return send(201, store.enroll(await body()));
       if (request.method === "POST" && request.url === "/api/agent/heartbeat") {
         const input = await body();
-        return store.updateDevice(input.device_id, input) ? send(200, { accepted: true, pending_jobs: [] }) : send(404, { error: "device_not_found" });
+        const { agent_token: _agentToken, ...safeHeartbeat } = input;
+        return store.updateDevice(input.device_id, safeHeartbeat) ? send(200, { accepted: true, pending_jobs: [] }) : send(404, { error: "device_not_found" });
       }
       if (request.method === "POST" && request.url === "/api/agent/inventory") {
         const input = await body();
@@ -31,6 +33,10 @@ export function createApp(store = new Store()) {
         return store.updateDevice(input.device_id, { findings: input.findings, findings_captured_at: input.captured_at }) ? send(200, { accepted: true, finding_count: input.findings?.length ?? 0 }) : send(404, { error: "device_not_found" });
       }
       if (request.method === "POST" && request.url === "/api/campaigns") return send(201, store.createCampaign(await body()));
+      if (request.method === "POST" && request.url === "/api/notifications/actions") {
+        const event = store.recordNotificationAction(await body());
+        return event ? send(event.duplicate ? 200 : 201, event) : send(400, { error: "invalid_notification_action" });
+      }
       return send(404, { error: "not_found" });
     } catch (error) {
       return send(400, { error: "invalid_request", message: error.message });

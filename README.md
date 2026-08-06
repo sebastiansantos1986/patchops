@@ -7,6 +7,7 @@ This repository contains:
 - A clickable PatchPilot-style web console prototype.
 - A runnable control-plane API foundation.
 - A shared Go agent lifecycle scaffold for Windows and macOS adapters.
+- A native SwiftUI macOS test agent with inventory and actionable notifications.
 - Placeholder Windows/macOS agent bootstrap downloads.
 - Evidence report sample exports.
 - MVP technical specification.
@@ -30,6 +31,17 @@ npm run simulate
 ```
 
 Run API tests with `npm run check` and agent tests with `npm run check:agent`. Run one safe agent lifecycle cycle with `go run ./agents/cmd/patchops-agent --once`.
+
+## Native macOS test agent
+
+The SwiftUI lab agent collects read-only system and application inventory and can sync it to the local POC API. Its native notification buttons record actions in simulation mode; they cannot install software or restart the Mac.
+
+```bash
+npm run macos:probe
+npm run macos:install
+```
+
+See [the macOS agent guide](clients/macos/PatchOpsAgent/README.md) for the test flow, collected fields, and production hardening requirements.
 
 ## Demo Flow
 
@@ -68,7 +80,7 @@ The dashboard remains a static design prototype, but most primary interactions a
 ## What Is Not Real Yet
 
 - The API is a POC seam with an in-memory store, not a production service.
-- No real device agent.
+- The native macOS agent is a user-launched lab build, not yet a production daemon.
 - No real patch installation.
 - No real MDM integration.
 - No real auth/SSO.
