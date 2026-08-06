@@ -33,10 +33,7 @@
       body {
         margin: 0;
         color: var(--ink);
-        background:
-          linear-gradient(135deg, rgba(37, 99, 235, 0.12), transparent 34%),
-          linear-gradient(315deg, rgba(15, 152, 142, 0.12), transparent 30%),
-          var(--bg);
+        background: #f2f5f9;
       }
 
       button,
@@ -52,13 +49,13 @@
       }
 
       .sidebar {
-        background: rgba(255, 255, 255, 0.82);
-        color: var(--ink);
+        background: linear-gradient(180deg, #071629 0%, #0a2038 100%);
+        color: #d8e6f5;
         padding: 18px 14px;
         display: flex;
         flex-direction: column;
         gap: 18px;
-        border-right: 1px solid rgba(188, 204, 220, 0.72);
+        border-right: 1px solid #17334e;
         backdrop-filter: blur(18px);
       }
 
@@ -67,7 +64,7 @@
         align-items: center;
         gap: 11px;
         padding: 6px 8px 14px;
-        border-bottom: 1px solid var(--line);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
       }
 
       .logo {
@@ -83,7 +80,7 @@
 
       .brand strong {
         display: block;
-        color: var(--ink);
+        color: #fff;
         font-size: 15px;
         letter-spacing: 0;
       }
@@ -91,7 +88,7 @@
       .brand span {
         display: block;
         font-size: 12px;
-        color: var(--muted);
+        color: #8fa8c0;
       }
 
       .nav-group {
@@ -100,7 +97,7 @@
       }
 
       .nav-title {
-        color: #7a8795;
+        color: #6f8da9;
         font-size: 11px;
         font-weight: 700;
         text-transform: uppercase;
@@ -113,7 +110,7 @@
         align-items: center;
         gap: 10px;
         height: 38px;
-        color: #526174;
+        color: #abc0d3;
         border: 0;
         border-radius: 7px;
         background: transparent;
@@ -130,26 +127,26 @@
 
       .nav-btn.active,
       .nav-btn:hover {
-        background: #eaf2ff;
-        color: var(--blue);
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.28), rgba(15, 152, 142, 0.12));
+        color: #70b7ff;
       }
 
       .sidebar-footer {
         margin-top: auto;
         padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: 8px;
-        background: linear-gradient(135deg, #f8fbff, #edf6f3);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
       }
 
       .sidebar-footer strong {
-        color: var(--ink);
+        color: #fff;
         display: block;
         font-size: 13px;
       }
 
       .sidebar-footer span {
-        color: var(--muted);
+        color: #8fa8c0;
         display: block;
         font-size: 12px;
         margin-top: 4px;
@@ -206,7 +203,7 @@
 
       .topbar {
         height: 72px;
-        background: rgba(255, 255, 255, 0.76);
+        background: rgba(255, 255, 255, 0.94);
         border-bottom: 1px solid var(--line);
         display: flex;
         align-items: center;
@@ -287,6 +284,7 @@
         padding: 0 14px;
         font-weight: 700;
         box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+        white-space: nowrap;
       }
 
       .ghost-btn {
@@ -1125,6 +1123,208 @@
         padding: 18px;
       }
 
+      .notification-lab {
+        display: grid;
+        gap: 16px;
+      }
+
+      .platform-previews {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 16px;
+      }
+
+      .platform-stage {
+        min-width: 0;
+        border-radius: 16px;
+        padding: 18px;
+        overflow: hidden;
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.14);
+      }
+
+      .platform-stage.macos {
+        color: #fff;
+        background:
+          linear-gradient(180deg, rgba(14, 23, 42, 0.1), rgba(14, 23, 42, 0.48)),
+          radial-gradient(circle at 82% 18%, #b55db8, transparent 32%),
+          radial-gradient(circle at 20% 82%, #2579c8, transparent 38%),
+          #24324f;
+      }
+
+      .platform-stage.windows {
+        color: #fff;
+        background:
+          radial-gradient(circle at 15% 5%, rgba(37, 99, 235, 0.28), transparent 34%),
+          linear-gradient(160deg, #101820, #1b2733);
+      }
+
+      .platform-label {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+
+      .platform-label strong {
+        font-size: 15px;
+      }
+
+      .platform-label span {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 11px;
+      }
+
+      .native-stack {
+        display: grid;
+        gap: 10px;
+      }
+
+      .native-alert {
+        display: grid;
+        grid-template-columns: 40px minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+        padding: 13px;
+        border-radius: 14px;
+        color: #111827;
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.2);
+        backdrop-filter: blur(18px);
+      }
+
+      .windows .native-alert {
+        color: #f8fafc;
+        background: rgba(32, 41, 51, 0.94);
+        border-color: rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+      }
+
+      .alert-mark {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 10px;
+        color: #fff;
+        background: linear-gradient(145deg, #2563eb, #0f988e);
+        font-weight: 900;
+      }
+
+      .native-copy strong {
+        display: block;
+        font-size: 13px;
+      }
+
+      .native-copy p {
+        margin: 4px 0 0;
+        font-size: 12px;
+        line-height: 1.4;
+        color: #536170;
+      }
+
+      .windows .native-copy p {
+        color: #b9c4cf;
+      }
+
+      .native-meta {
+        color: #64748b;
+        font-size: 10px;
+        white-space: nowrap;
+      }
+
+      .windows .native-meta {
+        color: #9aa9b7;
+      }
+
+      .native-actions {
+        grid-column: 2 / -1;
+        display: flex;
+        gap: 7px;
+        flex-wrap: wrap;
+      }
+
+      .native-action {
+        min-height: 30px;
+        border: 1px solid rgba(100, 116, 139, 0.25);
+        border-radius: 7px;
+        padding: 0 11px;
+        background: rgba(255, 255, 255, 0.7);
+        color: #1f2937;
+        font-size: 11px;
+        font-weight: 750;
+        cursor: pointer;
+      }
+
+      .native-action.primary {
+        color: #fff;
+        border-color: transparent;
+        background: var(--blue);
+      }
+
+      .windows .native-action {
+        color: #f8fafc;
+        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.08);
+      }
+
+      .windows .native-action.primary {
+        background: #2563eb;
+      }
+
+      .experience-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .experience-card {
+        display: flex;
+        min-height: 220px;
+        flex-direction: column;
+        padding: 15px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        box-shadow: 0 10px 28px rgba(28, 43, 65, 0.08);
+      }
+
+      .experience-card h3 {
+        margin: 12px 0 5px;
+        font-size: 14px;
+      }
+
+      .experience-card p,
+      .experience-card li {
+        color: var(--muted);
+        font-size: 11px;
+        line-height: 1.45;
+      }
+
+      .experience-card ul {
+        margin: 5px 0 12px;
+        padding-left: 18px;
+      }
+
+      .experience-card .popup-actions {
+        margin-top: auto;
+      }
+
+      .state-icon {
+        width: 42px;
+        height: 42px;
+        display: grid;
+        place-items: center;
+        border-radius: 50%;
+        color: #fff;
+        background: var(--green);
+        font-weight: 900;
+      }
+
+      .state-icon.warn { background: var(--orange); }
+      .state-icon.info { background: var(--blue); }
+
       .popup-card {
         max-width: 420px;
         margin: 0 auto;
@@ -1553,6 +1753,10 @@
         .reports-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
+
+        .experience-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
       }
 
       @media (max-width: 760px) {
@@ -1648,6 +1852,27 @@
 
         .campaign-item {
           grid-template-columns: 1fr;
+        }
+
+        .platform-previews,
+        .experience-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .platform-stage {
+          padding: 14px;
+        }
+
+        .native-alert {
+          grid-template-columns: 38px minmax(0, 1fr);
+        }
+
+        .native-meta {
+          display: none;
+        }
+
+        .native-actions {
+          grid-column: 1 / -1;
         }
 
         #devices .table-panel {
@@ -2311,41 +2536,66 @@
 
           <div class="view" id="notifications">
             <div class="section-head">
-              <div><h2>User notifications</h2><p>Send polished endpoint popups for reboot deadlines, maintenance windows, and remediation prompts.</p></div>
-              <button class="primary-btn">Send Notification</button>
+              <div><h2>Endpoint notification studio</h2><p>Native macOS and Windows alerts, backed by a consistent in-app update experience.</p></div>
+              <button class="primary-btn">Publish Templates</button>
             </div>
 
-            <div class="two-col">
-              <article class="notification-preview">
-                <div class="section-head"><div><h2>Popup preview</h2><p>What users see on Windows or macOS.</p></div><span class="badge info">Reboot prompt</span></div>
-                <div class="popup-card">
-                  <div class="popup-head">
-                    <div class="logo">P</div>
-                    <div><strong>PatchOps Security Update</strong><span>Chrome critical update requires restart</span></div>
-                  </div>
-                  <div class="popup-body">
-                    <p>Your device has a critical browser security update ready. Please restart Chrome now or defer until the next maintenance window.</p>
-                    <div class="meta-grid">
-                      <div class="meta-tile"><span>Deadline</span><strong>Today 6:00 PM</strong></div>
-                      <div class="meta-tile"><span>Uptime</span><strong>18d 4h</strong></div>
-                      <div class="meta-tile"><span>Last reboot</span><strong>Jun 19</strong></div>
+            <div class="notification-lab">
+              <div class="platform-previews">
+                <article class="platform-stage macos">
+                  <div class="platform-label"><strong>macOS Notification Center</strong><span>Native banner previews</span></div>
+                  <div class="native-stack">
+                    <div class="native-alert">
+                      <div class="alert-mark">P</div>
+                      <div class="native-copy"><strong>Updates available</strong><p>Chrome and Zoom security updates are ready to install.</p></div>
+                      <span class="native-meta">now</span>
+                      <div class="native-actions"><button class="native-action primary">Install now</button><button class="native-action">Tonight</button></div>
                     </div>
-                    <div class="popup-actions" style="margin-top: 12px">
-                      <button class="primary-btn">Restart Chrome</button>
-                      <button class="ghost-btn">Defer 2 Hours</button>
-                      <button class="ghost-btn">Details</button>
+                    <div class="native-alert">
+                      <div class="alert-mark">P</div>
+                      <div class="native-copy"><strong>Restart required</strong><p>Your Mac will restart to finish installing macOS 15.6.</p></div>
+                      <span class="native-meta">5m ago</span>
+                      <div class="native-actions"><button class="native-action primary">Restart</button><button class="native-action">Later</button></div>
+                    </div>
+                    <div class="native-alert">
+                      <div class="alert-mark">P</div>
+                      <div class="native-copy"><strong>Deadline approaching</strong><p>Updates install automatically today at 6:00 PM.</p></div>
+                      <span class="native-meta">now</span>
                     </div>
                   </div>
-                </div>
-              </article>
+                </article>
+
+                <article class="platform-stage windows">
+                  <div class="platform-label"><strong>Windows Action Center</strong><span>Native toast previews</span></div>
+                  <div class="native-stack">
+                    <div class="native-alert">
+                      <div class="alert-mark">P</div>
+                      <div class="native-copy"><strong>Security updates are ready</strong><p>2 important application updates can be installed now.</p></div>
+                      <span class="native-meta">10:42 AM</span>
+                      <div class="native-actions"><button class="native-action primary">Install now</button><button class="native-action">Schedule</button></div>
+                    </div>
+                    <div class="native-alert">
+                      <div class="alert-mark">P</div>
+                      <div class="native-copy"><strong>Restart required</strong><p>Save your work. A restart is required to complete updates.</p></div>
+                      <span class="native-meta">10:50 AM</span>
+                      <div class="native-actions"><button class="native-action primary">Restart now</button><button class="native-action">Snooze</button></div>
+                    </div>
+                    <div class="native-alert">
+                      <div class="alert-mark">P</div>
+                      <div class="native-copy"><strong>Installation delayed</strong><p>We detected a presentation. The prompt will return in 30 minutes.</p></div>
+                      <span class="native-meta">10:55 AM</span>
+                    </div>
+                  </div>
+                </article>
+              </div>
 
               <article class="panel">
-                <div class="section-head"><div><h2>Notification templates</h2><p>Reusable prompts controlled by remediation policy.</p></div></div>
-                <div class="template-grid">
-                  <div class="activity-item"><span class="pulse danger"></span><div><div class="item-title">Critical app update prompt</div><div class="item-sub">For Chrome, Edge, Zoom, Adobe, and Slack updates.</div></div><span class="badge good">Active</span></div>
-                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Reboot deadline warning</div><div class="item-sub">Shows uptime, last reboot, and forced restart deadline.</div></div><span class="badge good">Active</span></div>
-                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Maintenance window notice</div><div class="item-sub">Friendly heads-up before scheduled patch campaign.</div></div><span class="badge info">Draft</span></div>
-                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">Blocked remediation</div><div class="item-sub">Low battery, offline too long, app running, or user deferrals exhausted.</div></div><span class="badge warn">Review</span></div>
+                <div class="section-head"><div><h2>Expanded in-app experience</h2><p>The same clear workflow when users open PatchOps from either platform.</p></div><span class="badge good">Windows + macOS</span></div>
+                <div class="experience-grid">
+                  <div class="experience-card"><div class="state-icon info">↓</div><h3>Updates available</h3><p>Two verified security updates are ready:</p><ul><li>Google Chrome 141.0.7390</li><li>Zoom 6.0.12</li></ul><div class="popup-actions"><button class="primary-btn">Install now</button><button class="ghost-btn">Later</button></div></div>
+                  <div class="experience-card"><div class="state-icon info">56%</div><h3>Installing updates</h3><p>Chrome is being updated. The browser will reopen when installation completes.</p><div class="bar" style="margin:16px 0"><span style="width:56%; background:var(--blue)"></span></div><div class="item-sub">About 1 minute remaining</div><div class="popup-actions"><button class="ghost-btn">Hide</button></div></div>
+                  <div class="experience-card"><div class="state-icon warn">!</div><h3>Restart required</h3><p>Save your work before the enforced restart.</p><div class="meta-tile"><span>Restart deadline</span><strong>15 minutes</strong></div><div class="popup-actions"><button class="primary-btn">Restart now</button><button class="ghost-btn">Snooze</button></div></div>
+                  <div class="experience-card"><div class="state-icon">✓</div><h3>You're up to date</h3><p>All approved applications and operating-system updates are installed.</p><div class="meta-tile"><span>Last scan</span><strong>Just now</strong></div><div class="popup-actions"><button class="ghost-btn">Close</button></div></div>
                 </div>
               </article>
             </div>
@@ -2699,6 +2949,14 @@
       };
 
       const actionMessages = {
+        "Publish Templates": ["Templates published", "Windows and macOS notification designs are ready for the next agent policy sync."],
+        "Install now": ["Installation started", "PatchOps is downloading and verifying the approved updates."],
+        "Restart now": ["Restart scheduled", "The endpoint will restart after the final safety checks."],
+        "Restart": ["Restart scheduled", "The endpoint will restart after the user saves their work."],
+        "Tonight": ["Scheduled for tonight", "Installation will begin during the device maintenance window."],
+        "Later": ["Reminder scheduled", "PatchOps will prompt again before the policy deadline."],
+        "Snooze": ["Prompt snoozed", "The restart prompt will return in 30 minutes."],
+        "Schedule": ["Schedule opened", "Choose an installation time before the enforcement deadline."],
         "Save Draft": ["Draft saved", "Campaign configuration is stored for later review."],
         "Launch Campaign": ["Campaign launched", "Demo campaign moved to evidence generation with staged rollout enabled."],
         "Send Notification": ["Notification queued", "Endpoint popup will be sent to the selected remediation scope."],
