@@ -14,3 +14,12 @@ test("campaigns start as drafts", () => {
   const campaign = new Store().createCampaign({ name: "Browser pilot" });
   assert.equal(campaign.status, "draft");
 });
+
+test("notification actions are allowlisted and idempotent", () => {
+  const store = new Store();
+  const input = { action_id: "action-1", action: "install_now", platform: "macos" };
+  assert.equal(store.recordNotificationAction(input).duplicate, false);
+  assert.equal(store.recordNotificationAction(input).duplicate, true);
+  assert.equal(store.notificationActions.size, 1);
+  assert.equal(store.recordNotificationAction({ action_id: "action-2", action: "run_anything" }), null);
+});

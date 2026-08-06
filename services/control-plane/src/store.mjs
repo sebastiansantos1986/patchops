@@ -4,6 +4,7 @@ export class Store {
   constructor() {
     this.devices = new Map();
     this.campaigns = new Map();
+    this.notificationActions = new Map();
   }
 
   enroll(input) {
@@ -25,5 +26,23 @@ export class Store {
     const campaign = { id: `camp_${randomUUID()}`, status: "draft", created_at: new Date().toISOString(), ...input };
     this.campaigns.set(campaign.id, campaign);
     return campaign;
+  }
+
+  recordNotificationAction(input) {
+    const allowedActions = new Set(["install_now", "schedule", "defer", "restart", "details", "dismiss"]);
+    if (!input.action_id || !allowedActions.has(input.action)) return null;
+    if (this.notificationActions.has(input.action_id)) return { ...this.notificationActions.get(input.action_id), duplicate: true };
+    const event = {
+      action_id: input.action_id,
+      notification_id: input.notification_id ?? "notification-lab",
+      device_id: input.device_id ?? "lab-device",
+      platform: input.platform,
+      action: input.action,
+      mode: "simulation",
+      received_at: new Date().toISOString(),
+      duplicate: false
+    };
+    this.notificationActions.set(event.action_id, event);
+    return event;
   }
 }
