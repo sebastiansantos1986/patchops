@@ -101,10 +101,21 @@ The POC scaffold under `poc-scaffold/` describes how to build the first working 
 
 ## Free development hosting
 
-The repository includes two deployment definitions:
+The repository includes two deployment paths:
 
 - `.github/workflows/pages.yml` publishes the dashboard to GitHub Pages after changes reach `main`.
-- `render.yaml` provisions the Node control-plane API as a free Render web service.
+- `render.yaml` provisions both the dashboard and Node control-plane API on Render.
+
+### Publish the full stack on Render
+
+In Render, choose **New → Blueprint**, connect this repository, and apply `render.yaml`. The Blueprint creates:
+
+```text
+https://patchops-dashboard-sebastiansantos1986.onrender.com
+https://patchops-api-sebastiansantos1986.onrender.com
+```
+
+The dashboard is a free static site served from Render's CDN. The API is a free web service and can take approximately one minute to wake after 15 minutes without traffic. Its POC data is held in memory and resets when the API restarts or redeploys.
 
 ### Publish the dashboard
 
@@ -114,7 +125,7 @@ After merging the deployment pull request, open **Settings → Pages** in GitHub
 https://sebastiansantos1986.github.io/patchops/
 ```
 
-### Publish the API
+### Publish only the API
 
 In Render, choose **New → Blueprint**, connect this repository, and apply `render.yaml`. The configured service URL is:
 
