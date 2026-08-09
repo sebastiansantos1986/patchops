@@ -6,7 +6,7 @@ let server;
 let baseURL;
 
 before(async () => {
-  server = createApp(undefined, { enrollmentToken: "enroll-secret", dashboardPassword: "console-secret", sessionSecret: "session-secret" });
+  server = createApp(undefined, { enrollmentToken: "enroll-secret", dashboardUsername: "test-admin", dashboardPassword: "console-secret", sessionSecret: "session-secret" });
   await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
   baseURL = `http://127.0.0.1:${server.address().port}/api`;
 });
@@ -23,8 +23,9 @@ async function request(path, { method = "GET", authorization, body } = {}) {
 
 test("dashboard data requires a valid short-lived session", async () => {
   assert.equal((await request("/devices")).status, 401);
-  assert.equal((await request("/auth/login", { method: "POST", body: { password: "wrong" } })).status, 401);
-  const login = await request("/auth/login", { method: "POST", body: { password: "console-secret" } });
+  assert.equal((await request("/auth/login", { method: "POST", body: { username: "test-admin", password: "wrong" } })).status, 401);
+  assert.equal((await request("/auth/login", { method: "POST", body: { username: "wrong", password: "console-secret" } })).status, 401);
+  const login = await request("/auth/login", { method: "POST", body: { username: "test-admin", password: "console-secret" } });
   assert.equal(login.status, 200);
   const { token } = await login.json();
   assert.equal((await request("/devices", { authorization: `Bearer ${token}` })).status, 200);

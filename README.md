@@ -23,7 +23,7 @@ npm run dev
 ```
 
 Open the dashboard at `http://127.0.0.1:8765`. The API health endpoint is `http://127.0.0.1:3000/api/health`.
-Sign in to the local dashboard with the development password `patchops-dev`.
+Sign in to the local dashboard with username `admin` and password `patchops-dev`.
 
 In another terminal, seed the API with the simulated Windows and macOS devices:
 
@@ -118,12 +118,13 @@ https://patchops-api-sebastiansantos1986.onrender.com
 
 The dashboard is a free static site served from Render's CDN. The API is a free web service and can take approximately one minute to wake after 15 minutes without traffic. Its POC data is held in memory and resets when the API restarts or redeploys.
 
-Before syncing the Blueprint, configure the two prompted secret values:
+The Blueprint configures the hosted development credentials automatically:
 
-- `PATCHOPS_ENROLLMENT_TOKEN`: a long random secret used only to enroll test agents.
-- `PATCHOPS_DASHBOARD_PASSWORD`: the password used by the hosted console sign-in screen.
+- Dashboard username: `admin`
+- Dashboard password: generated securely by Render
+- macOS agent enrollment token: generated securely by Render
 
-Render generates `PATCHOPS_SESSION_SECRET` automatically. Never commit any of these values. After the API deploys, enter the same enrollment token in the macOS agent Settings screen. The agent exchanges it for a device-scoped credential and stores both secrets in macOS Keychain.
+Render also generates `PATCHOPS_SESSION_SECRET` automatically. Open the API service's **Environment** page to reveal or copy the generated dashboard password and enrollment token. Never commit those values. Enter the enrollment token in the macOS agent Settings screen; the agent exchanges it for a device-scoped credential and stores both secrets in macOS Keychain.
 
 ### Publish the dashboard
 
