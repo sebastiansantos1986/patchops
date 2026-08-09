@@ -1982,7 +1982,8 @@
         <div class="auth-brand"><div class="logo">P</div><strong>PatchOps Console</strong></div>
         <h1 id="auth-title">Welcome back</h1>
         <p>Sign in to view enrolled devices, software inventory, findings, and patch activity.</p>
-        <label>Console password<input id="auth-password" type="password" autocomplete="current-password" required autofocus /></label>
+        <label>Username<input id="auth-username" type="text" value="admin" autocomplete="username" required autofocus /></label>
+        <label>Console password<input id="auth-password" type="password" autocomplete="current-password" required /></label>
         <button class="primary-btn" type="submit">Sign in securely</button>
         <div class="auth-error" id="auth-error" role="alert"></div>
       </form>
@@ -3064,7 +3065,7 @@
         sessionStorage.removeItem("patchops_dashboard_token");
         authError.textContent = message;
         authGate.hidden = false;
-        document.getElementById("auth-password").focus();
+        document.getElementById("auth-username").focus();
       }
 
       function hideAuthGate() {
@@ -3081,7 +3082,10 @@
           const response = await fetch(`${apiBaseUrl}/auth/login`, {
             method: "POST",
             headers: { "content-type": "application/json" },
-            body: JSON.stringify({ password: document.getElementById("auth-password").value })
+            body: JSON.stringify({
+              username: document.getElementById("auth-username").value,
+              password: document.getElementById("auth-password").value
+            })
           });
           if (!response.ok) throw new Error(response.status === 401 ? "That password was not accepted." : `Sign-in failed (${response.status}).`);
           const result = await response.json();

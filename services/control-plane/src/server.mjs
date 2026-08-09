@@ -11,6 +11,7 @@ function secret(optionValue, environmentValue, localDefault, name) {
 
 export function createApp(store = new Store(), options = {}) {
   const enrollmentToken = secret(options.enrollmentToken, process.env.PATCHOPS_ENROLLMENT_TOKEN, "POC-MACOS-ENROLL-TOKEN", "PATCHOPS_ENROLLMENT_TOKEN");
+  const dashboardUsername = options.dashboardUsername ?? process.env.PATCHOPS_DASHBOARD_USERNAME ?? "admin";
   const dashboardPassword = secret(options.dashboardPassword, process.env.PATCHOPS_DASHBOARD_PASSWORD, "patchops-dev", "PATCHOPS_DASHBOARD_PASSWORD");
   const sessionSecret = secret(options.sessionSecret, process.env.PATCHOPS_SESSION_SECRET, "local-development-session-secret", "PATCHOPS_SESSION_SECRET");
   return createServer(async (request, response) => {
@@ -32,7 +33,9 @@ export function createApp(store = new Store(), options = {}) {
       if (request.method === "GET" && request.url === "/api/health") return send(200, { status: "ok", service: "patchops-control-plane" });
       if (request.method === "POST" && request.url === "/api/auth/login") {
         const input = await body();
-        return safeEqual(input.password, dashboardPassword) ? send(200, { token: createDashboardSession(sessionSecret), expires_in: 28800 }) : send(401, { error: "invalid_credentials" });
+        return safeEqual(input.username, dashboardUsername) && safeEqual(input.password, dashboardPassword)
+          ? send(200, { token: createDashboardSession(sessionSecret), expires_in: 28800 })
+          : send(401, { error: "invalid_credentials" });
       }
       if (request.method === "GET" && request.url === "/api/devices") return dashboardAuthorized() ? send(200, { devices: store.listDevices() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/notifications/actions") return dashboardAuthorized() ? send(200, { mode: "simulation", actions: [...store.notificationActions.values()] }) : send(401, { error: "unauthorized" });
