@@ -80,7 +80,7 @@ The dashboard is a static frontend backed by the development API, and most prima
 
 ## What Is Not Real Yet
 
-- The API is a POC seam with an in-memory store, not a production service.
+- Local development uses an in-memory store; hosted development uses PostgreSQL without production backup guarantees.
 - The native macOS agent is a user-launched lab build, not yet a production daemon.
 - No real patch installation.
 - No real MDM integration.
@@ -116,7 +116,9 @@ https://patchops-dashboard-sebastiansantos1986.onrender.com
 https://patchops-api-sebastiansantos1986.onrender.com
 ```
 
-The dashboard is a free static site served from Render's CDN. The API is a free web service and can take approximately one minute to wake after 15 minutes without traffic. Its POC data is held in memory and resets when the API restarts or redeploys.
+The dashboard is a free static site served from Render's CDN. The API is a free web service and can take approximately one minute to wake after 15 minutes without traffic. Hosted device, campaign, and notification records are stored in the Blueprint-managed PostgreSQL database, so they survive API sleep, restarts, and redeploys.
+
+The free Render PostgreSQL instance is for development only: it has a 1 GB limit, expires after 30 days, and does not include backups. Upgrade or migrate it before retaining important fleet history.
 
 The Blueprint configures the hosted development credentials automatically:
 
@@ -142,7 +144,7 @@ In Render, choose **New → Blueprint**, connect this repository, and apply `ren
 https://patchops-api-sebastiansantos1986.onrender.com
 ```
 
-The dashboard reads that URL from `config.js`. If Render assigns a different service name, update `config.js` to match. The free API sleeps when idle and uses in-memory data, so simulated devices disappear after a restart or redeploy.
+The dashboard reads that URL from `config.js`. If Render assigns a different service name, update `config.js` to match. The free API sleeps when idle; hosted records remain in PostgreSQL subject to the free database's 30-day development limit.
 
 ## Security Note
 

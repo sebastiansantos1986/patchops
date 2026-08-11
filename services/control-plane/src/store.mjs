@@ -4,6 +4,7 @@ const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
 
 export class Store {
   constructor() {
+    this.ready = Promise.resolve();
     this.devices = new Map();
     this.campaigns = new Map();
     this.notificationActions = new Map();
@@ -24,9 +25,13 @@ export class Store {
     return Boolean(device?.agent_token_hash && token && device.agent_token_hash === tokenHash(token));
   }
 
+  hasDevice(id) { return this.devices.has(id); }
+
   listDevices() {
     return [...this.devices.values()].map(({ agent_token_hash: _agentTokenHash, ...device }) => device);
   }
+
+  listNotificationActions() { return [...this.notificationActions.values()]; }
 
   updateDevice(id, changes) {
     const device = this.devices.get(id);
