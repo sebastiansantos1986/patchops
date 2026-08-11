@@ -30,6 +30,7 @@ export function createApp(store, options = {}) {
     };
     const dashboardAuthorized = () => verifyDashboardSession(bearerToken(request), sessionSecret);
     const deviceAuthorized = (deviceID) => store.authenticateDevice(deviceID, bearerToken(request));
+    const requestURL = () => new URL(request.url, "http://patchops.local");
 
     try {
       await store.ready;
@@ -42,6 +43,22 @@ export function createApp(store, options = {}) {
       }
       if (request.method === "GET" && request.url === "/api/devices") return dashboardAuthorized() ? send(200, { devices: await store.listDevices() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/notifications/actions") return dashboardAuthorized() ? send(200, { mode: "simulation", actions: await store.listNotificationActions() }) : send(401, { error: "unauthorized" });
+      if (request.method === "GET" && request.url === "/api/notifications") return dashboardAuthorized() ? send(200, { notifications: await store.listNotifications() }) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/notifications") {
+        if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
+        const notification = await store.createNotification(await body());
+        return notification ? send(201, notification) : send(400, { error: "invalid_notification" });
+      }
+      if (request.method === "GET" && request.url.startsWith("/api/agent/notifications?")) {
+        const deviceID = requestURL().searchParams.get("device_id");
+        if (!await deviceAuthorized(deviceID)) return send(401, { error: "unauthorized" });
+        return send(200, { notifications: await store.pendingNotifications(deviceID) });
+      }
+      if (request.method === "POST" && request.url === "/api/agent/notifications/ack") {
+        const input = await body();
+        if (!await deviceAuthorized(input.device_id)) return send(401, { error: "unauthorized" });
+        return await store.acknowledgeNotification(input.device_id, input.notification_id) ? send(200, { accepted: true }) : send(404, { error: "notification_not_found" });
+      }
       if (request.method === "POST" && request.url === "/api/agent/enroll") {
         const suppliedToken = String(request.headers.authorization ?? "").replace(/^Enrollment\s+/i, "");
         return safeEqual(suppliedToken, enrollmentToken) ? send(201, await store.enroll(await body())) : send(401, { error: "invalid_enrollment_token" });

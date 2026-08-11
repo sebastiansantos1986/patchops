@@ -11,7 +11,10 @@ before(async () => {
   baseURL = `http://127.0.0.1:${server.address().port}/api`;
 });
 
-after(async () => new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve())));
+after(async () => {
+  server.closeAllConnections();
+  await new Promise((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+});
 
 async function request(path, { method = "GET", authorization, body } = {}) {
   return fetch(`${baseURL}${path}`, {
@@ -41,4 +44,31 @@ test("enrollment exchanges a one-time secret for device-scoped credentials", asy
   const inventory = { device_id: identity.device_id, captured_at: new Date().toISOString(), os: { name: "macOS", version: "15" }, software: [] };
   assert.equal((await request("/agent/inventory", { method: "POST", authorization: "Bearer wrong", body: inventory })).status, 401);
   assert.equal((await request("/agent/inventory", { method: "POST", authorization: `Bearer ${identity.agent_token}`, body: inventory })).status, 200);
+});
+
+test("dashboard notifications reach one authenticated device and record its action", async () => {
+  const enrolled = await request("/agent/enroll", { method: "POST", authorization: "Enrollment enroll-secret", body: { hostname: "NOTIFY-MAC", platform: "macos", serial_number: "NOTIFY123" } });
+  const identity = await enrolled.json();
+  const login = await request("/auth/login", { method: "POST", body: { username: "test-admin", password: "console-secret" } });
+  const { token } = await login.json();
+
+  const queued = await request("/notifications", {
+    method: "POST",
+    authorization: `Bearer ${token}`,
+    body: { device_id: identity.device_id, title: "VM notification test", subtitle: "PatchOps", body: "Choose an action; no software will be installed." }
+  });
+  assert.equal(queued.status, 201);
+  const notification = await queued.json();
+
+  assert.equal((await request(`/agent/notifications?device_id=${encodeURIComponent(identity.device_id)}`, { authorization: "Bearer wrong" })).status, 401);
+  const pending = await request(`/agent/notifications?device_id=${encodeURIComponent(identity.device_id)}`, { authorization: `Bearer ${identity.agent_token}` });
+  assert.deepEqual((await pending.json()).notifications.map(({ id }) => id), [notification.id]);
+
+  assert.equal((await request("/agent/notifications/ack", { method: "POST", authorization: `Bearer ${identity.agent_token}`, body: { device_id: identity.device_id, notification_id: notification.id } })).status, 200);
+  assert.equal((await request("/notifications/actions", { method: "POST", authorization: `Bearer ${identity.agent_token}`, body: { action_id: "notify-action-1", notification_id: notification.id, device_id: identity.device_id, platform: "macos", action: "defer" } })).status, 201);
+
+  const history = await request("/notifications", { authorization: `Bearer ${token}` });
+  const delivered = (await history.json()).notifications.find(({ id }) => id === notification.id);
+  assert.equal(delivered.status, "acknowledged");
+  assert.equal(delivered.action, "defer");
 });

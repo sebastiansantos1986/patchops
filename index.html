@@ -1423,7 +1423,8 @@
       }
 
       .field input,
-      .field select {
+      .field select,
+      .field textarea {
         height: 38px;
         border: 1px solid var(--line);
         border-radius: 8px;
@@ -1431,6 +1432,8 @@
         color: var(--ink);
         padding: 0 10px;
       }
+
+      .field textarea { height: 76px; padding: 10px; resize: vertical; font: inherit; }
 
       .check-row {
         display: grid;
@@ -2557,20 +2560,20 @@
                     <div class="item-title">macOS Agent</div>
                     <div class="item-sub">macOS 13+ · Universal Apple silicon and Intel build</div>
                   </div>
-                  <span class="badge good">v0.2 VM Lab</span>
+                  <span class="badge good">v0.3 Remote Alerts</span>
                 </div>
                 <div class="meta-grid">
                   <div class="meta-tile"><span>Package</span><strong>Universal app ZIP</strong></div>
                   <div class="meta-tile"><span>Privileges</span><strong>Standard user</strong></div>
                   <div class="meta-tile"><span>Signing</span><strong>Ad-hoc test</strong></div>
                 </div>
-                <div class="code-box">shasum -a 256 PatchOps-Agent-macOS-0.2.0.zip</div>
+                <div class="code-box">shasum -a 256 PatchOps-Agent-macOS-0.3.0.zip</div>
                 <div class="download-actions">
-                  <a class="download-link" href="downloads/PatchOps-Agent-macOS-0.2.0.zip" download>
+                  <a class="download-link" href="downloads/PatchOps-Agent-macOS-0.3.0.zip" download>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
                     Download macOS Agent
                   </a>
-                  <a class="ghost-btn" href="downloads/PatchOps-Agent-macOS-0.2.0.sha256" download>Download Checksum</a>
+                  <a class="ghost-btn" href="downloads/PatchOps-Agent-macOS-0.3.0.sha256" download>Download Checksum</a>
                   <a class="ghost-btn" href="downloads/install-macos-agent.sh" download>Download Installer</a>
                   <button class="ghost-btn">Copy Verify Command</button>
                 </div>
@@ -2601,6 +2604,22 @@
               <div><h2>Endpoint notification studio</h2><p>Native macOS and Windows alerts, backed by a consistent in-app update experience.</p></div>
               <button class="primary-btn">Publish Templates</button>
             </div>
+
+            <article class="panel" style="margin-bottom:14px">
+              <div class="section-head">
+                <div><h2>Send to a test computer</h2><p>Queues a real native macOS banner for one enrolled test device. Button actions are recorded but cannot install or restart.</p></div>
+                <span class="badge warn">Simulation actions</span>
+              </div>
+              <form id="notification-send-form">
+                <div class="form-grid">
+                  <div class="field"><label for="notification-device">Test computer</label><select id="notification-device" required><option value="">Load enrolled devices…</option></select></div>
+                  <div class="field"><label for="notification-title">Title</label><input id="notification-title" maxlength="120" value="Security update test" required /></div>
+                  <div class="field"><label for="notification-subtitle">Subtitle</label><input id="notification-subtitle" maxlength="120" value="PatchOps VM Lab" /></div>
+                  <div class="field"><label for="notification-body">Message</label><textarea id="notification-body" maxlength="500" required>This is a real notification delivery test. Choosing an action will not install software or restart this Mac.</textarea></div>
+                </div>
+                <div class="popup-actions"><button class="primary-btn" type="submit">Send to test Mac</button><span class="item-sub" id="notification-send-status">The agent checks for new messages every 15 seconds while it is open.</span></div>
+              </form>
+            </article>
 
             <div class="notification-lab">
               <div class="platform-previews">
@@ -2667,11 +2686,9 @@
                 <div class="section-head"><div><h2>Delivery status</h2><p>Recent endpoint popup activity.</p></div></div>
                 <div class="table-panel">
                   <table>
-                    <thead><tr><th>Campaign</th><th>Sent</th><th>Acknowledged</th><th>Deferred</th><th>Expired</th></tr></thead>
-                    <tbody>
-                      <tr><td>Chrome critical update</td><td>72</td><td>51</td><td>16</td><td>5</td></tr>
-                      <tr><td>Windows reboot deadline</td><td>58</td><td>38</td><td>12</td><td>8</td></tr>
-                      <tr><td>macOS maintenance notice</td><td>44</td><td>41</td><td>3</td><td>0</td></tr>
+                    <thead><tr><th>Notification</th><th>Device ID</th><th>Queued</th><th>Status</th><th>Action</th></tr></thead>
+                    <tbody id="notification-delivery-rows">
+                      <tr><td colspan="5">Sign in to load notification delivery history.</td></tr>
                     </tbody>
                   </table>
                 </div>
@@ -3153,6 +3170,21 @@
         document.getElementById("software-analysis").textContent = "Pending";
       }
 
+      async function refreshNotificationHistory() {
+        if (!dashboardToken) return;
+        const response = await fetch(`${apiBaseUrl}/notifications`, { headers: { authorization: `Bearer ${dashboardToken}` } });
+        if (!response.ok) return;
+        const { notifications = [] } = await response.json();
+        const rows = notifications.slice(0, 10).map((notification) => `<tr>
+          <td>${escapeHtml(notification.title)}</td>
+          <td>${escapeHtml(notification.device_id)}</td>
+          <td>${new Date(notification.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</td>
+          <td><span class="badge ${notification.status === "acknowledged" ? "good" : notification.status === "delivered" ? "info" : "warn"}">${escapeHtml(notification.status)}</span></td>
+          <td>${escapeHtml(notification.action || "—")}</td>
+        </tr>`).join("");
+        document.getElementById("notification-delivery-rows").innerHTML = rows || `<tr><td colspan="5">No console notifications have been sent yet.</td></tr>`;
+      }
+
       async function refreshLiveDevices({ notify = false } = {}) {
         const status = document.getElementById("api-status");
         status.className = "api-status";
@@ -3169,6 +3201,11 @@
           const { devices = [] } = await response.json();
           status.className = "api-status online";
           status.textContent = `Live · ${devices.length} device${devices.length === 1 ? "" : "s"}`;
+
+          const deviceSelect = document.getElementById("notification-device");
+          const selectedDevice = deviceSelect.value;
+          deviceSelect.innerHTML = `<option value="">Select an enrolled test computer</option>${devices.map((device) => `<option value="${escapeHtml(device.id)}">${escapeHtml(device.hostname)} · ${escapeHtml(device.platform)}</option>`).join("")}`;
+          if (devices.some((device) => device.id === selectedDevice)) deviceSelect.value = selectedDevice;
 
           document.getElementById("device-rows").innerHTML = devices.length ? devices.map((device) => {
               const findings = device.findings?.length ?? 0;
@@ -3188,6 +3225,7 @@
               </tr>`;
             }).join("") : `<tr><td colspan="7">No enrolled devices yet. Sync the macOS agent to populate this view.</td></tr>`;
           renderLiveSoftware(devices);
+          await refreshNotificationHistory();
           if (notify) showToast("Metrics refreshed", `Loaded ${devices.length} live endpoint records.`);
         } catch {
           status.className = "api-status offline";
@@ -3205,6 +3243,35 @@
       document.querySelector('[title="Refresh metrics"]').addEventListener("click", () => refreshLiveDevices({ notify: true }));
       document.getElementById("device-rows").addEventListener("click", (event) => {
         if (event.target.matches("[data-device-id]")) showToast("Device selected", "A production build will open the live device timeline and assigned policies.");
+      });
+      document.getElementById("notification-send-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = event.submitter;
+        const status = document.getElementById("notification-send-status");
+        button.disabled = true;
+        status.textContent = "Queueing notification…";
+        try {
+          const response = await fetch(`${apiBaseUrl}/notifications`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+            body: JSON.stringify({
+              device_id: document.getElementById("notification-device").value,
+              title: document.getElementById("notification-title").value,
+              subtitle: document.getElementById("notification-subtitle").value,
+              body: document.getElementById("notification-body").value
+            })
+          });
+          if (response.status === 401) return showAuthGate("Your session expired. Please sign in again.");
+          if (!response.ok) throw new Error(`API returned ${response.status}`);
+          const notification = await response.json();
+          status.textContent = `Queued ${notification.id}. Keep PatchOps Agent open; delivery normally takes 15 seconds.`;
+          showToast("Notification queued", "The selected test Mac will display a native banner when its agent checks in.");
+          await refreshNotificationHistory();
+        } catch (error) {
+          status.textContent = `Send failed: ${error.message}`;
+        } finally {
+          button.disabled = false;
+        }
       });
       if (dashboardToken) {
         hideAuthGate();

@@ -2,6 +2,8 @@
 
 This is a native SwiftUI test agent for macOS 13 or newer. It provides a polished local dashboard, gathers read-only device and application inventory, enrolls with the PatchOps POC API, and sends native actionable Notification Center alerts.
 
+Version 0.3 polls the authenticated PatchOps notification queue every 15 seconds while the app is open. A dashboard administrator can target an enrolled test Mac, and the native banner reports delivery and the selected simulation action back to the console.
+
 ## Safety boundary
 
 This build is permanently in simulation mode. **Install now**, **Later**, and **Details** record a notification action, but never install packages, close applications, or restart the Mac. It does not require administrator privileges and does not install a background daemon.

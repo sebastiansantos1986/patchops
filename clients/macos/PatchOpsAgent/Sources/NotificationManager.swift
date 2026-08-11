@@ -39,6 +39,19 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Obs
         }
     }
 
+    func deliver(_ notification: RemoteNotification) async throws {
+        if !authorizationGranted { await requestPermission() }
+        let content = UNMutableNotificationContent()
+        content.title = notification.title
+        content.subtitle = notification.subtitle
+        content.body = notification.body
+        content.sound = .default
+        content.categoryIdentifier = notification.category
+        content.userInfo = ["patchops_notification_id": notification.id]
+        try await UNUserNotificationCenter.current().add(UNNotificationRequest(identifier: notification.id, content: content, trigger: nil))
+        lastAction = "Received \(notification.title) from the PatchOps console"
+    }
+
     func userNotificationCenter(_ center: UNUserNotificationCenter, willPresent notification: UNNotification) async -> UNNotificationPresentationOptions {
         [.banner, .sound, .list]
     }
@@ -52,7 +65,8 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Obs
         default: action = "dismiss"
         }
         do {
-            try await APIClient().recordNotification(action: action, settings: settingsProvider())
+            let notificationID = response.notification.request.content.userInfo["patchops_notification_id"] as? String ?? response.notification.request.identifier
+            try await APIClient().recordNotification(action: action, notificationID: notificationID, settings: settingsProvider())
             lastAction = "Recorded \(action) in simulation mode"
         } catch {
             lastAction = "Action failed: \(error.localizedDescription)"

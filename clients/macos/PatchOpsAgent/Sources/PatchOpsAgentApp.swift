@@ -11,6 +11,7 @@ struct PatchOpsAgentApp: App {
                 .frame(minWidth: 940, minHeight: 620)
                 .task {
                     if model.snapshot == nil { model.scan() }
+                    model.startNotificationPolling()
                 }
         }
         .windowStyle(.hiddenTitleBar)
