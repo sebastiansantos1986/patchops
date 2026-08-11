@@ -13,18 +13,27 @@ TEMP_APP_DIRECTORY="$(mktemp -d "$BUILD_DIRECTORY/.PatchOpsAgent.XXXXXX")/PatchO
 trap 'rm -rf "$(dirname "$TEMP_APP_DIRECTORY")"' EXIT
 mkdir -p "$TEMP_APP_DIRECTORY/Contents/MacOS" "$TEMP_APP_DIRECTORY/Contents/Resources"
 
-CLANG_MODULE_CACHE_PATH="$MODULE_CACHE_DIRECTORY" \
-SWIFT_MODULE_CACHE_PATH="$MODULE_CACHE_DIRECTORY" \
-xcrun swiftc \
-  -swift-version 5 \
-  -parse-as-library \
-  -O \
-  -o "$TEMP_APP_DIRECTORY/Contents/MacOS/PatchOpsAgent" \
-  "$PROJECT_DIRECTORY"/Sources/*.swift \
-  -framework SwiftUI \
-  -framework AppKit \
-  -framework Security \
-  -framework UserNotifications
+for ARCHITECTURE in arm64 x86_64; do
+  CLANG_MODULE_CACHE_PATH="$MODULE_CACHE_DIRECTORY/$ARCHITECTURE" \
+  SWIFT_MODULE_CACHE_PATH="$MODULE_CACHE_DIRECTORY/$ARCHITECTURE" \
+  xcrun swiftc \
+    -target "$ARCHITECTURE-apple-macos13.0" \
+    -swift-version 5 \
+    -parse-as-library \
+    -O \
+    -o "$BUILD_DIRECTORY/PatchOpsAgent-$ARCHITECTURE" \
+    "$PROJECT_DIRECTORY"/Sources/*.swift \
+    -framework SwiftUI \
+    -framework AppKit \
+    -framework Security \
+    -framework UserNotifications
+done
+
+xcrun lipo -create \
+  "$BUILD_DIRECTORY/PatchOpsAgent-arm64" \
+  "$BUILD_DIRECTORY/PatchOpsAgent-x86_64" \
+  -output "$TEMP_APP_DIRECTORY/Contents/MacOS/PatchOpsAgent"
+rm -f "$BUILD_DIRECTORY/PatchOpsAgent-arm64" "$BUILD_DIRECTORY/PatchOpsAgent-x86_64"
 
 cp "$PROJECT_DIRECTORY/Info.plist" "$TEMP_APP_DIRECTORY/Contents/Info.plist"
 codesign --force --deep --sign - "$TEMP_APP_DIRECTORY"

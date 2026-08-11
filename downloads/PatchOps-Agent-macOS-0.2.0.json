@@ -1,0 +1,12 @@
+{
+  "product": "PatchOps Agent",
+  "version": "0.2.0",
+  "platform": "macOS",
+  "minimum_os": "13.0",
+  "architectures": ["arm64", "x86_64"],
+  "sha256": "f8a0fcc92e086f6f125c2ee22b0353e9e725b02d0e4ea0a5960255328f72543d",
+  "signing": "ad-hoc test signature",
+  "notarized": false,
+  "privileged": false,
+  "simulation_only": true
+}
