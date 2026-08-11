@@ -38,3 +38,14 @@ services:
         generateValue: true
       - key: PATCHOPS_SESSION_SECRET
         generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: patchops-postgres-sebastiansantos1986
+          property: connectionString
+
+databases:
+  - name: patchops-postgres-sebastiansantos1986
+    plan: free
+    databaseName: patchops
+    user: patchops
+    ipAllowList: []
