@@ -157,4 +157,6 @@ bash install-macos-agent.sh
 
 The installer verifies the app signature and installs it in `~/Applications`. Open PatchOps Agent, choose the hosted development API in Settings, and enter the enrollment token from the Render API service. The test device appears under **Devices** after enrollment and synchronization.
 
+To test remote alerts, keep PatchOps Agent open on the VM, open **Notifications** in the dashboard, choose the enrolled VM, and select **Send to test Mac**. The agent checks the hosted queue every 15 seconds, displays a native Notification Center banner, and reports the user's selected action to the delivery table. All actions remain simulation-only.
+
 This is an ad-hoc-signed, non-notarized development build for isolated VMs. It does not install a root daemon or privileged helper and cannot patch or reboot a machine. Do not use it on production endpoints. Production releases require Developer ID signing and Apple notarization. The Windows download remains a placeholder until its native package is implemented.

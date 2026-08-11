@@ -7,6 +7,7 @@ export class Store {
     this.ready = Promise.resolve();
     this.devices = new Map();
     this.campaigns = new Map();
+    this.notifications = new Map();
     this.notificationActions = new Map();
   }
 
@@ -32,6 +33,36 @@ export class Store {
   }
 
   listNotificationActions() { return [...this.notificationActions.values()]; }
+
+  listNotifications() { return [...this.notifications.values()].sort((left, right) => right.created_at.localeCompare(left.created_at)); }
+
+  createNotification(input) {
+    if (!this.devices.has(input.device_id) || !input.title?.trim() || !input.body?.trim()) return null;
+    const notification = {
+      id: `ntf_${randomUUID()}`,
+      device_id: input.device_id,
+      title: input.title.trim().slice(0, 120),
+      subtitle: String(input.subtitle ?? "PatchOps test notification").trim().slice(0, 120),
+      body: input.body.trim().slice(0, 500),
+      category: "PATCHOPS_UPDATE",
+      mode: "simulation",
+      status: "queued",
+      created_at: new Date().toISOString()
+    };
+    this.notifications.set(notification.id, notification);
+    return notification;
+  }
+
+  pendingNotifications(deviceID) {
+    return [...this.notifications.values()].filter((notification) => notification.device_id === deviceID && notification.status === "queued");
+  }
+
+  acknowledgeNotification(deviceID, notificationID) {
+    const notification = this.notifications.get(notificationID);
+    if (!notification || notification.device_id !== deviceID) return null;
+    Object.assign(notification, { status: "delivered", delivered_at: new Date().toISOString() });
+    return notification;
+  }
 
   updateDevice(id, changes) {
     const device = this.devices.get(id);
@@ -61,6 +92,8 @@ export class Store {
       duplicate: false
     };
     this.notificationActions.set(event.action_id, event);
+    const notification = this.notifications.get(event.notification_id);
+    if (notification && notification.device_id === event.device_id) Object.assign(notification, { status: "acknowledged", action: event.action, acknowledged_at: event.received_at });
     return event;
   }
 }

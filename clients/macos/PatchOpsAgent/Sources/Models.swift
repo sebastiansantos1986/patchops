@@ -55,6 +55,24 @@ struct EnrollmentResponse: Codable {
     }
 }
 
+struct RemoteNotification: Codable, Identifiable {
+    let id: String
+    let deviceID: String
+    let title: String
+    let subtitle: String
+    let body: String
+    let category: String
+
+    enum CodingKeys: String, CodingKey {
+        case id, title, subtitle, body, category
+        case deviceID = "device_id"
+    }
+}
+
+struct NotificationEnvelope: Codable {
+    let notifications: [RemoteNotification]
+}
+
 struct AgentSettings: Codable {
     var apiURL = "http://127.0.0.1:3000/api"
     var tenantID = "acme-prod"

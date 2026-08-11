@@ -14,6 +14,7 @@ final class AgentModel: ObservableObject {
     private let collector = InventoryCollector()
     private let client = APIClient()
     private let keychain = KeychainStore()
+    private var notificationPollingTask: Task<Void, Never>?
 
     init() {
         loadSettings()
@@ -51,10 +52,33 @@ final class AgentModel: ObservableObject {
                 state = .healthy
                 lastSync = Date()
                 statusMessage = "Synced securely in POC mode"
+                await pollForNotifications()
             } catch {
                 state = .failed
                 statusMessage = error.localizedDescription
             }
+        }
+    }
+
+    func startNotificationPolling() {
+        guard notificationPollingTask == nil else { return }
+        notificationPollingTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.pollForNotifications()
+                try? await Task.sleep(for: .seconds(15))
+            }
+        }
+    }
+
+    func pollForNotifications() async {
+        guard settings.deviceID != nil, settings.agentToken != nil else { return }
+        do {
+            for notification in try await client.fetchNotifications(settings: settings) {
+                try await notifications.deliver(notification)
+                try await client.acknowledgeNotification(notification.id, settings: settings)
+            }
+        } catch {
+            notifications.lastAction = "Console polling failed: \(error.localizedDescription)"
         }
     }
 

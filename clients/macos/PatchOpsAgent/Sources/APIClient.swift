@@ -25,7 +25,7 @@ struct APIClient {
             "hostname": snapshot.hostname,
             "platform": "macos",
             "serial_number": snapshot.serialNumber,
-            "agent_version": "0.2.0"
+            "agent_version": "0.3.0"
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
         return try await send(path: "/agent/enroll", data: data, settings: settings, authorization: "Enrollment \(settings.enrollmentToken)")
@@ -47,10 +47,27 @@ struct APIClient {
         _ = try await sendRaw(path: "/agent/inventory", data: try encoder.encode(inventory), settings: settings, authorization: "Bearer \(enrollment.agentToken)")
     }
 
-    func recordNotification(action: String, settings: AgentSettings) async throws {
+    func fetchNotifications(settings: AgentSettings) async throws -> [RemoteNotification] {
+        guard let deviceID = settings.deviceID, let agentToken = settings.agentToken else { return [] }
+        guard var components = URLComponents(string: settings.apiURL + "/agent/notifications") else { throw APIError.invalidURL }
+        components.queryItems = [URLQueryItem(name: "device_id", value: deviceID)]
+        guard let url = components.url else { throw APIError.invalidURL }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(agentToken)", forHTTPHeaderField: "Authorization")
+        let responseData = try await perform(request)
+        return try JSONDecoder().decode(NotificationEnvelope.self, from: responseData).notifications
+    }
+
+    func acknowledgeNotification(_ notificationID: String, settings: AgentSettings) async throws {
+        guard let deviceID = settings.deviceID, let agentToken = settings.agentToken else { return }
+        let payload = ["device_id": deviceID, "notification_id": notificationID]
+        _ = try await sendRaw(path: "/agent/notifications/ack", data: try JSONSerialization.data(withJSONObject: payload), settings: settings, authorization: "Bearer \(agentToken)")
+    }
+
+    func recordNotification(action: String, notificationID: String = "macos-agent-lab", settings: AgentSettings) async throws {
         let payload: [String: String] = [
             "action_id": UUID().uuidString,
-            "notification_id": "macos-agent-lab",
+            "notification_id": notificationID,
             "device_id": settings.deviceID ?? "lab-macos",
             "platform": "macos",
             "action": action
@@ -70,6 +87,10 @@ struct APIClient {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         if let authorization { request.setValue(authorization, forHTTPHeaderField: "Authorization") }
         request.httpBody = data
+        return try await perform(request)
+    }
+
+    private func perform(_ request: URLRequest) async throws -> Data {
         let (responseData, response) = try await URLSession(configuration: .ephemeral).data(for: request)
         let status = (response as? HTTPURLResponse)?.statusCode ?? 0
         guard (200..<300).contains(status) else { throw APIError.rejected(status, String(data: responseData, encoding: .utf8) ?? "Unknown error") }
