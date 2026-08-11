@@ -2368,7 +2368,7 @@
           <div class="view" id="devices">
             <div class="section-head">
               <div><h2>Device inventory</h2><p>Live endpoint posture, ownership, patch status, and restart state.</p></div>
-              <button class="ghost-btn">Enroll Device</button>
+              <button class="ghost-btn" data-open-view="agents">Enroll Device</button>
             </div>
             <div class="filter-row">
               <select class="select"><option>All platforms</option><option>Windows</option><option>macOS</option></select>
@@ -2513,6 +2513,18 @@
               <div><h2>Agent downloads</h2><p>Deploy scan-and-patch agents to collect exposure data, run remediation jobs, and report compliance evidence.</p></div>
               <button class="ghost-btn">Rotate Enrollment Token</button>
             </div>
+            <article class="panel" style="margin-bottom:14px; background:linear-gradient(135deg, rgba(37,99,235,.08), rgba(13,148,136,.08))">
+              <div class="section-head">
+                <div><h2>VM Test Lab</h2><p>Validate enrollment, inventory, persistence, and native notifications without changing the VM.</p></div>
+                <span class="badge info">Simulation only</span>
+              </div>
+              <div class="activity-list">
+                <div class="activity-item"><span class="pulse"></span><div><div class="item-title">1. Download and verify</div><div class="item-sub">Download the universal macOS ZIP and compare its SHA-256 checksum.</div></div><span class="badge good">Safe</span></div>
+                <div class="activity-item"><span class="pulse"></span><div><div class="item-title">2. Enroll the VM</div><div class="item-sub">Use the hosted API and the enrollment token from Render. Credentials stay in Keychain.</div></div><span class="badge info">Manual</span></div>
+                <div class="activity-item"><span class="pulse"></span><div><div class="item-title">3. Scan and sync</div><div class="item-sub">Review read-only hardware, OS, uptime, and application inventory before upload.</div></div><span class="badge good">Read only</span></div>
+                <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">4. Exercise notification actions</div><div class="item-sub">Install, defer, and restart buttons record simulation events; they cannot patch or reboot the VM.</div></div><span class="badge warn">No execution</span></div>
+              </div>
+            </article>
             <div class="download-grid">
               <article class="download-card">
                 <div class="download-head">
@@ -2543,23 +2555,26 @@
                   <div class="agent-node" style="background: var(--teal)">M</div>
                   <div>
                     <div class="item-title">macOS Agent</div>
-                    <div class="item-sub">macOS 13+ · Apple silicon and Intel</div>
+                    <div class="item-sub">macOS 13+ · Universal Apple silicon and Intel build</div>
                   </div>
-                  <span class="badge good">v0.1 POC</span>
+                  <span class="badge good">v0.2 VM Lab</span>
                 </div>
                 <div class="meta-grid">
-                  <div class="meta-tile"><span>Package</span><strong>Shell bootstrap</strong></div>
-                  <div class="meta-tile"><span>Daemon</span><strong>com.patchops.agent</strong></div>
-                  <div class="meta-tile"><span>Token</span><strong>POC-MACOS</strong></div>
+                  <div class="meta-tile"><span>Package</span><strong>Universal app ZIP</strong></div>
+                  <div class="meta-tile"><span>Privileges</span><strong>Standard user</strong></div>
+                  <div class="meta-tile"><span>Signing</span><strong>Ad-hoc test</strong></div>
                 </div>
-                <div class="code-box">TENANT=acme-prod ENROLL_TOKEN=POC-MACOS-ENROLL-TOKEN sh ./install-macos-agent.sh</div>
+                <div class="code-box">shasum -a 256 PatchOps-Agent-macOS-0.2.0.zip</div>
                 <div class="download-actions">
-                  <a class="download-link" href="downloads/install-macos-agent.sh" download>
+                  <a class="download-link" href="downloads/PatchOps-Agent-macOS-0.2.0.zip" download>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
-                    Download macOS Bootstrap
+                    Download macOS Agent
                   </a>
-                  <button class="ghost-btn">Copy Command</button>
+                  <a class="ghost-btn" href="downloads/PatchOps-Agent-macOS-0.2.0.sha256" download>Download Checksum</a>
+                  <a class="ghost-btn" href="downloads/install-macos-agent.sh" download>Download Installer</a>
+                  <button class="ghost-btn">Copy Verify Command</button>
                 </div>
+                <p class="item-sub">Test build only: not Developer ID signed or notarized. Use isolated VMs; right-click the app and choose Open. No daemon, root helper, patching, or reboot capability is included.</p>
               </article>
             </div>
 
@@ -3212,14 +3227,15 @@
         toggle.addEventListener("click", () => toggle.classList.toggle("on"));
       });
 
-      document.querySelectorAll(".download-card .ghost-btn").forEach((button) => {
+      document.querySelectorAll(".download-card button.ghost-btn").forEach((button) => {
         button.addEventListener("click", async () => {
+          const originalText = button.textContent;
           const command = button.closest(".download-card").querySelector(".code-box").textContent;
           await navigator.clipboard?.writeText(command);
           showToast("Command copied", "Deployment command is ready to paste into your MDM or terminal.");
           button.textContent = "Copied";
           setTimeout(() => {
-            button.textContent = "Copy Command";
+            button.textContent = originalText;
           }, 1400);
         });
       });
@@ -3239,7 +3255,7 @@
 
       document.querySelectorAll('a[download]').forEach((link) => {
         link.addEventListener("click", () => {
-          showToast("Download started", `${link.textContent.trim()} is downloading from the demo package.`);
+          showToast("Download started", `${link.textContent.trim()} is downloading from the VM test package.`);
         });
       });
     </script>

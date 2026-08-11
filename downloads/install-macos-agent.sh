@@ -1,16 +1,20 @@
 #!/bin/sh
-# PatchOps macOS Agent Bootstrap - POC placeholder
-# This script is for product prototype/demo purposes only.
-# A production installer should use a signed and notarized PKG.
+# PatchOps macOS VM Lab Installer
+# Installs the ad-hoc signed, unprivileged test app for the current user only.
 
-TENANT="${TENANT:-acme-prod}"
-ENROLL_TOKEN="${ENROLL_TOKEN:-POC-MACOS-ENROLL-TOKEN}"
-API_URL="${API_URL:-https://api.patchops.example}"
+set -eu
+SCRIPT_DIRECTORY="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
+ARCHIVE="$SCRIPT_DIRECTORY/PatchOps-Agent-macOS-0.2.0.zip"
+INSTALL_DIRECTORY="$HOME/Applications"
 
-echo "PatchOps macOS Agent bootstrap"
-echo "Tenant: ${TENANT}"
-echo "API: ${API_URL}"
-echo "Enrollment token: ${ENROLL_TOKEN}"
-echo ""
-echo "POC only: download signed PKG, verify checksum, install LaunchDaemon, enroll device."
+if [ ! -f "$ARCHIVE" ]; then
+  echo "Keep this installer beside PatchOps-Agent-macOS-0.2.0.zip, then retry." >&2
+  exit 1
+fi
 
+mkdir -p "$INSTALL_DIRECTORY"
+ditto -x -k "$ARCHIVE" "$INSTALL_DIRECTORY"
+codesign --verify --deep --strict "$INSTALL_DIRECTORY/PatchOps Agent.app"
+
+echo "Installed PatchOps Agent in $INSTALL_DIRECTORY"
+echo "Open it from Finder, select the hosted development API, and enter the Render enrollment token."

@@ -8,7 +8,8 @@ This repository contains:
 - A runnable control-plane API foundation.
 - A shared Go agent lifecycle scaffold for Windows and macOS adapters.
 - A native SwiftUI macOS test agent with inventory and actionable notifications.
-- Placeholder Windows/macOS agent bootstrap downloads.
+- A downloadable universal macOS VM-lab agent for Apple silicon and Intel Macs, with a published checksum and package manifest.
+- A placeholder Windows agent bootstrap download while its native package is under development.
 - Evidence report sample exports.
 - MVP technical specification.
 - 6-week POC build plan.
@@ -148,4 +149,12 @@ The dashboard reads that URL from `config.js`. If Render assigns a different ser
 
 ## Security Note
 
-The files in `downloads/` are placeholders for demo purposes only. Production agents must use signed Windows installers and signed/notarized macOS packages.
+Open **Agents** in the hosted console and download the macOS agent ZIP, SHA-256 checksum, and user-level installer. The package manifest is published beside them in `downloads/`. Keep the downloaded ZIP and installer together on the VM and run:
+
+```bash
+bash install-macos-agent.sh
+```
+
+The installer verifies the app signature and installs it in `~/Applications`. Open PatchOps Agent, choose the hosted development API in Settings, and enter the enrollment token from the Render API service. The test device appears under **Devices** after enrollment and synchronization.
+
+This is an ad-hoc-signed, non-notarized development build for isolated VMs. It does not install a root daemon or privileged helper and cannot patch or reboot a machine. Do not use it on production endpoints. Production releases require Developer ID signing and Apple notarization. The Windows download remains a placeholder until its native package is implemented.
