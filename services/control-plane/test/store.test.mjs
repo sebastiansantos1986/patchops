@@ -49,3 +49,14 @@ test("console-managed agent policy is bounded", () => {
   assert.equal(policy.allow_custom_popups, false);
   assert.equal(store.getAgentSettings().allow_system_notifications, true);
 });
+
+test("console users are unique, editable, and never expose password hashes", () => {
+  const store = new Store();
+  const created = store.createConsoleUser({ username: "reviewer", full_name: "Review User", email: "review@example.test", role: "reviewer", status: "active", password_hash: "private-hash" });
+  assert.equal(created.username, "reviewer");
+  assert.equal(created.password_hash, undefined);
+  assert.equal(store.createConsoleUser({ username: "REVIEWER", role: "reviewer", status: "active", password_hash: "other" }), null);
+  assert.equal(store.findConsoleUser("Reviewer").password_hash, "private-hash");
+  assert.equal(store.listConsoleUsers()[0].password_hash, undefined);
+  assert.equal(store.updateConsoleUser(created.id, { status: "disabled" }).status, "disabled");
+});

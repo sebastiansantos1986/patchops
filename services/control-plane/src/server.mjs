@@ -1,6 +1,6 @@
 import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
-import { bearerToken, createDashboardSession, safeEqual, verifyDashboardSession } from "./auth.mjs";
+import { bearerToken, createDashboardSession, hashPassword, safeEqual, verifyDashboardSession, verifyPassword } from "./auth.mjs";
 import { PostgresStore } from "./postgres-store.mjs";
 import { Store } from "./store.mjs";
 
@@ -20,7 +20,7 @@ export function createApp(store, options = {}) {
     response.setHeader("content-type", "application/json");
     response.setHeader("access-control-allow-origin", "*");
     response.setHeader("access-control-allow-headers", "authorization, content-type");
-    response.setHeader("access-control-allow-methods", "GET, POST, OPTIONS");
+    response.setHeader("access-control-allow-methods", "GET, POST, PATCH, OPTIONS");
     if (request.method === "OPTIONS") return response.writeHead(204).end();
     const send = (status, body) => response.writeHead(status).end(JSON.stringify(body));
     const body = async () => {
@@ -28,7 +28,10 @@ export function createApp(store, options = {}) {
       for await (const chunk of request) chunks.push(chunk);
       return chunks.length ? JSON.parse(Buffer.concat(chunks)) : {};
     };
-    const dashboardAuthorized = () => verifyDashboardSession(bearerToken(request), sessionSecret);
+    const dashboardSession = () => verifyDashboardSession(bearerToken(request), sessionSecret);
+    const dashboardAuthorized = () => Boolean(dashboardSession());
+    const dashboardCanWrite = () => ["owner", "administrator", "operator"].includes(dashboardSession()?.role);
+    const dashboardCanManageUsers = () => ["owner", "administrator"].includes(dashboardSession()?.role);
     const deviceAuthorized = (deviceID) => store.authenticateDevice(deviceID, bearerToken(request));
     const requestURL = () => new URL(request.url, "http://patchops.local");
 
@@ -37,19 +40,56 @@ export function createApp(store, options = {}) {
       if (request.method === "GET" && request.url === "/api/health") return send(200, { status: "ok", service: "patchops-control-plane", storage: process.env.DATABASE_URL ? "postgres" : "memory" });
       if (request.method === "POST" && request.url === "/api/auth/login") {
         const input = await body();
-        return safeEqual(input.username, dashboardUsername) && safeEqual(input.password, dashboardPassword)
-          ? send(200, { token: createDashboardSession(sessionSecret), expires_in: 28800 })
-          : send(401, { error: "invalid_credentials" });
+        const storedUser = await store.findConsoleUser(input.username);
+        const bootstrapOwner = safeEqual(input.username, dashboardUsername) && safeEqual(input.password, dashboardPassword)
+          ? { id: "bootstrap-owner", username: dashboardUsername, full_name: "PatchOps Owner", role: "owner", status: "active" }
+          : null;
+        const user = storedUser?.status === "active" && verifyPassword(input.password, storedUser.password_hash) ? storedUser : bootstrapOwner;
+        if (!user) return send(401, { error: "invalid_credentials" });
+        const safeUser = { id: user.id, username: user.username, full_name: user.full_name, email: user.email ?? "", role: user.role, status: user.status };
+        return send(200, { token: createDashboardSession(sessionSecret, safeUser), expires_in: 28800, user: safeUser });
+      }
+      if (request.method === "GET" && request.url === "/api/auth/me") {
+        const session = dashboardSession();
+        return session ? send(200, { user: { id: session.sub, username: session.username, role: session.role } }) : send(401, { error: "unauthorized" });
+      }
+      if (request.method === "GET" && request.url === "/api/admin/users") return dashboardCanManageUsers() ? send(200, { users: await store.listConsoleUsers(), bootstrap_owner: { username: dashboardUsername, role: "owner", status: "active" } }) : send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/admin/users") {
+        if (!dashboardCanManageUsers()) return send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
+        const input = await body();
+        const username = String(input.username ?? "").trim();
+        const password = String(input.password ?? "");
+        const role = ["administrator", "operator", "reviewer"].includes(input.role) ? input.role : null;
+        if (!/^[a-zA-Z0-9._-]{3,64}$/.test(username) || password.length < 12 || !role) return send(400, { error: "invalid_user", message: "Use a 3–64 character username, a password of at least 12 characters, and a supported role." });
+        if (safeEqual(username.toLowerCase(), dashboardUsername.toLowerCase())) return send(409, { error: "username_reserved" });
+        const user = await store.createConsoleUser({ username, full_name: String(input.full_name ?? "").trim().slice(0, 120), email: String(input.email ?? "").trim().slice(0, 254), role, status: "active", password_hash: hashPassword(password) });
+        return user ? send(201, user) : send(409, { error: "username_exists" });
+      }
+      if (request.method === "PATCH" && request.url.startsWith("/api/admin/users/")) {
+        if (!dashboardCanManageUsers()) return send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
+        const id = decodeURIComponent(request.url.slice("/api/admin/users/".length));
+        const input = await body();
+        if (id === dashboardSession()?.sub && input.status === "disabled") return send(400, { error: "cannot_disable_current_user" });
+        if (id === dashboardSession()?.sub && input.role && input.role !== dashboardSession()?.role) return send(400, { error: "cannot_change_current_role" });
+        const changes = {};
+        if (["administrator", "operator", "reviewer"].includes(input.role)) changes.role = input.role;
+        if (["active", "disabled"].includes(input.status)) changes.status = input.status;
+        if (input.password !== undefined) {
+          if (String(input.password).length < 12) return send(400, { error: "weak_password" });
+          changes.password_hash = hashPassword(input.password);
+        }
+        const user = await store.updateConsoleUser(id, changes);
+        return user ? send(200, user) : send(404, { error: "user_not_found" });
       }
       if (request.method === "GET" && request.url === "/api/devices") return dashboardAuthorized() ? send(200, { devices: await store.listDevices() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/notifications/actions") return dashboardAuthorized() ? send(200, { mode: "simulation", actions: await store.listNotificationActions() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/notifications") return dashboardAuthorized() ? send(200, { notifications: await store.listNotifications() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/settings/notifications") return dashboardAuthorized() ? send(200, await store.getNotificationSettings()) : send(401, { error: "unauthorized" });
-      if (request.method === "POST" && request.url === "/api/settings/notifications") return dashboardAuthorized() ? send(200, await store.saveNotificationSettings(await body())) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/settings/notifications") return dashboardCanWrite() ? send(200, await store.saveNotificationSettings(await body())) : send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
       if (request.method === "GET" && request.url === "/api/settings/agent") return dashboardAuthorized() ? send(200, await store.getAgentSettings()) : send(401, { error: "unauthorized" });
-      if (request.method === "POST" && request.url === "/api/settings/agent") return dashboardAuthorized() ? send(200, await store.saveAgentSettings(await body())) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/settings/agent") return dashboardCanWrite() ? send(200, await store.saveAgentSettings(await body())) : send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
       if (request.method === "POST" && request.url === "/api/notifications") {
-        if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
+        if (!dashboardCanWrite()) return send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
         const notification = await store.createNotification(await body());
         return notification ? send(201, notification) : send(400, { error: "invalid_notification" });
       }
@@ -88,7 +128,7 @@ export function createApp(store, options = {}) {
         if (!await deviceAuthorized(input.device_id)) return send(401, { error: "unauthorized" });
         return await store.updateDevice(input.device_id, { findings: input.findings, findings_captured_at: input.captured_at }) ? send(200, { accepted: true, finding_count: input.findings?.length ?? 0 }) : send(404, { error: "device_not_found" });
       }
-      if (request.method === "POST" && request.url === "/api/campaigns") return dashboardAuthorized() ? send(201, await store.createCampaign(await body())) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/campaigns") return dashboardCanWrite() ? send(201, await store.createCampaign(await body())) : send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
       if (request.method === "POST" && request.url === "/api/notifications/actions") {
         const input = await body();
         if (await store.hasDevice(input.device_id) && !await deviceAuthorized(input.device_id)) return send(401, { error: "unauthorized" });

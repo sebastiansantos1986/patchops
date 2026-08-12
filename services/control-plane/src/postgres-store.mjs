@@ -19,7 +19,44 @@ export class PostgresStore {
       CREATE TABLE IF NOT EXISTS patchops_notifications (id TEXT PRIMARY KEY, device_id TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_notification_actions (action_id TEXT PRIMARY KEY, data JSONB NOT NULL, received_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_settings (key TEXT PRIMARY KEY, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS patchops_console_users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     `);
+  }
+
+  async listConsoleUsers() {
+    await this.ready;
+    return (await this.pool.query("SELECT data FROM patchops_console_users ORDER BY LOWER(username)")).rows.map((row) => row.data);
+  }
+
+  async findConsoleUser(username) {
+    await this.ready;
+    const result = await this.pool.query("SELECT id, password_hash, data FROM patchops_console_users WHERE LOWER(username) = LOWER($1)", [String(username ?? "")]);
+    return result.rowCount ? { ...result.rows[0].data, id: result.rows[0].id, password_hash: result.rows[0].password_hash } : null;
+  }
+
+  async createConsoleUser(input) {
+    await this.ready;
+    const id = `usr_${randomUUID()}`;
+    const now = new Date().toISOString();
+    const { password_hash, ...safeInput } = input;
+    const user = { id, ...safeInput, created_at: now, updated_at: now };
+    try {
+      await this.pool.query("INSERT INTO patchops_console_users (id, username, password_hash, data) VALUES ($1, $2, $3, $4)", [id, input.username, password_hash, user]);
+      return user;
+    } catch (error) {
+      if (error.code === "23505") return null;
+      throw error;
+    }
+  }
+
+  async updateConsoleUser(id, changes) {
+    await this.ready;
+    const result = await this.pool.query("SELECT data, password_hash FROM patchops_console_users WHERE id = $1", [id]);
+    if (!result.rowCount) return null;
+    const { password_hash, ...safeChanges } = changes;
+    const user = { ...result.rows[0].data, ...safeChanges, updated_at: new Date().toISOString() };
+    await this.pool.query("UPDATE patchops_console_users SET username = $2, password_hash = $3, data = $4, updated_at = NOW() WHERE id = $1", [id, user.username, password_hash ?? result.rows[0].password_hash, user]);
+    return user;
   }
 
   async enroll(input) {
