@@ -25,7 +25,7 @@ struct APIClient {
             "hostname": snapshot.hostname,
             "platform": "macos",
             "serial_number": snapshot.serialNumber,
-            "agent_version": "0.4.0"
+            "agent_version": "0.5.0"
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
         return try await send(path: "/agent/enroll", data: data, settings: settings, authorization: "Enrollment \(settings.enrollmentToken)")
@@ -56,6 +56,16 @@ struct APIClient {
         request.setValue("Bearer \(agentToken)", forHTTPHeaderField: "Authorization")
         let responseData = try await perform(request)
         return try JSONDecoder().decode(NotificationEnvelope.self, from: responseData).notifications
+    }
+
+    func fetchPolicy(settings: AgentSettings) async throws -> RemoteAgentPolicy {
+        guard let deviceID = settings.deviceID, let agentToken = settings.agentToken else { return RemoteAgentPolicy() }
+        guard var components = URLComponents(string: settings.apiURL + "/agent/policy") else { throw APIError.invalidURL }
+        components.queryItems = [URLQueryItem(name: "device_id", value: deviceID)]
+        guard let url = components.url else { throw APIError.invalidURL }
+        var request = URLRequest(url: url)
+        request.setValue("Bearer \(agentToken)", forHTTPHeaderField: "Authorization")
+        return try JSONDecoder().decode(RemoteAgentPolicy.self, from: try await perform(request))
     }
 
     func acknowledgeNotification(_ notificationID: String, settings: AgentSettings) async throws {

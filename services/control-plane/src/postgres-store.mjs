@@ -4,6 +4,7 @@ import pg from "pg";
 const { Pool } = pg;
 const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
 const defaultNotificationSettings = () => ({ presentation: "custom", app_name: "PatchOps Security Updates", organization: "Your Organization", accent_color: "#2563EB", symbol: "arrow.down.circle.fill", popup_width: 540, position: "center", sound: "Funk", primary_label: "Install Now", secondary_label: "Remind Me Later", show_close: true, max_deferrals: 3, require_deferral_reason: false, support_email: "", support_phone: "", help_url: "" });
+const defaultAgentSettings = () => ({ inventory_interval_seconds: 900, notification_poll_seconds: 15, allow_custom_popups: true, allow_system_notifications: true });
 
 export class PostgresStore {
   constructor(connectionString) {
@@ -93,6 +94,27 @@ export class PostgresStore {
       max_deferrals: Math.min(10, Math.max(0, Number(input.max_deferrals) || 0))
     };
     await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ('notifications', $1) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [settings]);
+    return settings;
+  }
+
+  async getAgentSettings() {
+    await this.ready;
+    const result = await this.pool.query("SELECT data FROM patchops_settings WHERE key = 'agent'");
+    return { ...defaultAgentSettings(), ...(result.rows[0]?.data ?? {}) };
+  }
+
+  async saveAgentSettings(input) {
+    await this.ready;
+    const current = await this.getAgentSettings();
+    const settings = {
+      ...current,
+      ...input,
+      inventory_interval_seconds: Math.min(86400, Math.max(60, Number(input.inventory_interval_seconds) || 900)),
+      notification_poll_seconds: Math.min(300, Math.max(5, Number(input.notification_poll_seconds) || 15)),
+      allow_custom_popups: input.allow_custom_popups !== false,
+      allow_system_notifications: input.allow_system_notifications !== false
+    };
+    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ('agent', $1) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [settings]);
     return settings;
   }
 

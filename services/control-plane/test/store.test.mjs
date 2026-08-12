@@ -40,3 +40,12 @@ test("custom notification settings are sanitized and embedded in queued popups",
   assert.equal(notification.appearance.app_name, "Acme Updates");
   assert.equal(notification.appearance.primary_label, "Update Now");
 });
+
+test("console-managed agent policy is bounded", () => {
+  const store = new Store();
+  const policy = store.saveAgentSettings({ inventory_interval_seconds: 10, notification_poll_seconds: 999, allow_custom_popups: false });
+  assert.equal(policy.inventory_interval_seconds, 60);
+  assert.equal(policy.notification_poll_seconds, 300);
+  assert.equal(policy.allow_custom_popups, false);
+  assert.equal(store.getAgentSettings().allow_system_notifications, true);
+});

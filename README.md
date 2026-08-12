@@ -128,7 +128,7 @@ The Blueprint configures the hosted development credentials automatically:
 - Dashboard password: generated securely by Render
 - macOS agent enrollment token: generated securely by Render
 
-Render also generates `PATCHOPS_SESSION_SECRET` automatically. Open the API service's **Environment** page to reveal or copy the generated dashboard password and enrollment token. Never commit those values. Enter the enrollment token in the macOS agent Settings screen; the agent exchanges it for a device-scoped credential and stores both secrets in macOS Keychain.
+Render also generates `PATCHOPS_SESSION_SECRET` automatically. Open the API service's **Environment** page to reveal or copy the generated dashboard password and enrollment token. Never commit those values. The macOS installer asks the administrator for the enrollment token once, stores it in macOS Keychain, and starts the hidden agent. Endpoint users do not receive local settings or agent controls.
 
 ### Publish the dashboard
 
@@ -156,8 +156,8 @@ Open **Agents** in the hosted console and download the macOS agent ZIP, SHA-256 
 bash install-macos-agent.sh
 ```
 
-The installer verifies the app signature and installs it in `~/Applications`. Open PatchOps Agent, choose the hosted development API in Settings, and enter the enrollment token from the Render API service. The test device appears under **Devices** after enrollment and synchronization.
+The installer verifies the app signature, installs it in `~/Applications`, asks for the Render enrollment token on a new VM, and registers a per-user LaunchAgent. The test device appears under **Devices** after automatic enrollment and synchronization.
 
-To test remote alerts, keep PatchOps Agent open on the VM, open **Notifications** in the dashboard, choose the enrolled VM, and select **Send to test Mac**. The agent checks the hosted queue every 15 seconds, displays a native Notification Center banner, and reports the user's selected action to the delivery table. All actions remain simulation-only.
+To test remote alerts, leave the VM signed in, open **Notifications** in the dashboard, choose the enrolled VM, and select **Send to test Mac**. The hidden agent checks the hosted queue using its console-managed cadence, displays the selected native or custom popup, and reports the user's selected action to the delivery table. All actions remain simulation-only.
 
 This is an ad-hoc-signed, non-notarized development build for isolated VMs. It does not install a root daemon or privileged helper and cannot patch or reboot a machine. Do not use it on production endpoints. Production releases require Developer ID signing and Apple notarization. The Windows download remains a placeholder until its native package is implemented.

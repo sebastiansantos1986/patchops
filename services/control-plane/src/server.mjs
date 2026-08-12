@@ -46,6 +46,8 @@ export function createApp(store, options = {}) {
       if (request.method === "GET" && request.url === "/api/notifications") return dashboardAuthorized() ? send(200, { notifications: await store.listNotifications() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/settings/notifications") return dashboardAuthorized() ? send(200, await store.getNotificationSettings()) : send(401, { error: "unauthorized" });
       if (request.method === "POST" && request.url === "/api/settings/notifications") return dashboardAuthorized() ? send(200, await store.saveNotificationSettings(await body())) : send(401, { error: "unauthorized" });
+      if (request.method === "GET" && request.url === "/api/settings/agent") return dashboardAuthorized() ? send(200, await store.getAgentSettings()) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/settings/agent") return dashboardAuthorized() ? send(200, await store.saveAgentSettings(await body())) : send(401, { error: "unauthorized" });
       if (request.method === "POST" && request.url === "/api/notifications") {
         if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
         const notification = await store.createNotification(await body());
@@ -55,6 +57,11 @@ export function createApp(store, options = {}) {
         const deviceID = requestURL().searchParams.get("device_id");
         if (!await deviceAuthorized(deviceID)) return send(401, { error: "unauthorized" });
         return send(200, { notifications: await store.pendingNotifications(deviceID) });
+      }
+      if (request.method === "GET" && request.url.startsWith("/api/agent/policy?")) {
+        const deviceID = requestURL().searchParams.get("device_id");
+        if (!await deviceAuthorized(deviceID)) return send(401, { error: "unauthorized" });
+        return send(200, await store.getAgentSettings());
       }
       if (request.method === "POST" && request.url === "/api/agent/notifications/ack") {
         const input = await body();

@@ -38,6 +38,9 @@ test("dashboard data requires a valid short-lived session", async () => {
   const savedSettings = await request("/settings/notifications", { method: "POST", authorization: `Bearer ${token}`, body: { app_name: "Acme Updates", accent_color: "#0A84FF", primary_label: "Update Now", popup_width: 640 } });
   assert.equal(savedSettings.status, 200);
   assert.equal((await savedSettings.json()).popup_width, 640);
+  const savedAgentPolicy = await request("/settings/agent", { method: "POST", authorization: `Bearer ${token}`, body: { inventory_interval_seconds: 3600, notification_poll_seconds: 30 } });
+  assert.equal(savedAgentPolicy.status, 200);
+  assert.equal((await savedAgentPolicy.json()).inventory_interval_seconds, 3600);
   assert.equal((await request("/devices", { authorization: `Bearer ${token}` })).status, 200);
   assert.equal((await request("/campaigns", { method: "POST", authorization: `Bearer ${token}`, body: { name: "Pilot" } })).status, 201);
 });
@@ -48,6 +51,10 @@ test("enrollment exchanges a one-time secret for device-scoped credentials", asy
   const enrolled = await request("/agent/enroll", { method: "POST", authorization: "Enrollment enroll-secret", body: input });
   assert.equal(enrolled.status, 201);
   const identity = await enrolled.json();
+  assert.equal((await request(`/agent/policy?device_id=${encodeURIComponent(identity.device_id)}`, { authorization: "Bearer wrong" })).status, 401);
+  const policy = await request(`/agent/policy?device_id=${encodeURIComponent(identity.device_id)}`, { authorization: `Bearer ${identity.agent_token}` });
+  assert.equal(policy.status, 200);
+  assert.equal((await policy.json()).notification_poll_seconds, 30);
   const inventory = { device_id: identity.device_id, captured_at: new Date().toISOString(), os: { name: "macOS", version: "15" }, software: [] };
   assert.equal((await request("/agent/inventory", { method: "POST", authorization: "Bearer wrong", body: inventory })).status, 401);
   assert.equal((await request("/agent/inventory", { method: "POST", authorization: `Bearer ${identity.agent_token}`, body: inventory })).status, 200);

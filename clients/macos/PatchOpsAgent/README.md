@@ -2,7 +2,7 @@
 
 This is a native SwiftUI test agent for macOS 13 or newer. It provides a polished local dashboard, gathers read-only device and application inventory, enrolls with the PatchOps POC API, and sends native actionable Notification Center alerts.
 
-Version 0.4 polls the authenticated PatchOps notification queue every 15 seconds while the app is open. A dashboard administrator can target an enrolled test Mac and choose either a native system banner or a fully branded PUSH-style SwiftUI popup. Delivery and the selected simulation action return to the console.
+Version 0.5 runs as a hidden per-user LaunchAgent, refreshes inventory every 15 minutes, and polls the authenticated PatchOps notification queue every 15 seconds. A dashboard administrator controls the test Mac and chooses either a native system banner or a fully branded PUSH-style SwiftUI popup. Delivery and the selected simulation action return to the console; the endpoint user has no agent dashboard or menu-bar controls.
 
 ## Safety boundary
 
@@ -34,27 +34,19 @@ Start the local control plane in one terminal:
 npm run api
 ```
 
-Then build, copy to `~/Applications`, and open the agent:
+Then build and install the hidden managed agent:
 
 ```bash
 npm run macos:install
 ```
 
-In the app:
-
-1. Select **Overview** and choose **Scan now**.
-2. Review the **Inventory** list.
-3. Choose **Sync to PatchOps** while the local API is running. The local development enrollment token is `POC-MACOS-ENROLL-TOKEN`.
-4. Select **Notifications**, grant permission, and send a test notification.
-5. Click a notification action and confirm its simulation result in the app. API action history now requires a dashboard session.
-
-For the hosted development environment, open **Settings**, choose **Use hosted development API**, enter the enrollment token configured in Render, and save. Enrollment and device credentials are stored in macOS Keychain; they are not written to the settings JSON file.
+The development installer configures the local API and enrollment token, registers `~/Library/LaunchAgents/com.patchops.agent.lab.plist`, and starts the process. Inventory, timing, notification design, and allowed presentation types are controlled from the web console. Enrollment and device credentials are stored in macOS Keychain; they are not written to the settings JSON file.
 
 To verify API enrollment without opening the app, run `npm run macos:sync-probe` while the API is running.
 
 ## Current development limits
 
-- The app runs when opened; it is not yet a LaunchAgent or root LaunchDaemon.
+- The app runs as an unprivileged per-user LaunchAgent; a production system-wide service and privileged patch helper are not implemented.
 - The app has a local ad-hoc signature and is not notarized for distribution.
 - Non-secret settings are stored in a user settings file; enrollment and agent tokens use macOS Keychain.
 - The API uses an in-memory POC store.
