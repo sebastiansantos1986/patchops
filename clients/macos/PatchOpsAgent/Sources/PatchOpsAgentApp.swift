@@ -1,30 +1,24 @@
+import AppKit
 import SwiftUI
+
+@MainActor
+final class PatchOpsAgentDelegate: NSObject, NSApplicationDelegate {
+    let model = AgentModel()
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        model.startManagedOperation()
+    }
+
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
+}
 
 @main
 struct PatchOpsAgentApp: App {
-    @StateObject private var model = AgentModel()
+    @NSApplicationDelegateAdaptor(PatchOpsAgentDelegate.self) private var delegate
 
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-                .environmentObject(model)
-                .frame(minWidth: 940, minHeight: 620)
-                .task {
-                    if model.snapshot == nil { model.scan() }
-                    model.startNotificationPolling()
-                }
-        }
-        .windowStyle(.hiddenTitleBar)
-
-        MenuBarExtra("PatchOps", systemImage: model.state == .failed ? "exclamationmark.shield" : "checkmark.shield") {
-            Text(model.statusMessage)
-            Divider()
-            Button("Collect inventory") { model.scan() }
-            Button("Sync now") { model.sync() }
-            Button("Test notification") { Task { await model.notifications.sendUpdateNotification() } }
-            Divider()
-            Button("Open PatchOps") { NSApplication.shared.activate(ignoringOtherApps: true) }
-            Button("Quit") { NSApplication.shared.terminate(nil) }
+        Settings {
+            EmptyView()
         }
     }
 }

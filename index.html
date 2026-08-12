@@ -132,12 +132,85 @@
       }
 
       .sidebar-footer {
-        margin-top: auto;
+        margin-top: 0;
         padding: 12px;
         border: 1px solid rgba(255, 255, 255, 0.12);
         border-radius: 10px;
         background: rgba(255, 255, 255, 0.06);
       }
+
+      .settings-dock { margin-top: auto; }
+
+      .settings-hero {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 24px;
+        margin-bottom: 22px;
+      }
+
+      .settings-search {
+        width: min(440px, 100%);
+        padding: 12px 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: 8px;
+        background: var(--panel);
+        color: var(--ink);
+        outline: none;
+      }
+
+      .settings-search:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37, 99, 235, .13); }
+
+      .settings-categories {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        padding-bottom: 14px;
+        margin-bottom: 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .settings-category {
+        border: 0;
+        border-radius: 999px;
+        padding: 8px 12px;
+        color: var(--muted);
+        background: transparent;
+        cursor: pointer;
+        white-space: nowrap;
+        font-weight: 700;
+        font-size: 13px;
+      }
+
+      .settings-category.active,
+      .settings-category:hover { color: var(--blue); background: rgba(37, 99, 235, .09); }
+
+      .settings-catalog-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .settings-card {
+        min-height: 142px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--ink);
+        background: var(--panel);
+        text-align: left;
+        cursor: pointer;
+        box-shadow: 0 8px 22px rgba(28, 43, 65, .05);
+      }
+
+      .settings-card:hover { border-color: #9db7d4; transform: translateY(-1px); box-shadow: var(--shadow); }
+      .settings-card[hidden] { display: none; }
+      .settings-card-head { display: flex; align-items: center; gap: 11px; margin-bottom: 12px; }
+      .settings-card-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 9px; color: var(--blue); background: rgba(37, 99, 235, .1); font-weight: 900; }
+      .settings-card strong { font-size: 14px; }
+      .settings-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
+      .settings-detail[hidden] { display: none; }
+      .settings-detail-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
 
       .sidebar-footer strong {
         color: #fff;
@@ -1767,6 +1840,7 @@
         .severity-strip,
         .download-grid,
         .integration-grid,
+        .settings-catalog-grid,
         .reports-grid {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
@@ -1846,10 +1920,16 @@
         .role-grid,
         .download-grid,
         .integration-grid,
+        .settings-catalog-grid,
         .meta-grid,
         .two-col,
         .reports-grid {
           grid-template-columns: 1fr;
+        }
+
+        .settings-hero,
+        .settings-detail-toolbar {
+          flex-direction: column;
         }
 
         .toolbar-row,
@@ -2061,13 +2141,16 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/></svg>
             <span>Policies</span>
           </button>
-          <button class="nav-btn" data-view="settings" title="Settings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9c.2.6.8 1 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
-            <span>Settings</span>
-          </button>
           <button class="nav-btn" data-view="audit" title="Audit">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
             <span>Audit</span>
+          </button>
+        </nav>
+
+        <nav class="nav-group settings-dock" aria-label="Configuration">
+          <button class="nav-btn" data-view="settings" title="Settings">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9c.2.6.8 1 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
+            <span>Settings</span>
           </button>
         </nav>
 
@@ -2314,6 +2397,7 @@
                 <div class="remediation-step"><strong>3. Export evidence</strong><span>Generate a compliance report after remediation to capture before/after posture.</span></div>
                 <button class="primary-btn" data-open-view="campaign-builder">Build Campaign From Findings</button>
               </aside>
+            </div>
             </div>
           </div>
 
@@ -2574,24 +2658,24 @@
                     <div class="item-title">macOS Agent</div>
                     <div class="item-sub">macOS 13+ · Universal Apple silicon and Intel build</div>
                   </div>
-                  <span class="badge good">v0.4 PUSH Studio</span>
+                  <span class="badge good">v0.5 Managed background</span>
                 </div>
                 <div class="meta-grid">
                   <div class="meta-tile"><span>Package</span><strong>Universal app ZIP</strong></div>
-                  <div class="meta-tile"><span>Privileges</span><strong>Standard user</strong></div>
+                  <div class="meta-tile"><span>Runtime</span><strong>Hidden LaunchAgent</strong></div>
                   <div class="meta-tile"><span>Signing</span><strong>Ad-hoc test</strong></div>
                 </div>
-                <div class="code-box">shasum -a 256 PatchOps-Agent-macOS-0.4.0.zip</div>
+                <div class="code-box">shasum -a 256 PatchOps-Agent-macOS-0.5.0.zip</div>
                 <div class="download-actions">
-                  <a class="download-link" href="downloads/PatchOps-Agent-macOS-0.4.0.zip" download>
+                  <a class="download-link" href="downloads/PatchOps-Agent-macOS-0.5.0.zip" download>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
                     Download macOS Agent
                   </a>
-                  <a class="ghost-btn" href="downloads/PatchOps-Agent-macOS-0.4.0.sha256" download>Download Checksum</a>
+                  <a class="ghost-btn" href="downloads/PatchOps-Agent-macOS-0.5.0.sha256" download>Download Checksum</a>
                   <a class="ghost-btn" href="downloads/install-macos-agent.sh" download>Download Installer</a>
                   <button class="ghost-btn">Copy Verify Command</button>
                 </div>
-                <p class="item-sub">Test build only: not Developer ID signed or notarized. Use isolated VMs; right-click the app and choose Open. No daemon, root helper, patching, or reboot capability is included.</p>
+                <p class="item-sub">Test build only: not Developer ID signed or notarized. Use isolated VMs. It runs at login without a Dock or menu-bar UI; no root helper, patching, or reboot capability is included.</p>
               </article>
             </div>
 
@@ -2632,7 +2716,7 @@
                   <div class="field"><label for="notification-subtitle">Subtitle</label><input id="notification-subtitle" maxlength="120" value="PatchOps VM Lab" /></div>
                   <div class="field"><label for="notification-body">Message</label><textarea id="notification-body" maxlength="500" required>This is a real notification delivery test. Choosing an action will not install software or restart this Mac.</textarea></div>
                 </div>
-                <div class="popup-actions"><button class="primary-btn" type="submit">Send to test Mac</button><span class="item-sub" id="notification-send-status">The agent checks for new messages every 15 seconds while it is open.</span></div>
+                <div class="popup-actions"><button class="primary-btn" type="submit">Send to test Mac</button><span class="item-sub" id="notification-send-status">The managed background agent checks for new messages every 15 seconds.</span></div>
               </form>
             </article>
 
@@ -2929,12 +3013,58 @@
           </div>
 
           <div class="view" id="settings">
-            <div class="section-head">
-              <div><h2>Settings</h2><p>One place for notification design, tenant security, approvals, policy defaults, and integrations.</p></div>
-              <button class="primary-btn" id="save-notification-settings">Save Settings</button>
+            <div id="settings-catalog">
+              <div class="settings-hero">
+                <div><h2>Settings</h2><p>Configure PatchOps from one organized workspace without adding more sidebar items.</p></div>
+                <input class="settings-search" id="settings-search" type="search" placeholder="Search settings" aria-label="Search settings" />
+              </div>
+              <div class="settings-categories" role="tablist" aria-label="Settings categories">
+                <button class="settings-category active" data-settings-category="all">All</button>
+                <button class="settings-category" data-settings-category="system">System</button>
+                <button class="settings-category" data-settings-category="agents">Agent management</button>
+                <button class="settings-category" data-settings-category="users">User experience</button>
+                <button class="settings-category" data-settings-category="security">Security</button>
+                <button class="settings-category" data-settings-category="integrations">Integrations</button>
+              </div>
+              <div class="settings-catalog-grid">
+                <button class="settings-card" data-settings-category-value="system" data-settings-name="Organization and branding">
+                  <span class="settings-card-head"><span class="settings-card-icon">O</span><strong>Organization and branding</strong></span><p>Company identity, console appearance, locale, and support information.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="agents" data-settings-name="Agent enrollment and packages">
+                  <span class="settings-card-head"><span class="settings-card-icon">A</span><strong>Agent enrollment and packages</strong></span><p>Enrollment tokens, macOS and Windows downloads, update channels, and health.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="agents" data-settings-name="Agent behavior" data-settings-panel="agent">
+                  <span class="settings-card-head"><span class="settings-card-icon">B</span><strong>Agent behavior</strong></span><p>Inventory cadence, background check-ins, logging, and bandwidth controls.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="users" data-settings-name="Notification studio" data-settings-panel="notification">
+                  <span class="settings-card-head"><span class="settings-card-icon">N</span><strong>Notification studio</strong></span><p>Customize branded popups, buttons, deferrals, support details, and previews.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="system" data-settings-name="Patch and reboot defaults">
+                  <span class="settings-card-head"><span class="settings-card-icon">P</span><strong>Patch and reboot defaults</strong></span><p>Default SLAs, maintenance windows, restart rules, and safety thresholds.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="security" data-settings-name="Roles and permissions">
+                  <span class="settings-card-head"><span class="settings-card-icon">R</span><strong>Roles and permissions</strong></span><p>Administrator roles, approvals, session security, and least-privilege access.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="security" data-settings-name="API roles and clients">
+                  <span class="settings-card-head"><span class="settings-card-icon">API</span><strong>API roles and clients</strong></span><p>Create scoped API clients, rotate credentials, and control automation access.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="integrations" data-settings-name="Integrations and webhooks">
+                  <span class="settings-card-head"><span class="settings-card-icon">I</span><strong>Integrations and webhooks</strong></span><p>Connect Jamf, Intune, identity providers, ticketing, SIEM, and event receivers.</p>
+                </button>
+                <button class="settings-card" data-settings-category-value="security" data-settings-name="Audit and retention">
+                  <span class="settings-card-head"><span class="settings-card-icon">L</span><strong>Audit and retention</strong></span><p>Evidence retention, event export, change history, and compliance controls.</p>
+                </button>
+              </div>
             </div>
 
-            <div class="admin-grid">
+            <div class="settings-detail" id="settings-notification-detail" hidden>
+              <div class="settings-detail-toolbar">
+                <button class="ghost-btn settings-back" type="button">← All settings</button>
+                <div><h2 style="margin:0">Notification studio</h2><p style="margin:3px 0 0;color:var(--muted)">Console-managed design and behavior for endpoint prompts.</p></div>
+                <span style="flex:1"></span>
+                <button class="primary-btn" id="save-notification-settings">Save Settings</button>
+              </div>
+              <div class="admin-grid">
               <div>
                 <section class="builder-section">
                   <h2>Notification appearance</h2>
@@ -2961,38 +3091,6 @@
                   </div>
                 </section>
 
-                <section class="builder-section">
-                  <h2>Roles and access</h2>
-                  <p>Use least-privilege roles so patching, reporting, and audit access are separated.</p>
-                  <div class="role-grid">
-                    <div class="role-card"><strong>Owner</strong><span>Full tenant, billing, security, and approval control.</span></div>
-                    <div class="role-card"><strong>Security Admin</strong><span>Findings, policies, reports, and emergency remediation.</span></div>
-                    <div class="role-card"><strong>Patch Admin</strong><span>Campaigns, agents, notifications, and device actions.</span></div>
-                    <div class="role-card"><strong>Auditor</strong><span>Read-only reports, evidence, audit log, and exports.</span></div>
-                  </div>
-                </section>
-
-                <section class="builder-section">
-                  <h2>Approval workflow</h2>
-                  <p>Control high-impact actions before they affect users or production devices.</p>
-                  <div class="template-grid">
-                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Require approval before forced reboot</div><div class="item-sub">Two-person approval for reboot deadlines under 24 hours.</div></div><span class="badge good">On</span></label>
-                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Allow emergency auto-patch for critical browser CVEs</div><div class="item-sub">Starts pilot ring immediately, pauses on failure threshold.</div></div><span class="badge warn">Guarded</span></label>
-                    <label class="check-row"><input type="checkbox" checked /><div><div class="item-title">Require exception reason for unresolved findings</div><div class="item-sub">Exception register appears in compliance evidence reports.</div></div><span class="badge good">On</span></label>
-                  </div>
-                </section>
-
-                <section class="builder-section">
-                  <h2>Default SLAs</h2>
-                  <p>Severity-driven remediation windows used by Findings, Campaign Builder, and Reports.</p>
-                  <div class="form-grid">
-                    <div class="field"><label>Critical</label><select><option>24 hours</option><option>12 hours</option><option>48 hours</option></select></div>
-                    <div class="field"><label>High</label><select><option>7 days</option><option>3 days</option><option>14 days</option></select></div>
-                    <div class="field"><label>Medium</label><select><option>30 days</option><option>14 days</option><option>45 days</option></select></div>
-                    <div class="field"><label>Unsupported software</label><select><option>Custom by policy</option><option>7 days</option><option>Require approval</option></select></div>
-                  </div>
-                </section>
-
               </div>
 
               <aside class="panel review-card">
@@ -3002,23 +3100,39 @@
                   <p class="push-preview-copy">Important verified updates are ready. Choose when to continue; test-mode actions are recorded without changing this Mac.</p>
                   <div class="push-preview-actions"><button class="ghost-btn" id="preview-secondary" type="button">Remind Me Later</button><button class="push-preview-primary" id="preview-primary" type="button">Install Now</button></div>
                 </div>
-                <div style="height:18px"></div>
-                <div class="section-head"><div><h2>Security posture</h2><p>Tenant-level controls.</p></div><span class="badge good">Healthy</span></div>
-                <div class="activity-list">
-                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">SSO / OIDC</div><div class="item-sub">Okta connected · SCIM planned.</div></div><span class="badge good">On</span></div>
-                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">MFA required</div><div class="item-sub">All privileged roles must use MFA.</div></div><span class="badge good">On</span></div>
-                  <div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">API tokens</div><div class="item-sub">2 active tokens · rotate every 90 days.</div></div><span class="badge warn">Review</span></div>
-                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Audit retention</div><div class="item-sub">365 days online, 7 years archive.</div></div><span class="badge good">Set</span></div>
-                  <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Agent package trust</div><div class="item-sub">Signed Windows MSI and notarized macOS PKG required.</div></div><span class="badge info">Planned</span></div>
-                </div>
-
-                <div class="section-head" style="margin-top: 16px"><div><h2>Webhooks</h2><p>Send events to SIEM or ticketing.</p></div></div>
-                <div class="meta-grid">
-                  <div class="meta-tile"><span>Findings</span><strong>Enabled</strong></div>
-                  <div class="meta-tile"><span>Campaigns</span><strong>Enabled</strong></div>
-                  <div class="meta-tile"><span>Reports</span><strong>Draft</strong></div>
-                </div>
               </aside>
+            </div>
+            </div>
+
+            <div class="settings-detail" id="settings-agent-detail" hidden>
+              <div class="settings-detail-toolbar">
+                <button class="ghost-btn settings-back" type="button">← All settings</button>
+                <div><h2 style="margin:0">Agent behavior</h2><p style="margin:3px 0 0;color:var(--muted)">Control background operation centrally for every enrolled endpoint.</p></div>
+                <span style="flex:1"></span>
+                <button class="primary-btn" id="save-agent-settings">Save Agent Policy</button>
+              </div>
+              <div class="builder-grid">
+                <section class="builder-section">
+                  <h2>Check-in cadence</h2>
+                  <p>Agents retrieve this authenticated policy after enrollment and on every inventory sync.</p>
+                  <div class="form-grid">
+                    <div class="field"><label>Inventory and heartbeat</label><select id="agent-inventory-interval"><option value="300">Every 5 minutes</option><option value="900" selected>Every 15 minutes</option><option value="3600">Every hour</option><option value="21600">Every 6 hours</option></select></div>
+                    <div class="field"><label>Notification check</label><select id="agent-notification-interval"><option value="5">Every 5 seconds</option><option value="15" selected>Every 15 seconds</option><option value="30">Every 30 seconds</option><option value="60">Every minute</option></select></div>
+                  </div>
+                  <div class="template-grid" style="margin-top:14px">
+                    <label class="check-row"><input id="agent-allow-custom" type="checkbox" checked /><div><div class="item-title">Allow custom SwiftUI popups</div><div class="item-sub">Display fully branded console-managed prompts.</div></div><span class="badge good">Managed</span></label>
+                    <label class="check-row"><input id="agent-allow-system" type="checkbox" checked /><div><div class="item-title">Allow macOS system notifications</div><div class="item-sub">Permit Notification Center delivery when selected by an administrator.</div></div><span class="badge good">Managed</span></label>
+                  </div>
+                </section>
+                <aside class="panel review-card">
+                  <div class="section-head"><div><h2>Endpoint experience</h2><p>What the device user sees.</p></div><span class="badge good">Background</span></div>
+                  <div class="activity-list">
+                    <div class="activity-item"><span class="pulse"></span><div><div class="item-title">No Dock application</div><div class="item-sub">The agent runs with LSUIElement enabled.</div></div><span class="badge good">Hidden</span></div>
+                    <div class="activity-item"><span class="pulse"></span><div><div class="item-title">No menu-bar controls</div><div class="item-sub">Endpoint users cannot change API, token, cadence, or notification settings.</div></div><span class="badge good">Console only</span></div>
+                    <div class="activity-item"><span class="pulse"></span><div><div class="item-title">Starts at user login</div><div class="item-sub">A per-user LaunchAgent keeps the lab agent available.</div></div><span class="badge info">v0.5</span></div>
+                  </div>
+                </aside>
+              </div>
             </div>
           </div>
 
@@ -3110,6 +3224,22 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
 
+      function showSettingsCatalog() {
+        document.getElementById("settings-catalog").hidden = false;
+        document.getElementById("settings-notification-detail").hidden = true;
+        document.getElementById("settings-agent-detail").hidden = true;
+      }
+
+      function filterSettingsCatalog() {
+        const query = document.getElementById("settings-search").value.trim().toLowerCase();
+        const category = document.querySelector(".settings-category.active")?.dataset.settingsCategory ?? "all";
+        document.querySelectorAll(".settings-card").forEach((card) => {
+          const categoryMatches = category === "all" || card.dataset.settingsCategoryValue === category;
+          const queryMatches = !query || card.dataset.settingsName.toLowerCase().includes(query) || card.textContent.toLowerCase().includes(query);
+          card.hidden = !(categoryMatches && queryMatches);
+        });
+      }
+
       const escapeHtml = (value) => String(value ?? "").replace(/[&<>'"]/g, (character) => ({
         "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#39;", '"': "&quot;"
       })[character]);
@@ -3126,6 +3256,7 @@
         : window.PATCHOPS_CONFIG?.apiUrl;
       let dashboardToken = sessionStorage.getItem("patchops_dashboard_token");
       let notificationSettings = null;
+      let agentSettings = null;
       const authGate = document.getElementById("auth-gate");
       const authForm = document.getElementById("auth-form");
       const authError = document.getElementById("auth-error");
@@ -3182,6 +3313,26 @@
         document.getElementById("setting-require-reason").checked = Boolean(notificationSettings.require_deferral_reason);
         document.getElementById("notification-presentation").value = notificationSettings.presentation ?? "custom";
         updateNotificationPreview();
+      }
+
+      function collectAgentSettings() {
+        return {
+          inventory_interval_seconds: Number(document.getElementById("agent-inventory-interval").value),
+          notification_poll_seconds: Number(document.getElementById("agent-notification-interval").value),
+          allow_custom_popups: document.getElementById("agent-allow-custom").checked,
+          allow_system_notifications: document.getElementById("agent-allow-system").checked
+        };
+      }
+
+      async function loadAgentSettings() {
+        if (!dashboardToken) return;
+        const response = await fetch(`${apiBaseUrl}/settings/agent`, { headers: { authorization: `Bearer ${dashboardToken}` } });
+        if (!response.ok) return;
+        agentSettings = await response.json();
+        document.getElementById("agent-inventory-interval").value = String(agentSettings.inventory_interval_seconds);
+        document.getElementById("agent-notification-interval").value = String(agentSettings.notification_poll_seconds);
+        document.getElementById("agent-allow-custom").checked = agentSettings.allow_custom_popups !== false;
+        document.getElementById("agent-allow-system").checked = agentSettings.allow_system_notifications !== false;
       }
 
       authForm.addEventListener("submit", async (event) => {
@@ -3316,8 +3467,35 @@
       document.querySelectorAll(".nav-btn").forEach((button) => {
         button.addEventListener("click", () => {
           showView(button.dataset.view);
+          if (button.dataset.view === "settings") showSettingsCatalog();
         });
       });
+
+      document.getElementById("settings-search").addEventListener("input", filterSettingsCatalog);
+      document.querySelectorAll(".settings-category").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.querySelectorAll(".settings-category").forEach((item) => item.classList.toggle("active", item === button));
+          filterSettingsCatalog();
+        });
+      });
+      document.querySelectorAll(".settings-card").forEach((card) => {
+        card.addEventListener("click", () => {
+          if (card.dataset.settingsPanel === "notification") {
+            document.getElementById("settings-catalog").hidden = true;
+            document.getElementById("settings-notification-detail").hidden = false;
+            loadNotificationSettings();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } else if (card.dataset.settingsPanel === "agent") {
+            document.getElementById("settings-catalog").hidden = true;
+            document.getElementById("settings-agent-detail").hidden = false;
+            loadAgentSettings();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          } else {
+            showToast(card.dataset.settingsName, "This settings module is organized and ready for its backend workflow in the next build.");
+          }
+        });
+      });
+      document.querySelectorAll(".settings-back").forEach((button) => button.addEventListener("click", showSettingsCatalog));
 
       document.querySelector('[title="Refresh metrics"]').addEventListener("click", () => refreshLiveDevices({ notify: true }));
       document.getElementById("device-rows").addEventListener("click", (event) => {
@@ -3344,8 +3522,8 @@
           if (response.status === 401) return showAuthGate("Your session expired. Please sign in again.");
           if (!response.ok) throw new Error(`API returned ${response.status}`);
           const notification = await response.json();
-          status.textContent = `Queued ${notification.id}. Keep PatchOps Agent open; delivery normally takes 15 seconds.`;
-          showToast("Notification queued", "The selected test Mac will display a native banner when its agent checks in.");
+          status.textContent = `Queued ${notification.id}. The managed background agent normally delivers it within 15 seconds.`;
+          showToast("Notification queued", "The selected test Mac will display the prompt when its background agent checks in.");
           await refreshNotificationHistory();
         } catch (error) {
           status.textContent = `Send failed: ${error.message}`;
@@ -3372,6 +3550,25 @@
           showToast("Settings saved", "New custom popups will use this PUSH-inspired design.");
         } catch (error) {
           showToast("Settings not saved", error.message);
+        } finally {
+          button.disabled = false;
+        }
+      });
+      document.getElementById("save-agent-settings").addEventListener("click", async () => {
+        const button = document.getElementById("save-agent-settings");
+        button.disabled = true;
+        try {
+          const response = await fetch(`${apiBaseUrl}/settings/agent`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+            body: JSON.stringify(collectAgentSettings())
+          });
+          if (response.status === 401) return showAuthGate("Your session expired. Please sign in again.");
+          if (!response.ok) throw new Error(`API returned ${response.status}`);
+          agentSettings = await response.json();
+          showToast("Agent policy saved", "Enrolled agents retrieve this policy during their next managed sync.");
+        } catch (error) {
+          showToast("Agent policy not saved", error.message);
         } finally {
           button.disabled = false;
         }
@@ -3413,7 +3610,7 @@
 
       document.querySelectorAll("button").forEach((button) => {
         button.addEventListener("click", async () => {
-          if (button.classList.contains("nav-btn") || button.dataset.openView || button.closest(".download-card") || button.id === "save-notification-settings" || button.closest(".push-settings-preview")) return;
+          if (button.classList.contains("nav-btn") || button.classList.contains("settings-card") || button.classList.contains("settings-category") || button.classList.contains("settings-back") || button.dataset.openView || button.closest(".download-card") || button.id === "save-notification-settings" || button.id === "save-agent-settings" || button.closest(".push-settings-preview")) return;
           const text = button.textContent.trim();
           const message = actionMessages[text];
           if (!message) return;

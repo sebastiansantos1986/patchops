@@ -8,6 +8,7 @@ final class AgentModel: ObservableObject {
     @Published var statusMessage = "Ready to collect read-only inventory"
     @Published var settings = AgentSettings()
     @Published var lastSync: Date?
+    @Published var policy = RemoteAgentPolicy()
     @Published var selectedSection: SidebarSection? = .overview
     lazy var notifications = NotificationManager { [weak self] in self?.settings ?? AgentSettings() }
 
@@ -15,6 +16,7 @@ final class AgentModel: ObservableObject {
     private let client = APIClient()
     private let keychain = KeychainStore()
     private var notificationPollingTask: Task<Void, Never>?
+    private var managedSyncTask: Task<Void, Never>?
 
     init() {
         loadSettings()
@@ -35,6 +37,26 @@ final class AgentModel: ObservableObject {
         }
     }
 
+    func startManagedOperation() {
+        guard managedSyncTask == nil else { return }
+        startNotificationPolling()
+        managedSyncTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.collectAndSync()
+                try? await Task.sleep(for: .seconds(self?.policy.inventoryIntervalSeconds ?? 900))
+            }
+        }
+    }
+
+    private func collectAndSync() async {
+        state = .scanning
+        statusMessage = "Collecting managed inventory…"
+        let result = await Task.detached(priority: .utility) { [collector] in collector.collect() }.value
+        snapshot = result
+        saveSnapshot(result)
+        await upload(result)
+    }
+
     func sync() {
         guard let snapshot else {
             statusMessage = "Collect inventory before syncing"
@@ -42,21 +64,26 @@ final class AgentModel: ObservableObject {
         }
         state = .syncing
         statusMessage = "Enrolling and uploading to PatchOps…"
-        Task {
-            do {
-                let enrollment = try await client.enroll(snapshot: snapshot, settings: settings)
-                try await client.upload(snapshot: snapshot, enrollment: enrollment, settings: settings)
-                settings.deviceID = enrollment.deviceId
-                settings.agentToken = enrollment.agentToken
-                saveSettings()
-                state = .healthy
-                lastSync = Date()
-                statusMessage = "Synced securely in POC mode"
-                await pollForNotifications()
-            } catch {
-                state = .failed
-                statusMessage = error.localizedDescription
-            }
+        Task { await upload(snapshot) }
+    }
+
+    private func upload(_ snapshot: DeviceSnapshot) async {
+        state = .syncing
+        statusMessage = "Uploading managed inventory…"
+        do {
+            let enrollment = try await client.enroll(snapshot: snapshot, settings: settings)
+            try await client.upload(snapshot: snapshot, enrollment: enrollment, settings: settings)
+            settings.deviceID = enrollment.deviceId
+            settings.agentToken = enrollment.agentToken
+            saveSettings()
+            policy = try await client.fetchPolicy(settings: settings)
+            state = .healthy
+            lastSync = Date()
+            statusMessage = "Managed and connected"
+            await pollForNotifications()
+        } catch {
+            state = .failed
+            statusMessage = error.localizedDescription
         }
     }
 
@@ -65,7 +92,7 @@ final class AgentModel: ObservableObject {
         notificationPollingTask = Task { [weak self] in
             while !Task.isCancelled {
                 await self?.pollForNotifications()
-                try? await Task.sleep(for: .seconds(15))
+                try? await Task.sleep(for: .seconds(self?.policy.notificationPollSeconds ?? 15))
             }
         }
     }

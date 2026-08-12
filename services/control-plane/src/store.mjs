@@ -19,6 +19,7 @@ const defaultNotificationSettings = () => ({
   support_phone: "",
   help_url: ""
 });
+const defaultAgentSettings = () => ({ inventory_interval_seconds: 900, notification_poll_seconds: 15, allow_custom_popups: true, allow_system_notifications: true });
 
 export class Store {
   constructor() {
@@ -28,6 +29,7 @@ export class Store {
     this.notifications = new Map();
     this.notificationActions = new Map();
     this.notificationSettings = defaultNotificationSettings();
+    this.agentSettings = defaultAgentSettings();
   }
 
   enroll(input) {
@@ -67,6 +69,20 @@ export class Store {
       max_deferrals: Math.min(10, Math.max(0, Number(input.max_deferrals) || 0))
     };
     return this.notificationSettings;
+  }
+
+  getAgentSettings() { return this.agentSettings; }
+
+  saveAgentSettings(input) {
+    this.agentSettings = {
+      ...this.agentSettings,
+      ...input,
+      inventory_interval_seconds: Math.min(86400, Math.max(60, Number(input.inventory_interval_seconds) || 900)),
+      notification_poll_seconds: Math.min(300, Math.max(5, Number(input.notification_poll_seconds) || 15)),
+      allow_custom_popups: input.allow_custom_popups !== false,
+      allow_system_notifications: input.allow_system_notifications !== false
+    };
+    return this.agentSettings;
   }
 
   createNotification(input) {

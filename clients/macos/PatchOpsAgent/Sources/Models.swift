@@ -108,6 +108,20 @@ struct NotificationEnvelope: Codable {
     let notifications: [RemoteNotification]
 }
 
+struct RemoteAgentPolicy: Codable {
+    var inventoryIntervalSeconds = 900
+    var notificationPollSeconds = 15
+    var allowCustomPopups = true
+    var allowSystemNotifications = true
+
+    enum CodingKeys: String, CodingKey {
+        case inventoryIntervalSeconds = "inventory_interval_seconds"
+        case notificationPollSeconds = "notification_poll_seconds"
+        case allowCustomPopups = "allow_custom_popups"
+        case allowSystemNotifications = "allow_system_notifications"
+    }
+}
+
 struct AgentSettings: Codable {
     var apiURL = "http://127.0.0.1:3000/api"
     var tenantID = "acme-prod"
