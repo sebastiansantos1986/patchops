@@ -1435,6 +1435,20 @@
 
       .field textarea { height: 76px; padding: 10px; resize: vertical; font: inherit; }
 
+      .push-settings-preview {
+        --push-accent: #2563eb;
+        border-radius: 22px;
+        padding: 22px;
+        background: linear-gradient(145deg, rgba(255,255,255,.96), rgba(241,245,249,.92));
+        border: 1px solid rgba(100,116,139,.24);
+        box-shadow: 0 24px 55px rgba(15,23,42,.18);
+      }
+      .push-preview-head { display:flex; align-items:flex-start; gap:14px; }
+      .push-preview-icon { width:52px; height:52px; border-radius:14px; display:grid; place-items:center; color:#fff; font-weight:900; font-size:22px; background:linear-gradient(145deg,var(--push-accent),color-mix(in srgb,var(--push-accent),#fff 25%)); }
+      .push-preview-copy { margin:18px 0; color:var(--muted); line-height:1.55; }
+      .push-preview-actions { display:flex; justify-content:flex-end; gap:10px; }
+      .push-preview-primary { background:var(--push-accent); color:#fff; border:0; border-radius:8px; padding:10px 15px; font-weight:800; }
+
       .check-row {
         display: grid;
         grid-template-columns: 18px minmax(0, 1fr) auto;
@@ -2047,9 +2061,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/></svg>
             <span>Policies</span>
           </button>
-          <button class="nav-btn" data-view="admin" title="Admin">
+          <button class="nav-btn" data-view="settings" title="Settings">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5Z"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.6-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.7 1.7 0 0 0 9 4.6a1.7 1.7 0 0 0 1-1.6V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.6 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1A1.7 1.7 0 0 0 19.4 9c.2.6.8 1 1.6 1h.1a2 2 0 1 1 0 4H21a1.7 1.7 0 0 0-1.6 1Z"/></svg>
-            <span>Admin</span>
+            <span>Settings</span>
           </button>
           <button class="nav-btn" data-view="audit" title="Audit">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
@@ -2560,20 +2574,20 @@
                     <div class="item-title">macOS Agent</div>
                     <div class="item-sub">macOS 13+ · Universal Apple silicon and Intel build</div>
                   </div>
-                  <span class="badge good">v0.3 Remote Alerts</span>
+                  <span class="badge good">v0.4 PUSH Studio</span>
                 </div>
                 <div class="meta-grid">
                   <div class="meta-tile"><span>Package</span><strong>Universal app ZIP</strong></div>
                   <div class="meta-tile"><span>Privileges</span><strong>Standard user</strong></div>
                   <div class="meta-tile"><span>Signing</span><strong>Ad-hoc test</strong></div>
                 </div>
-                <div class="code-box">shasum -a 256 PatchOps-Agent-macOS-0.3.0.zip</div>
+                <div class="code-box">shasum -a 256 PatchOps-Agent-macOS-0.4.0.zip</div>
                 <div class="download-actions">
-                  <a class="download-link" href="downloads/PatchOps-Agent-macOS-0.3.0.zip" download>
+                  <a class="download-link" href="downloads/PatchOps-Agent-macOS-0.4.0.zip" download>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
                     Download macOS Agent
                   </a>
-                  <a class="ghost-btn" href="downloads/PatchOps-Agent-macOS-0.3.0.sha256" download>Download Checksum</a>
+                  <a class="ghost-btn" href="downloads/PatchOps-Agent-macOS-0.4.0.sha256" download>Download Checksum</a>
                   <a class="ghost-btn" href="downloads/install-macos-agent.sh" download>Download Installer</a>
                   <button class="ghost-btn">Copy Verify Command</button>
                 </div>
@@ -2613,6 +2627,7 @@
               <form id="notification-send-form">
                 <div class="form-grid">
                   <div class="field"><label for="notification-device">Test computer</label><select id="notification-device" required><option value="">Load enrolled devices…</option></select></div>
+                  <div class="field"><label for="notification-presentation">Presentation</label><select id="notification-presentation"><option value="custom">Custom PUSH-style popup</option><option value="system">macOS system notification</option></select></div>
                   <div class="field"><label for="notification-title">Title</label><input id="notification-title" maxlength="120" value="Security update test" required /></div>
                   <div class="field"><label for="notification-subtitle">Subtitle</label><input id="notification-subtitle" maxlength="120" value="PatchOps VM Lab" /></div>
                   <div class="field"><label for="notification-body">Message</label><textarea id="notification-body" maxlength="500" required>This is a real notification delivery test. Choosing an action will not install software or restart this Mac.</textarea></div>
@@ -2913,14 +2928,39 @@
             </div>
           </div>
 
-          <div class="view" id="admin">
+          <div class="view" id="settings">
             <div class="section-head">
-              <div><h2>Administration</h2><p>Tenant security, roles, approvals, compliance defaults, API access, and notification branding.</p></div>
-              <button class="primary-btn">Save Settings</button>
+              <div><h2>Settings</h2><p>One place for notification design, tenant security, approvals, policy defaults, and integrations.</p></div>
+              <button class="primary-btn" id="save-notification-settings">Save Settings</button>
             </div>
 
             <div class="admin-grid">
               <div>
+                <section class="builder-section">
+                  <h2>Notification appearance</h2>
+                  <p>PUSH-inspired white-label settings used by every custom PatchOps popup.</p>
+                  <div class="form-grid">
+                    <div class="field"><label>Application name</label><input id="setting-app-name" value="PatchOps Security Updates" /></div>
+                    <div class="field"><label>Organization</label><input id="setting-organization" value="Your Organization" /></div>
+                    <div class="field"><label>Accent color</label><input id="setting-accent-color" type="color" value="#2563eb" /></div>
+                    <div class="field"><label>SF Symbol</label><input id="setting-symbol" value="arrow.down.circle.fill" /></div>
+                    <div class="field"><label>Popup position</label><select id="setting-position"><option value="center">Center</option><option value="topRight">Top right</option><option value="topLeft">Top left</option><option value="bottomRight">Bottom right</option><option value="bottomLeft">Bottom left</option></select></div>
+                    <div class="field"><label>Popup width</label><select id="setting-popup-width"><option value="480">Compact · 480 px</option><option value="540" selected>Standard · 540 px</option><option value="640">Wide · 640 px</option></select></div>
+                    <div class="field"><label>Primary button</label><input id="setting-primary-label" value="Install Now" /></div>
+                    <div class="field"><label>Secondary button</label><input id="setting-secondary-label" value="Remind Me Later" /></div>
+                    <div class="field"><label>Sound</label><select id="setting-sound"><option>Funk</option><option>Glass</option><option>Hero</option><option>Ping</option><option value="">None</option></select></div>
+                    <div class="field"><label>Maximum deferrals</label><input id="setting-max-deferrals" type="number" min="0" max="10" value="3" /></div>
+                    <div class="field"><label>Support email</label><input id="setting-support-email" type="email" placeholder="helpdesk@example.com" /></div>
+                    <div class="field"><label>Support phone</label><input id="setting-support-phone" placeholder="1-800-555-0100" /></div>
+                    <div class="field"><label>Help URL</label><input id="setting-help-url" type="url" placeholder="https://support.example.com" /></div>
+                    <div class="field"><label>Default presentation</label><select id="setting-presentation"><option value="custom">Custom PUSH-style popup</option><option value="system">macOS system notification</option></select></div>
+                  </div>
+                  <div class="template-grid" style="margin-top:12px">
+                    <label class="check-row"><input id="setting-show-close" type="checkbox" checked /><div><div class="item-title">Show close button</div><div class="item-sub">Records a dismiss action when selected.</div></div><span class="badge good">Optional</span></label>
+                    <label class="check-row"><input id="setting-require-reason" type="checkbox" /><div><div class="item-title">Require a deferral reason</div><div class="item-sub">Reserved for the next expanded-response workflow.</div></div><span class="badge info">Configured</span></label>
+                  </div>
+                </section>
+
                 <section class="builder-section">
                   <h2>Roles and access</h2>
                   <p>Use least-privilege roles so patching, reporting, and audit access are separated.</p>
@@ -2953,19 +2993,16 @@
                   </div>
                 </section>
 
-                <section class="builder-section">
-                  <h2>Notification branding</h2>
-                  <p>Make endpoint popups feel trusted and recognizable to users.</p>
-                  <div class="form-grid">
-                    <div class="field"><label>Display name</label><input value="ACME Security Updates" /></div>
-                    <div class="field"><label>Support contact</label><input value="helpdesk@acme.example" /></div>
-                    <div class="field"><label>Tone</label><select><option>Clear and friendly</option><option>Strict compliance</option><option>Minimal</option></select></div>
-                    <div class="field"><label>Logo</label><select><option>Use organization logo</option><option>Use PatchOps logo</option></select></div>
-                  </div>
-                </section>
               </div>
 
               <aside class="panel review-card">
+                <div class="section-head"><div><h2>Live popup preview</h2><p>Updates as you customize.</p></div><span class="badge info">PUSH style</span></div>
+                <div class="push-settings-preview" id="push-settings-preview">
+                  <div class="push-preview-head"><div class="push-preview-icon">P</div><div><div class="item-sub" id="preview-app-name">PatchOps Security Updates</div><h2 style="margin:3px 0">Security update available</h2><strong id="preview-organization" style="color:var(--push-accent)">Your Organization</strong></div></div>
+                  <p class="push-preview-copy">Important verified updates are ready. Choose when to continue; test-mode actions are recorded without changing this Mac.</p>
+                  <div class="push-preview-actions"><button class="ghost-btn" id="preview-secondary" type="button">Remind Me Later</button><button class="push-preview-primary" id="preview-primary" type="button">Install Now</button></div>
+                </div>
+                <div style="height:18px"></div>
                 <div class="section-head"><div><h2>Security posture</h2><p>Tenant-level controls.</p></div><span class="badge good">Healthy</span></div>
                 <div class="activity-list">
                   <div class="activity-item"><span class="pulse"></span><div><div class="item-title">SSO / OIDC</div><div class="item-sub">Okta connected · SCIM planned.</div></div><span class="badge good">On</span></div>
@@ -3023,7 +3060,7 @@
         "evidence-report": ["Evidence Report", "Audit-ready remediation proof, exceptions, notifications, and final state."],
         integrations: ["Integrations", "Connect MDMs and endpoint systems for deployment context."],
         policies: ["Policies", "Deployment rules, restart behavior, and application governance."],
-        admin: ["Admin", "Tenant security, roles, approvals, SLAs, API access, and branding."],
+        settings: ["Settings", "Notification design, security, approvals, API access, and organization defaults."],
         audit: ["Audit", "Immutable administrative and endpoint activity trail."]
       };
 
@@ -3088,6 +3125,7 @@
         ? "http://127.0.0.1:3000/api"
         : window.PATCHOPS_CONFIG?.apiUrl;
       let dashboardToken = sessionStorage.getItem("patchops_dashboard_token");
+      let notificationSettings = null;
       const authGate = document.getElementById("auth-gate");
       const authForm = document.getElementById("auth-form");
       const authError = document.getElementById("auth-error");
@@ -3104,6 +3142,46 @@
         authError.textContent = "";
         authGate.hidden = true;
         document.getElementById("auth-password").value = "";
+      }
+
+      const notificationSettingFields = {
+        app_name: "setting-app-name", organization: "setting-organization", accent_color: "setting-accent-color",
+        symbol: "setting-symbol", position: "setting-position", popup_width: "setting-popup-width",
+        primary_label: "setting-primary-label", secondary_label: "setting-secondary-label", sound: "setting-sound",
+        max_deferrals: "setting-max-deferrals", support_email: "setting-support-email", support_phone: "setting-support-phone",
+        help_url: "setting-help-url", presentation: "setting-presentation"
+      };
+
+      function collectNotificationSettings() {
+        const settings = Object.fromEntries(Object.entries(notificationSettingFields).map(([key, id]) => [key, document.getElementById(id).value]));
+        settings.popup_width = Number(settings.popup_width);
+        settings.max_deferrals = Number(settings.max_deferrals);
+        settings.show_close = document.getElementById("setting-show-close").checked;
+        settings.require_deferral_reason = document.getElementById("setting-require-reason").checked;
+        return settings;
+      }
+
+      function updateNotificationPreview() {
+        const settings = collectNotificationSettings();
+        document.getElementById("push-settings-preview").style.setProperty("--push-accent", settings.accent_color);
+        document.getElementById("preview-app-name").textContent = settings.app_name;
+        document.getElementById("preview-organization").textContent = settings.organization;
+        document.getElementById("preview-primary").textContent = settings.primary_label;
+        document.getElementById("preview-secondary").textContent = settings.secondary_label;
+      }
+
+      async function loadNotificationSettings() {
+        if (!dashboardToken) return;
+        const response = await fetch(`${apiBaseUrl}/settings/notifications`, { headers: { authorization: `Bearer ${dashboardToken}` } });
+        if (!response.ok) return;
+        notificationSettings = await response.json();
+        Object.entries(notificationSettingFields).forEach(([key, id]) => {
+          if (notificationSettings[key] !== undefined) document.getElementById(id).value = notificationSettings[key];
+        });
+        document.getElementById("setting-show-close").checked = notificationSettings.show_close !== false;
+        document.getElementById("setting-require-reason").checked = Boolean(notificationSettings.require_deferral_reason);
+        document.getElementById("notification-presentation").value = notificationSettings.presentation ?? "custom";
+        updateNotificationPreview();
       }
 
       authForm.addEventListener("submit", async (event) => {
@@ -3125,6 +3203,7 @@
           sessionStorage.setItem("patchops_dashboard_token", dashboardToken);
           hideAuthGate();
           await refreshLiveDevices();
+          await loadNotificationSettings();
         } catch (error) {
           authError.textContent = error.message;
         }
@@ -3256,6 +3335,7 @@
             headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
             body: JSON.stringify({
               device_id: document.getElementById("notification-device").value,
+              presentation: document.getElementById("notification-presentation").value,
               title: document.getElementById("notification-title").value,
               subtitle: document.getElementById("notification-subtitle").value,
               body: document.getElementById("notification-body").value
@@ -3273,9 +3353,33 @@
           button.disabled = false;
         }
       });
+      Object.values(notificationSettingFields).forEach((id) => document.getElementById(id).addEventListener("input", updateNotificationPreview));
+      document.getElementById("setting-show-close").addEventListener("change", updateNotificationPreview);
+      document.getElementById("setting-require-reason").addEventListener("change", updateNotificationPreview);
+      document.getElementById("save-notification-settings").addEventListener("click", async () => {
+        const button = document.getElementById("save-notification-settings");
+        button.disabled = true;
+        try {
+          const response = await fetch(`${apiBaseUrl}/settings/notifications`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+            body: JSON.stringify(collectNotificationSettings())
+          });
+          if (response.status === 401) return showAuthGate("Your session expired. Please sign in again.");
+          if (!response.ok) throw new Error(`API returned ${response.status}`);
+          notificationSettings = await response.json();
+          document.getElementById("notification-presentation").value = notificationSettings.presentation;
+          showToast("Settings saved", "New custom popups will use this PUSH-inspired design.");
+        } catch (error) {
+          showToast("Settings not saved", error.message);
+        } finally {
+          button.disabled = false;
+        }
+      });
       if (dashboardToken) {
         hideAuthGate();
         refreshLiveDevices();
+        loadNotificationSettings();
       } else {
         showAuthGate();
       }
@@ -3309,7 +3413,7 @@
 
       document.querySelectorAll("button").forEach((button) => {
         button.addEventListener("click", async () => {
-          if (button.classList.contains("nav-btn") || button.dataset.openView || button.closest(".download-card")) return;
+          if (button.classList.contains("nav-btn") || button.dataset.openView || button.closest(".download-card") || button.id === "save-notification-settings" || button.closest(".push-settings-preview")) return;
           const text = button.textContent.trim();
           const message = actionMessages[text];
           if (!message) return;

@@ -1,6 +1,24 @@
 import { createHash, randomUUID } from "node:crypto";
 
 const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
+const defaultNotificationSettings = () => ({
+  presentation: "custom",
+  app_name: "PatchOps Security Updates",
+  organization: "Your Organization",
+  accent_color: "#2563EB",
+  symbol: "arrow.down.circle.fill",
+  popup_width: 540,
+  position: "center",
+  sound: "Funk",
+  primary_label: "Install Now",
+  secondary_label: "Remind Me Later",
+  show_close: true,
+  max_deferrals: 3,
+  require_deferral_reason: false,
+  support_email: "",
+  support_phone: "",
+  help_url: ""
+});
 
 export class Store {
   constructor() {
@@ -9,6 +27,7 @@ export class Store {
     this.campaigns = new Map();
     this.notifications = new Map();
     this.notificationActions = new Map();
+    this.notificationSettings = defaultNotificationSettings();
   }
 
   enroll(input) {
@@ -36,6 +55,20 @@ export class Store {
 
   listNotifications() { return [...this.notifications.values()].sort((left, right) => right.created_at.localeCompare(left.created_at)); }
 
+  getNotificationSettings() { return this.notificationSettings; }
+
+  saveNotificationSettings(input) {
+    const color = /^#[0-9A-F]{6}$/i.test(input.accent_color ?? "") ? input.accent_color : this.notificationSettings.accent_color;
+    this.notificationSettings = {
+      ...this.notificationSettings,
+      ...input,
+      accent_color: color,
+      popup_width: Math.min(720, Math.max(420, Number(input.popup_width) || 540)),
+      max_deferrals: Math.min(10, Math.max(0, Number(input.max_deferrals) || 0))
+    };
+    return this.notificationSettings;
+  }
+
   createNotification(input) {
     if (!this.devices.has(input.device_id) || !input.title?.trim() || !input.body?.trim()) return null;
     const notification = {
@@ -45,6 +78,8 @@ export class Store {
       subtitle: String(input.subtitle ?? "PatchOps test notification").trim().slice(0, 120),
       body: input.body.trim().slice(0, 500),
       category: "PATCHOPS_UPDATE",
+      presentation: input.presentation === "system" ? "system" : "custom",
+      appearance: { ...this.notificationSettings, ...(input.appearance ?? {}) },
       mode: "simulation",
       status: "queued",
       created_at: new Date().toISOString()

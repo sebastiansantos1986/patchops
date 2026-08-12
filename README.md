@@ -95,6 +95,7 @@ The POC scaffold under `poc-scaffold/` describes how to build the first working 
 - [MVP Technical Spec](docs/mvp-technical-spec.md)
 - [Product Architecture](docs/architecture.md)
 - [Security Model](docs/security-model.md)
+- [PUSH Notification Integration](docs/push-integration.md)
 - [Delivery Roadmap](docs/roadmap.md)
 - [6-Week POC Plan](docs/poc-plan.md)
 - [Backend API Contract](poc-scaffold/backend/api-contract.md)

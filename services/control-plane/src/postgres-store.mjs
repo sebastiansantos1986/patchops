@@ -3,6 +3,7 @@ import pg from "pg";
 
 const { Pool } = pg;
 const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
+const defaultNotificationSettings = () => ({ presentation: "custom", app_name: "PatchOps Security Updates", organization: "Your Organization", accent_color: "#2563EB", symbol: "arrow.down.circle.fill", popup_width: 540, position: "center", sound: "Funk", primary_label: "Install Now", secondary_label: "Remind Me Later", show_close: true, max_deferrals: 3, require_deferral_reason: false, support_email: "", support_phone: "", help_url: "" });
 
 export class PostgresStore {
   constructor(connectionString) {
@@ -16,6 +17,7 @@ export class PostgresStore {
       CREATE TABLE IF NOT EXISTS patchops_campaigns (id TEXT PRIMARY KEY, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_notifications (id TEXT PRIMARY KEY, device_id TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_notification_actions (action_id TEXT PRIMARY KEY, data JSONB NOT NULL, received_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS patchops_settings (key TEXT PRIMARY KEY, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     `);
   }
 
@@ -74,9 +76,30 @@ export class PostgresStore {
     return (await this.pool.query("SELECT data FROM patchops_notifications ORDER BY created_at DESC")).rows.map((row) => row.data);
   }
 
+  async getNotificationSettings() {
+    await this.ready;
+    const result = await this.pool.query("SELECT data FROM patchops_settings WHERE key = 'notifications'");
+    return { ...defaultNotificationSettings(), ...(result.rows[0]?.data ?? {}) };
+  }
+
+  async saveNotificationSettings(input) {
+    await this.ready;
+    const current = await this.getNotificationSettings();
+    const settings = {
+      ...current,
+      ...input,
+      accent_color: /^#[0-9A-F]{6}$/i.test(input.accent_color ?? "") ? input.accent_color : current.accent_color,
+      popup_width: Math.min(720, Math.max(420, Number(input.popup_width) || 540)),
+      max_deferrals: Math.min(10, Math.max(0, Number(input.max_deferrals) || 0))
+    };
+    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ('notifications', $1) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [settings]);
+    return settings;
+  }
+
   async createNotification(input) {
     await this.ready;
     if (!input.title?.trim() || !input.body?.trim() || !await this.hasDevice(input.device_id)) return null;
+    const settings = await this.getNotificationSettings();
     const notification = {
       id: `ntf_${randomUUID()}`,
       device_id: input.device_id,
@@ -84,6 +107,8 @@ export class PostgresStore {
       subtitle: String(input.subtitle ?? "PatchOps test notification").trim().slice(0, 120),
       body: input.body.trim().slice(0, 500),
       category: "PATCHOPS_UPDATE",
+      presentation: input.presentation === "system" ? "system" : "custom",
+      appearance: { ...settings, ...(input.appearance ?? {}) },
       mode: "simulation",
       status: "queued",
       created_at: new Date().toISOString()

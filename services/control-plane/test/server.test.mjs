@@ -31,6 +31,13 @@ test("dashboard data requires a valid short-lived session", async () => {
   const login = await request("/auth/login", { method: "POST", body: { username: "test-admin", password: "console-secret" } });
   assert.equal(login.status, 200);
   const { token } = await login.json();
+
+  const settingsResponse = await request("/settings/notifications", { authorization: `Bearer ${token}` });
+  assert.equal(settingsResponse.status, 200);
+  assert.equal((await settingsResponse.json()).presentation, "custom");
+  const savedSettings = await request("/settings/notifications", { method: "POST", authorization: `Bearer ${token}`, body: { app_name: "Acme Updates", accent_color: "#0A84FF", primary_label: "Update Now", popup_width: 640 } });
+  assert.equal(savedSettings.status, 200);
+  assert.equal((await savedSettings.json()).popup_width, 640);
   assert.equal((await request("/devices", { authorization: `Bearer ${token}` })).status, 200);
   assert.equal((await request("/campaigns", { method: "POST", authorization: `Bearer ${token}`, body: { name: "Pilot" } })).status, 201);
 });
@@ -51,6 +58,7 @@ test("dashboard notifications reach one authenticated device and record its acti
   const identity = await enrolled.json();
   const login = await request("/auth/login", { method: "POST", body: { username: "test-admin", password: "console-secret" } });
   const { token } = await login.json();
+  await request("/settings/notifications", { method: "POST", authorization: `Bearer ${token}`, body: { app_name: "Acme Updates", accent_color: "#0A84FF", primary_label: "Update Now", popup_width: 640 } });
 
   const queued = await request("/notifications", {
     method: "POST",
@@ -59,6 +67,9 @@ test("dashboard notifications reach one authenticated device and record its acti
   });
   assert.equal(queued.status, 201);
   const notification = await queued.json();
+  assert.equal(notification.presentation, "custom");
+  assert.equal(notification.appearance.app_name, "Acme Updates");
+  assert.equal(notification.appearance.primary_label, "Update Now");
 
   assert.equal((await request(`/agent/notifications?device_id=${encodeURIComponent(identity.device_id)}`, { authorization: "Bearer wrong" })).status, 401);
   const pending = await request(`/agent/notifications?device_id=${encodeURIComponent(identity.device_id)}`, { authorization: `Bearer ${identity.agent_token}` });
