@@ -1,12 +1,20 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { createDashboardSession, safeEqual, verifyDashboardSession } from "../src/auth.mjs";
+import { createDashboardSession, hashPassword, safeEqual, verifyDashboardSession, verifyPassword } from "../src/auth.mjs";
 
 test("dashboard sessions are signed, scoped, and expire", () => {
-  const token = createDashboardSession("correct-secret", 60);
-  assert.equal(verifyDashboardSession(token, "correct-secret"), true);
-  assert.equal(verifyDashboardSession(token, "wrong-secret"), false);
-  assert.equal(verifyDashboardSession(createDashboardSession("correct-secret", -1), "correct-secret"), false);
+  const user = { id: "usr_1", username: "reviewer", role: "reviewer" };
+  const token = createDashboardSession("correct-secret", user, 60);
+  assert.equal(verifyDashboardSession(token, "correct-secret").username, "reviewer");
+  assert.equal(verifyDashboardSession(token, "wrong-secret"), null);
+  assert.equal(verifyDashboardSession(createDashboardSession("correct-secret", user, -1), "correct-secret"), null);
+});
+
+test("console passwords use salted scrypt hashes", () => {
+  const hash = hashPassword("a-long-test-password");
+  assert.equal(verifyPassword("a-long-test-password", hash), true);
+  assert.equal(verifyPassword("wrong-password", hash), false);
+  assert.notEqual(hash, hashPassword("a-long-test-password"));
 });
 
 test("constant-time comparison handles missing and unequal values", () => {

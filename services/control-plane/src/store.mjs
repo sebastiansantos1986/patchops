@@ -30,6 +30,31 @@ export class Store {
     this.notificationActions = new Map();
     this.notificationSettings = defaultNotificationSettings();
     this.agentSettings = defaultAgentSettings();
+    this.consoleUsers = new Map();
+  }
+
+  listConsoleUsers() {
+    return [...this.consoleUsers.values()].map(({ password_hash: _passwordHash, ...user }) => user).sort((left, right) => left.username.localeCompare(right.username));
+  }
+
+  findConsoleUser(username) {
+    return [...this.consoleUsers.values()].find((user) => user.username.toLowerCase() === String(username ?? "").toLowerCase()) ?? null;
+  }
+
+  createConsoleUser(input) {
+    if ([...this.consoleUsers.values()].some((user) => user.username.toLowerCase() === input.username.toLowerCase())) return null;
+    const user = { id: `usr_${randomUUID()}`, ...input, created_at: new Date().toISOString(), updated_at: new Date().toISOString() };
+    this.consoleUsers.set(user.id, user);
+    const { password_hash: _passwordHash, ...safeUser } = user;
+    return safeUser;
+  }
+
+  updateConsoleUser(id, changes) {
+    const user = this.consoleUsers.get(id);
+    if (!user) return null;
+    Object.assign(user, changes, { updated_at: new Date().toISOString() });
+    const { password_hash: _passwordHash, ...safeUser } = user;
+    return safeUser;
   }
 
   enroll(input) {

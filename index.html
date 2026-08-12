@@ -1654,6 +1654,21 @@
         line-height: 1.35;
       }
 
+      .account-layout { display: grid; grid-template-columns: minmax(0, 1fr) 350px; gap: 14px; align-items: start; }
+      .account-list { display: grid; gap: 8px; }
+      .account-row { display: grid; grid-template-columns: minmax(160px, 1.3fr) minmax(130px, 1fr) 120px 100px auto; gap: 12px; align-items: center; padding: 13px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel-2); }
+      .account-row.header { padding-block: 8px; color: var(--muted); background: transparent; border: 0; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; }
+      .account-identity { min-width: 0; }
+      .account-identity strong, .account-identity span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .account-identity span { margin-top: 3px; color: var(--muted); font-size: 12px; }
+      .account-actions { display: flex; justify-content: flex-end; }
+      .account-actions .ghost-btn { padding-inline: 9px; }
+      .account-role-select { width: 100%; min-width: 105px; padding: 7px 8px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); background: var(--panel); }
+      .account-form { display: grid; gap: 12px; }
+      .account-form .field { min-width: 0; }
+      .account-help { padding: 12px; border-radius: 9px; color: #14532d; background: #dcfce7; font-size: 12px; line-height: 1.45; }
+      .current-user { color: var(--muted); font-size: 12px; font-weight: 700; white-space: nowrap; }
+
       .download-card {
         background: rgba(255, 255, 255, 0.92);
         border: 1px solid var(--line);
@@ -2071,6 +2086,11 @@
       .auth-error { min-height: 20px; margin-top: 12px; color: #fda4af; font-size: 13px; }
       .sign-out-btn { border: 0; color: var(--muted); background: transparent; cursor: pointer; font-weight: 700; }
       .sign-out-btn:hover { color: var(--ink); }
+      @media (max-width: 1050px) {
+        .account-layout { grid-template-columns: 1fr; }
+        .account-row { grid-template-columns: minmax(150px, 1.4fr) 1fr 110px auto; }
+        .account-email { display: none; }
+      }
     </style>
   </head>
   <body>
@@ -2174,6 +2194,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.5 5.8L21 8"/><path d="M21 3v5h-5"/></svg>
           </button>
           <span class="api-status" id="api-status">Connecting</span>
+          <span class="current-user" id="current-user"></span>
           <button class="sign-out-btn" id="sign-out" type="button">Sign out</button>
           <button class="icon-btn" title="Alerts">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9"/></svg>
@@ -3026,6 +3047,9 @@
                 <button class="settings-category" data-settings-category="integrations">Integrations</button>
               </div>
               <div class="settings-catalog-grid">
+                <button class="settings-card" data-settings-category-value="security" data-settings-name="Administrator accounts" data-settings-panel="accounts">
+                  <span class="settings-card-head"><span class="settings-card-icon">U</span><strong>Administrator accounts</strong></span><p>Create named console users, assign roles, reset passwords, and disable access.</p>
+                </button>
                 <button class="settings-card" data-settings-category-value="system" data-settings-name="Organization and branding">
                   <span class="settings-card-head"><span class="settings-card-icon">O</span><strong>Organization and branding</strong></span><p>Company identity, console appearance, locale, and support information.</p>
                 </button>
@@ -3053,6 +3077,35 @@
                 <button class="settings-card" data-settings-category-value="security" data-settings-name="Audit and retention">
                   <span class="settings-card-head"><span class="settings-card-icon">L</span><strong>Audit and retention</strong></span><p>Evidence retention, event export, change history, and compliance controls.</p>
                 </button>
+              </div>
+            </div>
+
+            <div class="settings-detail" id="settings-accounts-detail" hidden>
+              <div class="settings-detail-toolbar">
+                <button class="ghost-btn settings-back" type="button">← All settings</button>
+                <div><h2 style="margin:0">Administrator accounts</h2><p style="margin:3px 0 0;color:var(--muted)">Give each person an individual login and only the access they need.</p></div>
+              </div>
+              <div class="account-layout">
+                <section class="builder-section">
+                  <div class="section-head"><div><h2>Console users</h2><p>Named accounts stored securely in the PatchOps database.</p></div><span class="badge info" id="account-count">Loading</span></div>
+                  <div class="account-list" id="account-list">
+                    <div class="account-row header"><span>User</span><span class="account-email">Email</span><span>Role</span><span>Status</span><span></span></div>
+                  </div>
+                </section>
+                <aside class="builder-section">
+                  <h2>Create account</h2>
+                  <p>Use Reviewer for someone who only needs to inspect your progress.</p>
+                  <form class="account-form" id="account-form">
+                    <div class="field"><label>Username</label><input id="account-username" autocomplete="off" pattern="[A-Za-z0-9._-]{3,64}" placeholder="progress-reviewer" required /></div>
+                    <div class="field"><label>Full name</label><input id="account-full-name" autocomplete="off" placeholder="Alex Reviewer" required /></div>
+                    <div class="field"><label>Email</label><input id="account-email" type="email" autocomplete="off" placeholder="alex@example.com" /></div>
+                    <div class="field"><label>Role</label><select id="account-role"><option value="reviewer" selected>Read-only Reviewer</option><option value="operator">Operator</option><option value="administrator">Administrator</option></select></div>
+                    <div class="field"><label>Temporary password</label><input id="account-password" type="password" minlength="12" autocomplete="new-password" placeholder="At least 12 characters" required /></div>
+                    <div class="account-help"><strong>Recommended:</strong> choose Read-only Reviewer when inviting someone to check the dashboard. They can see devices, activity, and settings but cannot send notifications or change configuration.</div>
+                    <button class="primary-btn" type="submit">Create Account</button>
+                    <div class="item-sub" id="account-form-status" role="status"></div>
+                  </form>
+                </aside>
               </div>
             </div>
 
@@ -3225,6 +3278,7 @@
 
       function showSettingsCatalog() {
         document.getElementById("settings-catalog").hidden = false;
+        document.getElementById("settings-accounts-detail").hidden = true;
         document.getElementById("settings-notification-detail").hidden = true;
         document.getElementById("settings-agent-detail").hidden = true;
       }
@@ -3254,6 +3308,7 @@
         ? "http://127.0.0.1:3000/api"
         : window.PATCHOPS_CONFIG?.apiUrl;
       let dashboardToken = sessionStorage.getItem("patchops_dashboard_token");
+      let currentUser = JSON.parse(sessionStorage.getItem("patchops_dashboard_user") || "null");
       let notificationSettings = null;
       let agentSettings = null;
       const authGate = document.getElementById("auth-gate");
@@ -3262,7 +3317,10 @@
 
       function showAuthGate(message = "") {
         dashboardToken = null;
+        currentUser = null;
         sessionStorage.removeItem("patchops_dashboard_token");
+        sessionStorage.removeItem("patchops_dashboard_user");
+        document.getElementById("current-user").textContent = "";
         authError.textContent = message;
         authGate.hidden = false;
         document.getElementById("auth-username").focus();
@@ -3272,6 +3330,44 @@
         authError.textContent = "";
         authGate.hidden = true;
         document.getElementById("auth-password").value = "";
+        document.getElementById("current-user").textContent = currentUser ? `${currentUser.username} · ${currentUser.role}` : "";
+      }
+
+      function canManageUsers() { return ["owner", "administrator"].includes(currentUser?.role); }
+
+      function roleLabel(role) {
+        return ({ owner: "Owner", administrator: "Administrator", operator: "Operator", reviewer: "Read-only Reviewer" })[role] ?? role;
+      }
+
+      function accountRow(user, { bootstrap = false } = {}) {
+        const canToggle = canManageUsers() && !bootstrap && user.id !== currentUser?.id;
+        const nextStatus = user.status === "active" ? "disabled" : "active";
+        const roleControl = bootstrap ? escapeHtml(roleLabel(user.role)) : `<select class="account-role-select" data-account-role="${escapeHtml(user.id)}" aria-label="Role for ${escapeHtml(user.username)}" ${user.id === currentUser?.id ? "disabled" : ""}><option value="reviewer" ${user.role === "reviewer" ? "selected" : ""}>Reviewer</option><option value="operator" ${user.role === "operator" ? "selected" : ""}>Operator</option><option value="administrator" ${user.role === "administrator" ? "selected" : ""}>Administrator</option></select>`;
+        return `<div class="account-row">
+          <div class="account-identity"><strong>${escapeHtml(user.full_name || user.username)}</strong><span>${escapeHtml(user.username)}${bootstrap ? " · environment owner" : ""}</span></div>
+          <span class="account-email">${escapeHtml(user.email || "—")}</span>
+          <span>${roleControl}</span>
+          <span class="badge ${user.status === "active" ? "good" : "warn"}">${escapeHtml(user.status)}</span>
+          <div class="account-actions">${!bootstrap ? `<button class="ghost-btn" type="button" data-account-reset="${escapeHtml(user.id)}">Reset</button>` : ""}${canToggle ? `<button class="ghost-btn" type="button" data-account-id="${escapeHtml(user.id)}" data-account-status="${nextStatus}">${nextStatus === "disabled" ? "Disable" : "Enable"}</button>` : ""}</div>
+        </div>`;
+      }
+
+      async function loadConsoleUsers() {
+        const list = document.getElementById("account-list");
+        const form = document.getElementById("account-form");
+        if (!canManageUsers()) {
+          list.innerHTML = `<div class="account-row header"><span>Access restricted</span></div><p class="item-sub">Only an Owner or Administrator can manage console accounts.</p>`;
+          form.hidden = true;
+          document.getElementById("account-count").textContent = "Restricted";
+          return;
+        }
+        form.hidden = false;
+        const response = await fetch(`${apiBaseUrl}/admin/users`, { headers: { authorization: `Bearer ${dashboardToken}` } });
+        if (response.status === 401) return showAuthGate("Your session expired. Please sign in again.");
+        if (!response.ok) throw new Error(`Could not load accounts (${response.status})`);
+        const { users = [], bootstrap_owner: bootstrapOwner } = await response.json();
+        list.innerHTML = `<div class="account-row header"><span>User</span><span class="account-email">Email</span><span>Role</span><span>Status</span><span></span></div>${accountRow({ ...bootstrapOwner, full_name: "PatchOps Owner" }, { bootstrap: true })}${users.map((user) => accountRow(user)).join("")}`;
+        document.getElementById("account-count").textContent = `${users.length + 1} account${users.length ? "s" : ""}`;
       }
 
       const notificationSettingFields = {
@@ -3350,7 +3446,9 @@
           if (!response.ok) throw new Error(response.status === 401 ? "That password was not accepted." : `Sign-in failed (${response.status}).`);
           const result = await response.json();
           dashboardToken = result.token;
+          currentUser = result.user;
           sessionStorage.setItem("patchops_dashboard_token", dashboardToken);
+          sessionStorage.setItem("patchops_dashboard_user", JSON.stringify(currentUser));
           hideAuthGate();
           await refreshLiveDevices();
           await loadNotificationSettings();
@@ -3489,12 +3587,111 @@
             document.getElementById("settings-agent-detail").hidden = false;
             loadAgentSettings();
             window.scrollTo({ top: 0, behavior: "smooth" });
+          } else if (card.dataset.settingsPanel === "accounts") {
+            document.getElementById("settings-catalog").hidden = true;
+            document.getElementById("settings-accounts-detail").hidden = false;
+            loadConsoleUsers().catch((error) => showToast("Accounts unavailable", error.message));
+            window.scrollTo({ top: 0, behavior: "smooth" });
           } else {
             showToast(card.dataset.settingsName, "This settings module is organized and ready for its backend workflow in the next build.");
           }
         });
       });
       document.querySelectorAll(".settings-back").forEach((button) => button.addEventListener("click", showSettingsCatalog));
+
+      document.getElementById("account-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const button = event.submitter;
+        const status = document.getElementById("account-form-status");
+        button.disabled = true;
+        status.textContent = "Creating account…";
+        try {
+          const response = await fetch(`${apiBaseUrl}/admin/users`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+            body: JSON.stringify({
+              username: document.getElementById("account-username").value,
+              full_name: document.getElementById("account-full-name").value,
+              email: document.getElementById("account-email").value,
+              role: document.getElementById("account-role").value,
+              password: document.getElementById("account-password").value
+            })
+          });
+          if (response.status === 401) return showAuthGate("Your session expired. Please sign in again.");
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.message || result.error || `API returned ${response.status}`);
+          const createdUsername = result.username;
+          event.target.reset();
+          document.getElementById("account-role").value = "reviewer";
+          status.textContent = `${createdUsername} can now sign in with the temporary password.`;
+          showToast("Account created", `${createdUsername} has ${roleLabel(result.role)} access.`);
+          await loadConsoleUsers();
+        } catch (error) {
+          status.textContent = `Account not created: ${error.message}`;
+        } finally {
+          button.disabled = false;
+        }
+      });
+
+      document.getElementById("account-list").addEventListener("click", async (event) => {
+        const resetButton = event.target.closest("[data-account-reset]");
+        if (resetButton) {
+          const password = window.prompt("Enter a new temporary password (at least 12 characters):");
+          if (password === null) return;
+          if (password.length < 12) return showToast("Password not changed", "The temporary password must contain at least 12 characters.");
+          resetButton.disabled = true;
+          try {
+            const response = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(resetButton.dataset.accountReset)}`, {
+              method: "PATCH",
+              headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+              body: JSON.stringify({ password })
+            });
+            if (!response.ok) throw new Error(`API returned ${response.status}`);
+            showToast("Password reset", "The new temporary password is active immediately.");
+          } catch (error) {
+            showToast("Password not changed", error.message);
+          } finally {
+            resetButton.disabled = false;
+          }
+          return;
+        }
+        const button = event.target.closest("[data-account-id]");
+        if (!button) return;
+        button.disabled = true;
+        try {
+          const response = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(button.dataset.accountId)}`, {
+            method: "PATCH",
+            headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+            body: JSON.stringify({ status: button.dataset.accountStatus })
+          });
+          if (!response.ok) throw new Error(`API returned ${response.status}`);
+          showToast("Account updated", `Console access is now ${button.dataset.accountStatus}.`);
+          await loadConsoleUsers();
+        } catch (error) {
+          button.disabled = false;
+          showToast("Account not updated", error.message);
+        }
+      });
+
+      document.getElementById("account-list").addEventListener("change", async (event) => {
+        const select = event.target.closest("[data-account-role]");
+        if (!select) return;
+        select.disabled = true;
+        try {
+          const response = await fetch(`${apiBaseUrl}/admin/users/${encodeURIComponent(select.dataset.accountRole)}`, {
+            method: "PATCH",
+            headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+            body: JSON.stringify({ role: select.value })
+          });
+          if (!response.ok) throw new Error(`API returned ${response.status}`);
+          showToast("Role updated", `This account now has ${roleLabel(select.value)} access.`);
+        } catch (error) {
+          showToast("Role not updated", error.message);
+          await loadConsoleUsers();
+        } finally {
+          select.disabled = false;
+        }
+      });
 
       document.querySelector('[title="Refresh metrics"]').addEventListener("click", () => refreshLiveDevices({ notify: true }));
       document.getElementById("device-rows").addEventListener("click", (event) => {

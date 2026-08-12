@@ -57,7 +57,7 @@ Use this flow when showing the concept:
 6. Evidence Report
 7. Agents
 8. Integrations
-9. Admin
+9. Settings
 
 The product story is:
 
@@ -77,6 +77,8 @@ The dashboard is a static frontend backed by the development API, and most prima
 - Copy deployment commands.
 - Report sample downloads.
 - Toast notifications for common actions.
+- Named console accounts with Administrator, Operator, and Read-only Reviewer roles.
+- Account enable/disable, role changes, and password resets under Settings.
 - Admin/policy/integration review surfaces.
 
 ## What Is Not Real Yet
@@ -85,7 +87,7 @@ The dashboard is a static frontend backed by the development API, and most prima
 - The native macOS agent is a user-launched lab build, not yet a production daemon.
 - No real patch installation.
 - No real MDM integration.
-- Development password authentication is implemented; production SSO, user accounts, and RBAC remain.
+- Named development accounts and basic role enforcement are implemented; production SSO, MFA, invitations, and enterprise identity lifecycle management remain.
 - No real PDF generation.
 
 The POC scaffold under `poc-scaffold/` describes how to build the first working version. The runnable foundation lives under `services/` and `agents/`.
@@ -129,6 +131,8 @@ The Blueprint configures the hosted development credentials automatically:
 - macOS agent enrollment token: generated securely by Render
 
 Render also generates `PATCHOPS_SESSION_SECRET` automatically. Open the API service's **Environment** page to reveal or copy the generated dashboard password and enrollment token. Never commit those values. The macOS installer asks the administrator for the enrollment token once, stores it in macOS Keychain, and starts the hidden agent. Endpoint users do not receive local settings or agent controls.
+
+After signing in as the environment owner, open **Settings → Administrator accounts** to create individual console logins. Use **Read-only Reviewer** for someone who only needs to inspect progress. Reviewers can view dashboard data but cannot send endpoint notifications, launch campaigns, change agent policy, or manage accounts. The original Render username and password remain the recovery owner login during development.
 
 ### Publish the dashboard
 

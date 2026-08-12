@@ -45,6 +45,31 @@ test("dashboard data requires a valid short-lived session", async () => {
   assert.equal((await request("/campaigns", { method: "POST", authorization: `Bearer ${token}`, body: { name: "Pilot" } })).status, 201);
 });
 
+test("owners manage named console users and reviewers remain read-only", async () => {
+  const ownerLogin = await request("/auth/login", { method: "POST", body: { username: "test-admin", password: "console-secret" } });
+  const { token: ownerToken, user: owner } = await ownerLogin.json();
+  assert.equal(owner.role, "owner");
+  const created = await request("/admin/users", {
+    method: "POST",
+    authorization: `Bearer ${ownerToken}`,
+    body: { username: "progress-reviewer", full_name: "Progress Reviewer", email: "reviewer@example.test", role: "reviewer", password: "review-only-password" }
+  });
+  assert.equal(created.status, 201);
+  const reviewer = await created.json();
+  assert.equal(reviewer.role, "reviewer");
+  assert.equal(reviewer.password_hash, undefined);
+
+  const reviewerLogin = await request("/auth/login", { method: "POST", body: { username: "progress-reviewer", password: "review-only-password" } });
+  assert.equal(reviewerLogin.status, 200);
+  const { token: reviewerToken } = await reviewerLogin.json();
+  assert.equal((await request("/devices", { authorization: `Bearer ${reviewerToken}` })).status, 200);
+  assert.equal((await request("/notifications", { method: "POST", authorization: `Bearer ${reviewerToken}`, body: { device_id: "none", title: "No", body: "No" } })).status, 403);
+  assert.equal((await request("/admin/users", { authorization: `Bearer ${reviewerToken}` })).status, 403);
+
+  assert.equal((await request(`/admin/users/${reviewer.id}`, { method: "PATCH", authorization: `Bearer ${ownerToken}`, body: { status: "disabled" } })).status, 200);
+  assert.equal((await request("/auth/login", { method: "POST", body: { username: "progress-reviewer", password: "review-only-password" } })).status, 401);
+});
+
 test("enrollment exchanges a one-time secret for device-scoped credentials", async () => {
   const input = { hostname: "MAC-LAB", platform: "macos", serial_number: "LAB123" };
   assert.equal((await request("/agent/enroll", { method: "POST", authorization: "Enrollment wrong", body: input })).status, 401);
