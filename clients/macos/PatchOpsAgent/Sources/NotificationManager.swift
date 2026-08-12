@@ -40,6 +40,21 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate, Obs
     }
 
     func deliver(_ notification: RemoteNotification) async throws {
+        if notification.presentation == "custom" {
+            PushPopupPresenter.shared.show(notification) { [weak self] action in
+                guard let self else { return }
+                Task {
+                    do {
+                        try await APIClient().recordNotification(action: action, notificationID: notification.id, settings: self.settingsProvider())
+                        self.lastAction = "Recorded \(action) from the PUSH-style popup"
+                    } catch {
+                        self.lastAction = "Action failed: \(error.localizedDescription)"
+                    }
+                }
+            }
+            lastAction = "Received custom popup from the PatchOps console"
+            return
+        }
         if !authorizationGranted { await requestPermission() }
         let content = UNMutableNotificationContent()
         content.title = notification.title

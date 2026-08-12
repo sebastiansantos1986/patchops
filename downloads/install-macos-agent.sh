@@ -4,11 +4,11 @@
 
 set -eu
 SCRIPT_DIRECTORY="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-ARCHIVE="$SCRIPT_DIRECTORY/PatchOps-Agent-macOS-0.3.0.zip"
+ARCHIVE="$SCRIPT_DIRECTORY/PatchOps-Agent-macOS-0.4.0.zip"
 INSTALL_DIRECTORY="$HOME/Applications"
 
 if [ ! -f "$ARCHIVE" ]; then
-  echo "Keep this installer beside PatchOps-Agent-macOS-0.3.0.zip, then retry." >&2
+  echo "Keep this installer beside PatchOps-Agent-macOS-0.4.0.zip, then retry." >&2
   exit 1
 fi
 

@@ -1,0 +1,15 @@
+{
+  "product": "PatchOps Agent",
+  "version": "0.4.0",
+  "platform": "macos",
+  "minimum_os": "13.0",
+  "architectures": ["arm64", "x86_64"],
+  "sha256": "8378d3611bf4528f448b7883d929619f2dc1248bf5622340ba65f997d5a3f5cd",
+  "signing": "ad-hoc development signature",
+  "notarized": false,
+  "privileged": false,
+  "notification_poll_seconds": 15,
+  "system_notifications": true,
+  "push_style_custom_popups": true,
+  "actions_simulation_only": true
+}

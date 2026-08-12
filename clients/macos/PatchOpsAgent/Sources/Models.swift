@@ -62,10 +62,45 @@ struct RemoteNotification: Codable, Identifiable {
     let subtitle: String
     let body: String
     let category: String
+    let presentation: String?
+    let appearance: RemoteNotificationAppearance?
 
     enum CodingKeys: String, CodingKey {
-        case id, title, subtitle, body, category
+        case id, title, subtitle, body, category, presentation, appearance
         case deviceID = "device_id"
+    }
+}
+
+struct RemoteNotificationAppearance: Codable {
+    let appName: String?
+    let organization: String?
+    let accentColor: String?
+    let symbol: String?
+    let popupWidth: Int?
+    let position: String?
+    let sound: String?
+    let primaryLabel: String?
+    let secondaryLabel: String?
+    let showClose: Bool?
+    let maxDeferrals: Int?
+    let requireDeferralReason: Bool?
+    let supportEmail: String?
+    let supportPhone: String?
+    let helpURL: String?
+
+    enum CodingKeys: String, CodingKey {
+        case organization, symbol, position, sound
+        case appName = "app_name"
+        case accentColor = "accent_color"
+        case popupWidth = "popup_width"
+        case primaryLabel = "primary_label"
+        case secondaryLabel = "secondary_label"
+        case showClose = "show_close"
+        case maxDeferrals = "max_deferrals"
+        case requireDeferralReason = "require_deferral_reason"
+        case supportEmail = "support_email"
+        case supportPhone = "support_phone"
+        case helpURL = "help_url"
     }
 }
 

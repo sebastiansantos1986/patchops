@@ -25,7 +25,7 @@ struct APIClient {
             "hostname": snapshot.hostname,
             "platform": "macos",
             "serial_number": snapshot.serialNumber,
-            "agent_version": "0.3.0"
+            "agent_version": "0.4.0"
         ]
         let data = try JSONSerialization.data(withJSONObject: body)
         return try await send(path: "/agent/enroll", data: data, settings: settings, authorization: "Enrollment \(settings.enrollmentToken)")

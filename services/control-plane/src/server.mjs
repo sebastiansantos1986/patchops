@@ -44,6 +44,8 @@ export function createApp(store, options = {}) {
       if (request.method === "GET" && request.url === "/api/devices") return dashboardAuthorized() ? send(200, { devices: await store.listDevices() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/notifications/actions") return dashboardAuthorized() ? send(200, { mode: "simulation", actions: await store.listNotificationActions() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/notifications") return dashboardAuthorized() ? send(200, { notifications: await store.listNotifications() }) : send(401, { error: "unauthorized" });
+      if (request.method === "GET" && request.url === "/api/settings/notifications") return dashboardAuthorized() ? send(200, await store.getNotificationSettings()) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/settings/notifications") return dashboardAuthorized() ? send(200, await store.saveNotificationSettings(await body())) : send(401, { error: "unauthorized" });
       if (request.method === "POST" && request.url === "/api/notifications") {
         if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
         const notification = await store.createNotification(await body());
