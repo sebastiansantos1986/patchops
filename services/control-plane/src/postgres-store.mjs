@@ -1,5 +1,6 @@
 import { createHash, randomUUID } from "node:crypto";
 import pg from "pg";
+import { assessDevice, softwareIdentity } from "./patch-engine.mjs";
 
 const { Pool } = pg;
 const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
@@ -20,6 +21,8 @@ export class PostgresStore {
       CREATE TABLE IF NOT EXISTS patchops_notification_actions (action_id TEXT PRIMARY KEY, data JSONB NOT NULL, received_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_settings (key TEXT PRIMARY KEY, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_console_users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS patchops_patch_catalog (id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS patchops_remediations (id TEXT PRIMARY KEY, device_id TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     `);
   }
 
@@ -85,7 +88,49 @@ export class PostgresStore {
 
   async listDevices() {
     await this.ready;
-    return (await this.pool.query("SELECT data FROM patchops_devices ORDER BY updated_at DESC")).rows.map((row) => row.data);
+    const catalog = await this.listCatalogEntries();
+    return (await this.pool.query("SELECT data FROM patchops_devices ORDER BY updated_at DESC")).rows.map((row) => assessDevice(row.data, catalog));
+  }
+
+  async getDevice(id) {
+    await this.ready;
+    const result = await this.pool.query("SELECT data FROM patchops_devices WHERE id = $1", [id]);
+    if (!result.rowCount) return null;
+    return { ...assessDevice(result.rows[0].data, await this.listCatalogEntries()), remediations: await this.listRemediations(id) };
+  }
+
+  async listCatalogEntries() {
+    await this.ready;
+    return (await this.pool.query("SELECT data FROM patchops_patch_catalog ORDER BY data->>'name'")).rows.map((row) => row.data);
+  }
+
+  async saveCatalogEntry(input) {
+    await this.ready;
+    const platform = String(input.platform ?? "").toLowerCase();
+    const identity = softwareIdentity(platform, { name: input.name, bundle_identifier: input.identifier, product_code: input.identifier });
+    if (!["macos", "windows"].includes(platform) || !String(input.name ?? "").trim() || !String(input.identifier ?? "").trim() || !String(input.approved_version ?? "").trim()) return null;
+    const existing = await this.pool.query("SELECT id FROM patchops_patch_catalog WHERE identity = $1", [identity]);
+    const entry = { id: existing.rows[0]?.id ?? `cat_${randomUUID()}`, identity, platform, name: String(input.name).trim().slice(0, 120), identifier: String(input.identifier).trim().slice(0, 180), approved_version: String(input.approved_version).trim().slice(0, 80), severity: ["critical", "high", "medium", "low"].includes(input.severity) ? input.severity : "medium", source: "administrator_baseline", updated_at: new Date().toISOString() };
+    await this.pool.query("INSERT INTO patchops_patch_catalog (id, identity, data) VALUES ($1, $2, $3) ON CONFLICT (identity) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [entry.id, entry.identity, entry]);
+    return entry;
+  }
+
+  async listRemediations(deviceID) {
+    await this.ready;
+    const result = deviceID
+      ? await this.pool.query("SELECT data FROM patchops_remediations WHERE device_id = $1 ORDER BY created_at DESC", [deviceID])
+      : await this.pool.query("SELECT data FROM patchops_remediations ORDER BY created_at DESC");
+    return result.rows.map((row) => row.data);
+  }
+
+  async createRemediation(input) {
+    await this.ready;
+    const device = await this.getDevice(input.device_id);
+    const software = device?.software.find((item) => item.catalog_id === input.catalog_id);
+    if (!device || !software || software.patch_status !== "outdated") return null;
+    const remediation = { id: `rem_${randomUUID()}`, device_id: device.id, catalog_id: software.catalog_id, software_name: software.name, installed_version: software.version, target_version: software.approved_version, type: "install_approved_package", status: "draft", execution_mode: "simulation", created_at: new Date().toISOString() };
+    await this.pool.query("INSERT INTO patchops_remediations (id, device_id, data) VALUES ($1, $2, $3)", [remediation.id, remediation.device_id, remediation]);
+    return remediation;
   }
 
   async updateDevice(id, changes) {

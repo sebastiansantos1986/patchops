@@ -60,3 +60,18 @@ test("console users are unique, editable, and never expose password hashes", () 
   assert.equal(store.listConsoleUsers()[0].password_hash, undefined);
   assert.equal(store.updateConsoleUser(created.id, { status: "disabled" }).status, "disabled");
 });
+
+test("approved baselines create device patch posture and safe remediation drafts", () => {
+  const store = new Store();
+  const enrollment = store.enroll({ hostname: "PATCH-MAC", platform: "macos", serial_number: "PATCH1" });
+  store.updateDevice(enrollment.device_id, { software: [{ name: "Chrome", bundle_identifier: "com.google.Chrome", version: "127.0" }] });
+  const baseline = store.saveCatalogEntry({ platform: "macos", name: "Google Chrome", identifier: "com.google.Chrome", approved_version: "128.0", severity: "critical" });
+  const device = store.getDevice(enrollment.device_id);
+  assert.equal(device.patch_summary.outdated, 1);
+  assert.equal(device.software[0].catalog_id, baseline.id);
+  const remediation = store.createRemediation({ device_id: device.id, catalog_id: baseline.id });
+  assert.equal(remediation.type, "install_approved_package");
+  assert.equal(remediation.status, "draft");
+  assert.equal(remediation.execution_mode, "simulation");
+  assert.equal(store.getDevice(device.id).remediations.length, 1);
+});

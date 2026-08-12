@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { assessDevice, softwareIdentity } from "./patch-engine.mjs";
 
 const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
 const defaultNotificationSettings = () => ({
@@ -31,6 +32,8 @@ export class Store {
     this.notificationSettings = defaultNotificationSettings();
     this.agentSettings = defaultAgentSettings();
     this.consoleUsers = new Map();
+    this.patchCatalog = new Map();
+    this.remediations = new Map();
   }
 
   listConsoleUsers() {
@@ -75,7 +78,61 @@ export class Store {
   hasDevice(id) { return this.devices.has(id); }
 
   listDevices() {
-    return [...this.devices.values()].map(({ agent_token_hash: _agentTokenHash, ...device }) => device);
+    return [...this.devices.values()].map(({ agent_token_hash: _agentTokenHash, ...device }) => assessDevice(device, this.listCatalogEntries()));
+  }
+
+  getDevice(id) {
+    const device = this.devices.get(id);
+    if (!device) return null;
+    const { agent_token_hash: _agentTokenHash, ...safeDevice } = device;
+    return { ...assessDevice(safeDevice, this.listCatalogEntries()), remediations: this.listRemediations(id) };
+  }
+
+  listCatalogEntries() { return [...this.patchCatalog.values()].sort((left, right) => left.name.localeCompare(right.name)); }
+
+  saveCatalogEntry(input) {
+    const platform = String(input.platform ?? "").toLowerCase();
+    const software = { name: input.name, bundle_identifier: input.identifier, product_code: input.identifier };
+    const identity = softwareIdentity(platform, software);
+    if (!["macos", "windows"].includes(platform) || !String(input.name ?? "").trim() || !String(input.identifier ?? "").trim() || !String(input.approved_version ?? "").trim()) return null;
+    const existing = [...this.patchCatalog.values()].find((entry) => entry.identity === identity);
+    const entry = {
+      id: existing?.id ?? `cat_${randomUUID()}`,
+      identity,
+      platform,
+      name: String(input.name).trim().slice(0, 120),
+      identifier: String(input.identifier).trim().slice(0, 180),
+      approved_version: String(input.approved_version).trim().slice(0, 80),
+      severity: ["critical", "high", "medium", "low"].includes(input.severity) ? input.severity : "medium",
+      source: "administrator_baseline",
+      updated_at: new Date().toISOString()
+    };
+    this.patchCatalog.set(entry.id, entry);
+    return entry;
+  }
+
+  listRemediations(deviceID) {
+    return [...this.remediations.values()].filter((item) => !deviceID || item.device_id === deviceID).sort((left, right) => right.created_at.localeCompare(left.created_at));
+  }
+
+  createRemediation(input) {
+    const device = this.getDevice(input.device_id);
+    const software = device?.software.find((item) => item.catalog_id === input.catalog_id);
+    if (!device || !software || software.patch_status !== "outdated") return null;
+    const remediation = {
+      id: `rem_${randomUUID()}`,
+      device_id: device.id,
+      catalog_id: software.catalog_id,
+      software_name: software.name,
+      installed_version: software.version,
+      target_version: software.approved_version,
+      type: "install_approved_package",
+      status: "draft",
+      execution_mode: "simulation",
+      created_at: new Date().toISOString()
+    };
+    this.remediations.set(remediation.id, remediation);
+    return remediation;
   }
 
   listNotificationActions() { return [...this.notificationActions.values()]; }

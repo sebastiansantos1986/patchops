@@ -85,6 +85,23 @@ test("enrollment exchanges a one-time secret for device-scoped credentials", asy
   assert.equal((await request("/agent/inventory", { method: "POST", authorization: `Bearer ${identity.agent_token}`, body: inventory })).status, 200);
 });
 
+test("console creates an approved baseline and a simulation-only remediation draft", async () => {
+  const enrolled = await request("/agent/enroll", { method: "POST", authorization: "Enrollment enroll-secret", body: { hostname: "PATCH-MAC", platform: "macos", serial_number: "PATCH-API-1" } });
+  const identity = await enrolled.json();
+  await request("/agent/inventory", { method: "POST", authorization: `Bearer ${identity.agent_token}`, body: { device_id: identity.device_id, captured_at: new Date().toISOString(), os: { name: "macOS", version: "15" }, software: [{ name: "Google Chrome", bundle_identifier: "com.google.Chrome", version: "127.0" }] } });
+  const login = await request("/auth/login", { method: "POST", body: { username: "test-admin", password: "console-secret" } });
+  const { token } = await login.json();
+  const catalogResponse = await request("/catalog", { method: "POST", authorization: `Bearer ${token}`, body: { platform: "macos", name: "Google Chrome", identifier: "com.google.Chrome", approved_version: "128.0", severity: "critical" } });
+  assert.equal(catalogResponse.status, 200);
+  const catalog = await catalogResponse.json();
+  const deviceResponse = await request(`/devices/${encodeURIComponent(identity.device_id)}`, { authorization: `Bearer ${token}` });
+  assert.equal(deviceResponse.status, 200);
+  assert.equal((await deviceResponse.json()).patch_summary.outdated, 1);
+  const remediationResponse = await request("/remediations", { method: "POST", authorization: `Bearer ${token}`, body: { device_id: identity.device_id, catalog_id: catalog.id } });
+  assert.equal(remediationResponse.status, 201);
+  assert.equal((await remediationResponse.json()).execution_mode, "simulation");
+});
+
 test("dashboard notifications reach one authenticated device and record its action", async () => {
   const enrolled = await request("/agent/enroll", { method: "POST", authorization: "Enrollment enroll-secret", body: { hostname: "NOTIFY-MAC", platform: "macos", serial_number: "NOTIFY123" } });
   const identity = await enrolled.json();

@@ -82,6 +82,23 @@ export function createApp(store, options = {}) {
         return user ? send(200, user) : send(404, { error: "user_not_found" });
       }
       if (request.method === "GET" && request.url === "/api/devices") return dashboardAuthorized() ? send(200, { devices: await store.listDevices() }) : send(401, { error: "unauthorized" });
+      if (request.method === "GET" && request.url.startsWith("/api/devices/")) {
+        if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
+        const device = await store.getDevice(decodeURIComponent(request.url.slice("/api/devices/".length)));
+        return device ? send(200, device) : send(404, { error: "device_not_found" });
+      }
+      if (request.method === "GET" && request.url === "/api/catalog") return dashboardAuthorized() ? send(200, { catalog: await store.listCatalogEntries() }) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/catalog") {
+        if (!dashboardCanWrite()) return send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
+        const entry = await store.saveCatalogEntry(await body());
+        return entry ? send(200, entry) : send(400, { error: "invalid_catalog_entry" });
+      }
+      if (request.method === "GET" && request.url === "/api/remediations") return dashboardAuthorized() ? send(200, { remediations: await store.listRemediations() }) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/remediations") {
+        if (!dashboardCanWrite()) return send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
+        const remediation = await store.createRemediation(await body());
+        return remediation ? send(201, remediation) : send(400, { error: "device_or_outdated_software_not_found" });
+      }
       if (request.method === "GET" && request.url === "/api/notifications/actions") return dashboardAuthorized() ? send(200, { mode: "simulation", actions: await store.listNotificationActions() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/notifications") return dashboardAuthorized() ? send(200, { notifications: await store.listNotifications() }) : send(401, { error: "unauthorized" });
       if (request.method === "GET" && request.url === "/api/settings/notifications") return dashboardAuthorized() ? send(200, await store.getNotificationSettings()) : send(401, { error: "unauthorized" });
