@@ -879,6 +879,21 @@
         color: #385065;
       }
 
+      .device-detail-header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; margin-bottom: 14px; }
+      .device-detail-title { display: flex; gap: 13px; align-items: center; }
+      .device-detail-title .os-chip { width: 48px; height: 48px; font-size: 18px; }
+      .device-detail-title h2 { margin: 0; font-size: 24px; }
+      .device-detail-title p { margin: 4px 0 0; color: var(--muted); }
+      .device-detail-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+      .device-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 14px; }
+      .device-metric { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); box-shadow: var(--shadow); }
+      .device-metric span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+      .device-metric strong { display: block; margin-top: 6px; font-size: 24px; }
+      .device-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; }
+      .catalog-actions { display: flex; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+      .catalog-actions .ghost-btn { padding-inline: 9px; }
+      .safe-mode-note { padding: 12px; border: 1px solid #a7f3d0; border-radius: 9px; color: #065f46; background: #ecfdf5; font-size: 12px; line-height: 1.45; }
+
       .tabs {
         display: flex;
         gap: 8px;
@@ -1846,12 +1861,14 @@
         .admin-grid,
         .builder-grid,
         .detail-grid,
+        .device-detail-grid,
         .findings-layout,
         .software-layout {
           grid-template-columns: 1fr;
         }
 
         .kpi-grid,
+        .device-metrics,
         .severity-strip,
         .download-grid,
         .integration-grid,
@@ -1937,6 +1954,7 @@
         .integration-grid,
         .settings-catalog-grid,
         .meta-grid,
+        .device-metrics,
         .two-col,
         .reports-grid {
           grid-template-columns: 1fr;
@@ -2386,7 +2404,7 @@
               <div class="table-panel">
                 <table>
                   <thead><tr><th>Finding</th><th>Affected</th><th>Fixed Version</th><th>Severity</th><th>SLA</th><th>Action</th></tr></thead>
-                  <tbody id="software-rows">
+                  <tbody id="finding-rows">
                     <tr>
                       <td><div class="finding-title"><span class="finding-dot" style="background:var(--red)"></span><div><strong>Chrome remote code execution exposure</strong><div class="item-sub">CVE-2026-1842 · detected in browser catalog</div></div></div></td>
                       <td>72 devices</td><td>128.0.6613+</td><td><span class="badge danger">Critical</span></td><td><span class="badge danger">16h left</span></td><td><button class="ghost-btn" data-open-view="finding-detail">Patch</button></td>
@@ -2509,6 +2527,41 @@
             </div>
           </div>
 
+          <div class="view" id="device-detail">
+            <div class="device-detail-header">
+              <div class="device-detail-title">
+                <span class="os-chip" id="device-detail-platform">—</span>
+                <div><h2 id="device-detail-hostname">Device</h2><p id="device-detail-summary">Loading live inventory…</p></div>
+              </div>
+              <div class="device-detail-actions">
+                <button class="ghost-btn" type="button" data-open-view="devices">← All Devices</button>
+                <button class="primary-btn" type="button" id="device-detail-notify">Send Test Notification</button>
+              </div>
+            </div>
+            <div class="device-metrics">
+              <div class="device-metric"><span>Installed apps</span><strong id="device-detail-installed">—</strong></div>
+              <div class="device-metric"><span>Catalog managed</span><strong id="device-detail-managed">—</strong></div>
+              <div class="device-metric"><span>Outdated</span><strong id="device-detail-outdated">—</strong></div>
+              <div class="device-metric"><span>Last check-in</span><strong id="device-detail-seen" style="font-size:16px">—</strong></div>
+            </div>
+            <div class="device-detail-grid">
+              <section class="table-panel">
+                <div class="section-head" style="padding:16px 16px 0"><div><h2>Installed applications</h2><p>Live agent inventory compared with administrator-approved patch baselines.</p></div></div>
+                <table>
+                  <thead><tr><th>Application</th><th>Installed</th><th>Approved</th><th>Patch status</th><th>Action</th></tr></thead>
+                  <tbody id="device-detail-software"><tr><td colspan="5">Select a device to load inventory.</td></tr></tbody>
+                </table>
+              </section>
+              <aside class="panel">
+                <div class="section-head"><div><h2>Device facts</h2><p>Read-only data reported by the endpoint agent.</p></div></div>
+                <div class="activity-list" id="device-detail-facts"></div>
+                <div class="safe-mode-note" style="margin-top:14px"><strong>Safe remediation mode</strong><br />Remediations created in this build remain drafts. They do not download installers, close applications, elevate privileges, patch software, or restart the computer.</div>
+                <div class="section-head" style="margin-top:18px"><div><h2>Remediation drafts</h2><p>Typed actions prepared for later approval and execution.</p></div></div>
+                <div class="activity-list" id="device-detail-remediations"><div class="item-sub">No drafts for this device.</div></div>
+              </aside>
+            </div>
+          </div>
+
           <div class="view" id="software">
             <div class="section-head">
               <div><h2>Installed software reporting</h2><p>Every discovered app, version, publisher, install base, and patch exposure.</p></div>
@@ -2518,7 +2571,7 @@
               <div class="table-panel">
                 <table>
                   <thead><tr><th>Application</th><th>Publisher</th><th>Installed</th><th>Latest</th><th>Outdated</th><th>Risk</th></tr></thead>
-                  <tbody>
+                  <tbody id="software-rows">
                     <tr><td>Google Chrome</td><td>Google</td><td>6,402</td><td>128.0.6613</td><td>72</td><td><span class="badge danger">Critical</span></td></tr>
                     <tr><td>Zoom Workplace</td><td>Zoom</td><td>3,018</td><td>6.1.7</td><td>31</td><td><span class="badge warn">High</span></td></tr>
                     <tr><td>Slack</td><td>Salesforce</td><td>2,774</td><td>4.39.95</td><td>44</td><td><span class="badge info">Medium</span></td></tr>
@@ -3217,6 +3270,7 @@
         findings: ["Findings", "Prioritized CVEs, unsupported software, SLAs, and remediation actions."],
         "finding-detail": ["Finding Detail", "Affected devices, fixed versions, remediation status, and compliance evidence."],
         devices: ["Devices", "Endpoint inventory, status, ownership, and remediation."],
+        "device-detail": ["Device Detail", "Installed applications, approved baselines, patch posture, and safe remediation drafts."],
         software: ["Software", "Installed software metrics, versions, publishers, and exposure."],
         campaigns: ["Patch Campaigns", "Staged OS and app deployments across rings."],
         "campaign-builder": ["Campaign Builder", "Configure targeting, rings, user prompts, safety controls, and evidence."],
@@ -3309,6 +3363,7 @@
         : window.PATCHOPS_CONFIG?.apiUrl;
       let dashboardToken = sessionStorage.getItem("patchops_dashboard_token");
       let currentUser = JSON.parse(sessionStorage.getItem("patchops_dashboard_user") || "null");
+      let selectedDevice = null;
       let notificationSettings = null;
       let agentSettings = null;
       const authGate = document.getElementById("auth-gate");
@@ -3334,6 +3389,7 @@
       }
 
       function canManageUsers() { return ["owner", "administrator"].includes(currentUser?.role); }
+      function canWrite() { return ["owner", "administrator", "operator"].includes(currentUser?.role); }
 
       function roleLabel(role) {
         return ({ owner: "Owner", administrator: "Administrator", operator: "Operator", reviewer: "Read-only Reviewer" })[role] ?? role;
@@ -3497,6 +3553,66 @@
         document.getElementById("software-analysis").textContent = "Pending";
       }
 
+      function relativeTime(value) {
+        const milliseconds = Date.now() - new Date(value).getTime();
+        if (!Number.isFinite(milliseconds)) return "Unknown";
+        const minutes = Math.max(0, Math.round(milliseconds / 60000));
+        if (minutes < 1) return "Just now";
+        if (minutes < 60) return `${minutes}m ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 48) return `${hours}h ago`;
+        return `${Math.round(hours / 24)}d ago`;
+      }
+
+      function renderDeviceDetail(device) {
+        selectedDevice = device;
+        const platform = device.platform === "windows" ? "W" : "M";
+        const os = [device.os?.name, device.os?.version, device.os?.build && `(${device.os.build})`].filter(Boolean).join(" ");
+        document.getElementById("device-detail-platform").textContent = platform;
+        document.getElementById("device-detail-hostname").textContent = device.hostname || "Unnamed device";
+        document.getElementById("device-detail-summary").textContent = `${os || device.platform} · Agent ${device.agent_version || "unknown"} · ${device.enrollment_status || "active"}`;
+        document.getElementById("device-detail-installed").textContent = device.patch_summary?.installed ?? device.software?.length ?? 0;
+        document.getElementById("device-detail-managed").textContent = device.patch_summary?.managed ?? 0;
+        document.getElementById("device-detail-outdated").textContent = device.patch_summary?.outdated ?? 0;
+        document.getElementById("device-detail-seen").textContent = relativeTime(device.last_seen_at);
+        document.getElementById("device-detail-notify").disabled = !canWrite();
+
+        const rows = (device.software ?? []).map((application) => {
+          const status = application.patch_status || "unmanaged";
+          const statusClass = status === "outdated" ? "danger" : status === "compliant" ? "good" : "info";
+          const identifier = application.bundle_identifier || application.product_code || application.name;
+          const baselineAction = canWrite() ? `<button class="ghost-btn" type="button" data-baseline-name="${escapeHtml(application.name)}" data-baseline-id="${escapeHtml(identifier)}" data-baseline-version="${escapeHtml(application.approved_version || application.version)}">${status === "unmanaged" ? "Set baseline" : "Edit baseline"}</button>` : "";
+          const remediationAction = canWrite() && status === "outdated" ? `<button class="primary-btn" type="button" data-remediate-catalog="${escapeHtml(application.catalog_id)}">Create Draft</button>` : "";
+          return `<tr>
+            <td><strong>${escapeHtml(application.name)}</strong><div class="item-sub">${escapeHtml(identifier)}</div></td>
+            <td>${escapeHtml(application.version || "Unknown")}</td>
+            <td>${escapeHtml(application.approved_version || "Not managed")}</td>
+            <td><span class="badge ${statusClass}">${escapeHtml(status)}</span></td>
+            <td><div class="catalog-actions">${baselineAction}${remediationAction}</div></td>
+          </tr>`;
+        }).join("");
+        document.getElementById("device-detail-software").innerHTML = rows || `<tr><td colspan="5">This agent has not uploaded application inventory yet.</td></tr>`;
+
+        const facts = [
+          ["Serial number", device.serial_number || "Unknown"],
+          ["Architecture", device.architecture || "Unknown"],
+          ["Model", device.model || "Unknown"],
+          ["Uptime", formatUptime(device.uptime_seconds)],
+          ["Battery", Number.isFinite(device.battery_percent) ? `${device.battery_percent}%` : "Not reported"],
+          ["Inventory captured", relativeTime(device.inventory_captured_at)]
+        ];
+        document.getElementById("device-detail-facts").innerHTML = facts.map(([label, value]) => `<div class="activity-item"><div><div class="item-title">${escapeHtml(label)}</div><div class="item-sub">${escapeHtml(value)}</div></div></div>`).join("");
+        document.getElementById("device-detail-remediations").innerHTML = (device.remediations ?? []).length ? device.remediations.map((remediation) => `<div class="activity-item"><span class="pulse warn"></span><div><div class="item-title">${escapeHtml(remediation.software_name)} → ${escapeHtml(remediation.target_version)}</div><div class="item-sub">${escapeHtml(remediation.type)} · simulation only</div></div><span class="badge warn">${escapeHtml(remediation.status)}</span></div>`).join("") : `<div class="item-sub">No drafts for this device.</div>`;
+      }
+
+      async function openDeviceDetail(deviceID) {
+        const response = await fetch(`${apiBaseUrl}/devices/${encodeURIComponent(deviceID)}`, { headers: { authorization: `Bearer ${dashboardToken}` } });
+        if (response.status === 401) return showAuthGate("Your session expired. Please sign in again.");
+        if (!response.ok) throw new Error(`Device API returned ${response.status}`);
+        renderDeviceDetail(await response.json());
+        showView("device-detail");
+      }
+
       async function refreshNotificationHistory() {
         if (!dashboardToken) return;
         const response = await fetch(`${apiBaseUrl}/notifications`, { headers: { authorization: `Bearer ${dashboardToken}` } });
@@ -3535,14 +3651,15 @@
           if (devices.some((device) => device.id === selectedDevice)) deviceSelect.value = selectedDevice;
 
           document.getElementById("device-rows").innerHTML = devices.length ? devices.map((device) => {
-              const findings = device.findings?.length ?? 0;
+              const findings = device.patch_summary?.outdated ?? device.findings?.length ?? 0;
               const platform = device.platform === "windows" ? "W" : "M";
               const os = [device.os?.name, device.os?.version].filter(Boolean).join(" ") || device.platform;
               const reboot = device.last_reboot_at ? new Date(device.last_reboot_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "—";
-              const statusClass = device.reboot_pending ? "warn" : findings ? "danger" : "good";
-              const statusText = device.reboot_pending ? "Reboot pending" : findings ? `${findings} finding${findings === 1 ? "" : "s"}` : "Compliant";
+              const managed = device.patch_summary?.managed ?? 0;
+              const statusClass = device.reboot_pending ? "warn" : findings ? "danger" : managed ? "good" : "info";
+              const statusText = device.reboot_pending ? "Reboot pending" : findings ? `${findings} outdated` : managed ? "Compliant" : "Inventory only";
               return `<tr>
-                <td data-label="Device"><div class="device-cell"><span class="os-chip">${platform}</span><div><strong>${escapeHtml(device.hostname)}</strong><div class="item-sub">${findings} open · live API</div></div></div></td>
+                <td data-label="Device"><div class="device-cell"><span class="os-chip">${platform}</span><div><strong>${escapeHtml(device.hostname)}</strong><div class="item-sub">${findings} outdated · ${managed} managed · ${relativeTime(device.last_seen_at)}</div></div></div></td>
                 <td data-label="User">${escapeHtml(device.assigned_user || "Unassigned")}</td>
                 <td data-label="OS">${escapeHtml(os)}</td>
                 <td data-label="Uptime">${formatUptime(device.uptime_seconds)}</td>
@@ -3695,7 +3812,52 @@
 
       document.querySelector('[title="Refresh metrics"]').addEventListener("click", () => refreshLiveDevices({ notify: true }));
       document.getElementById("device-rows").addEventListener("click", (event) => {
-        if (event.target.matches("[data-device-id]")) showToast("Device selected", "A production build will open the live device timeline and assigned policies.");
+        const button = event.target.closest("[data-device-id]");
+        if (button) openDeviceDetail(button.dataset.deviceId).catch((error) => showToast("Device unavailable", error.message));
+      });
+      document.getElementById("device-detail-software").addEventListener("click", async (event) => {
+        const baselineButton = event.target.closest("[data-baseline-id]");
+        if (baselineButton) {
+          const approvedVersion = window.prompt(`Approved target version for ${baselineButton.dataset.baselineName}:`, baselineButton.dataset.baselineVersion);
+          if (approvedVersion === null) return;
+          if (!approvedVersion.trim()) return showToast("Baseline not saved", "Enter a valid approved version.");
+          baselineButton.disabled = true;
+          try {
+            const response = await fetch(`${apiBaseUrl}/catalog`, {
+              method: "POST",
+              headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+              body: JSON.stringify({ platform: selectedDevice.platform, name: baselineButton.dataset.baselineName, identifier: baselineButton.dataset.baselineId, approved_version: approvedVersion.trim(), severity: "high" })
+            });
+            if (!response.ok) throw new Error(`Catalog API returned ${response.status}`);
+            await openDeviceDetail(selectedDevice.id);
+            showToast("Patch baseline saved", `${baselineButton.dataset.baselineName} will now be assessed against ${approvedVersion.trim()}.`);
+          } catch (error) {
+            baselineButton.disabled = false;
+            showToast("Baseline not saved", error.message);
+          }
+          return;
+        }
+        const remediationButton = event.target.closest("[data-remediate-catalog]");
+        if (!remediationButton) return;
+        remediationButton.disabled = true;
+        try {
+          const response = await fetch(`${apiBaseUrl}/remediations`, {
+            method: "POST",
+            headers: { authorization: `Bearer ${dashboardToken}`, "content-type": "application/json" },
+            body: JSON.stringify({ device_id: selectedDevice.id, catalog_id: remediationButton.dataset.remediateCatalog })
+          });
+          if (!response.ok) throw new Error(`Remediation API returned ${response.status}`);
+          await openDeviceDetail(selectedDevice.id);
+          showToast("Safe remediation drafted", "The typed action is recorded in simulation mode and cannot change the endpoint.");
+        } catch (error) {
+          remediationButton.disabled = false;
+          showToast("Draft not created", error.message);
+        }
+      });
+      document.getElementById("device-detail-notify").addEventListener("click", () => {
+        if (!selectedDevice) return;
+        showView("notifications");
+        document.getElementById("notification-device").value = selectedDevice.id;
       });
       document.getElementById("notification-send-form").addEventListener("submit", async (event) => {
         event.preventDefault();

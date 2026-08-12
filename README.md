@@ -8,6 +8,8 @@ This repository contains:
 - A runnable control-plane API foundation.
 - A shared Go agent lifecycle scaffold for Windows and macOS adapters.
 - A native SwiftUI macOS test agent with inventory and actionable notifications.
+- A live device-detail workflow that compares installed applications with administrator-approved patch baselines.
+- Simulation-only typed remediation drafts for outdated applications.
 - A downloadable universal macOS VM-lab agent for Apple silicon and Intel Macs, with a published checksum and package manifest.
 - A placeholder Windows agent bootstrap download while its native package is under development.
 - Evidence report sample exports.
@@ -98,6 +100,7 @@ The POC scaffold under `poc-scaffold/` describes how to build the first working 
 - [Product Architecture](docs/architecture.md)
 - [Security Model](docs/security-model.md)
 - [PUSH Notification Integration](docs/push-integration.md)
+- [Patch-Management Boundary](docs/patch-management-scope.md)
 - [Delivery Roadmap](docs/roadmap.md)
 - [6-Week POC Plan](docs/poc-plan.md)
 - [Backend API Contract](poc-scaffold/backend/api-contract.md)
