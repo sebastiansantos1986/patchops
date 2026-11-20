@@ -179,6 +179,31 @@ export class PostgresStore {
     return settings;
   }
 
+  async getConfig(key) {
+    await this.ready;
+    const result = await this.pool.query("SELECT data FROM patchops_settings WHERE key = $1", [`config:${key}`]);
+    return result.rowCount ? result.rows[0].data : null;
+  }
+
+  async saveConfig(key, value) {
+    await this.ready;
+    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [`config:${key}`, JSON.stringify(value)]);
+    return value;
+  }
+
+  async getPostureHistory() {
+    await this.ready;
+    const result = await this.pool.query("SELECT data FROM patchops_settings WHERE key = 'posture_history'");
+    return Array.isArray(result.rows[0]?.data) ? result.rows[0].data : [];
+  }
+
+  async savePostureHistory(history) {
+    await this.ready;
+    // Serialize explicitly: node-postgres would otherwise send a JS array as a Postgres array.
+    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ('posture_history', $1::jsonb) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [JSON.stringify(history)]);
+    return history;
+  }
+
   async getAgentSettings() {
     await this.ready;
     const result = await this.pool.query("SELECT data FROM patchops_settings WHERE key = 'agent'");

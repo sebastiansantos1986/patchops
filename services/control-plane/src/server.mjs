@@ -2,6 +2,9 @@ import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import { bearerToken, createDashboardSession, hashPassword, safeEqual, verifyDashboardSession, verifyPassword } from "./auth.mjs";
 import { PostgresStore } from "./postgres-store.mjs";
+import { QueryError } from "./fleet-query.mjs";
+import { PostureService } from "./posture-service.mjs";
+import { loadEnvFile } from "./env-file.mjs";
 import { Store } from "./store.mjs";
 
 function secret(optionValue, environmentValue, localDefault, name) {
@@ -16,11 +19,12 @@ export function createApp(store, options = {}) {
   const dashboardUsername = options.dashboardUsername ?? process.env.PATCHOPS_DASHBOARD_USERNAME ?? "admin";
   const dashboardPassword = secret(options.dashboardPassword, process.env.PATCHOPS_DASHBOARD_PASSWORD, "patchops-dev", "PATCHOPS_DASHBOARD_PASSWORD");
   const sessionSecret = secret(options.sessionSecret, process.env.PATCHOPS_SESSION_SECRET, "local-development-session-secret", "PATCHOPS_SESSION_SECRET");
+  const posture = options.posture ?? new PostureService(store, { env: options.env ?? process.env });
   return createServer(async (request, response) => {
     response.setHeader("content-type", "application/json");
     response.setHeader("access-control-allow-origin", "*");
     response.setHeader("access-control-allow-headers", "authorization, content-type");
-    response.setHeader("access-control-allow-methods", "GET, POST, PATCH, OPTIONS");
+    response.setHeader("access-control-allow-methods", "GET, POST, PATCH, DELETE, OPTIONS");
     if (request.method === "OPTIONS") return response.writeHead(204).end();
     const send = (status, body) => response.writeHead(status).end(JSON.stringify(body));
     const body = async () => {
@@ -86,6 +90,52 @@ export function createApp(store, options = {}) {
         if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
         const device = await store.getDevice(decodeURIComponent(request.url.slice("/api/devices/".length)));
         return device ? send(200, device) : send(404, { error: "device_not_found" });
+      }
+      if (request.method === "GET" && request.url === "/api/posture") return dashboardAuthorized() ? send(200, await posture.overview()) : send(401, { error: "unauthorized" });
+      if (request.method === "POST" && request.url === "/api/posture/sync") {
+        if (!dashboardCanWrite()) return send(dashboardAuthorized() ? 403 : 401, { error: dashboardAuthorized() ? "forbidden" : "unauthorized" });
+        await posture.sync({ force: true });
+        await posture.compute({ fresh: true });
+        return send(200, await posture.overview());
+      }
+      if (request.method === "GET" && request.url === "/api/posture/export.csv") {
+        if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
+        response.setHeader("content-type", "text/csv; charset=utf-8");
+        response.setHeader("content-disposition", `attachment; filename="fleet-posture-${new Date().toISOString().slice(0, 10)}.csv"`);
+        return response.writeHead(200).end(await posture.csv());
+      }
+      if (request.method === "GET" && request.url.startsWith("/api/posture/devices/")) {
+        if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
+        const device = await posture.device(decodeURIComponent(request.url.slice("/api/posture/devices/".length)));
+        return device ? send(200, device) : send(404, { error: "device_not_found" });
+      }
+      if (request.url.startsWith("/api/fleet/")) {
+        if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
+        const writeDenied = () => (dashboardCanWrite() ? null : send(403, { error: "forbidden" }));
+        try {
+          if (request.method === "GET" && request.url === "/api/fleet/config") return send(200, await posture.configSummary());
+          if (request.method === "GET" && request.url === "/api/fleet/sources") return send(200, await posture.sources());
+          if (request.method === "GET" && request.url === "/api/fleet/vulnerabilities") return send(200, await posture.vulnerabilities());
+          if (request.method === "POST" && request.url === "/api/fleet/query") {
+            const input = await body();
+            return send(200, await posture.query(input.query, { groupBy: input.group_by || null, limit: input.limit }));
+          }
+          if (request.method === "POST" && request.url === "/api/fleet/software-rules") return writeDenied() ?? send(200, { software_rules: await posture.saveSoftwareRules((await body()).rules) });
+          if (request.method === "POST" && request.url === "/api/fleet/tracked-patches") return writeDenied() ?? send(200, { tracked_patches: await posture.saveTrackedPatches((await body()).patches) });
+          if (request.method === "POST" && request.url === "/api/fleet/dashboards") return writeDenied() ?? send(200, await posture.saveDashboard((await body()).dashboard));
+          if (request.url.startsWith("/api/fleet/dashboards/")) {
+            const id = decodeURIComponent(request.url.slice("/api/fleet/dashboards/".length));
+            if (request.method === "DELETE") return writeDenied() ?? (await posture.deleteDashboard(id) ? send(200, { deleted: true }) : send(404, { error: "dashboard_not_found" }));
+            if (request.method === "GET") {
+              const data = await posture.dashboardData(id);
+              return data ? send(200, data) : send(404, { error: "dashboard_not_found" });
+            }
+          }
+          return send(404, { error: "not_found" });
+        } catch (error) {
+          if (error instanceof QueryError) return send(400, { error: "invalid_query", message: error.message, position: error.position ?? null });
+          throw error;
+        }
       }
       if (request.method === "GET" && request.url === "/api/catalog") return dashboardAuthorized() ? send(200, { catalog: await store.listCatalogEntries() }) : send(401, { error: "unauthorized" });
       if (request.method === "POST" && request.url === "/api/catalog") {
@@ -160,6 +210,7 @@ export function createApp(store, options = {}) {
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  loadEnvFile();
   const port = Number(process.env.PORT ?? 3000);
   const host = process.env.HOST ?? "127.0.0.1";
   createApp().listen(port, host, () => console.log(`PatchOps API listening on http://${host}:${port}`));

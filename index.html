@@ -2109,6 +2109,229 @@
         .account-row { grid-template-columns: minmax(150px, 1.4fr) 1fr 110px auto; }
         .account-email { display: none; }
       }
+
+      /* ---- Fleet Posture (Intune + Jamf + PatchOps agent) ---- */
+      #posture, .pst-drawer { --sev-critical: #d03b3b; --sev-high: #ec835a; --sev-medium: #fab219; --sev-low: #9aa8b8; --sev-healthy: #0ca30c; }
+      .pst-banner { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; margin-bottom: 14px; border: 1px solid #bcd4fb; border-radius: 9px; background: #edf5ff; color: #1e3a8a; font-size: 13px; line-height: 1.45; }
+      .pst-banner strong { display: block; margin-bottom: 2px; }
+      .pst-banner.error { border-color: #fecaca; background: #fff1f2; color: #9f1239; }
+      .pst-banner code { background: rgba(255,255,255,.7); padding: 1px 5px; border-radius: 4px; font-size: 12px; }
+      .pst-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+      .pst-sources { display: flex; flex-wrap: wrap; gap: 10px; }
+      .pst-source { display: flex; align-items: center; gap: 10px; min-width: 210px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel); }
+      .pst-source-mark { width: 30px; height: 30px; border-radius: 7px; display: grid; place-items: center; color: #fff; font-weight: 800; font-size: 13px; flex: none; }
+      .pst-source strong { display: block; font-size: 13px; }
+      .pst-source > div span { display: block; color: var(--muted); font-size: 12px; }
+      .pst-actions { display: flex; gap: 8px; align-items: center; }
+      .pst-updated { color: var(--muted); font-size: 12px; }
+      .pst-exec { display: grid; grid-template-columns: minmax(260px, 0.9fr) minmax(0, 2.1fr); gap: 14px; }
+      .pst-score { padding: 18px; display: flex; flex-direction: column; gap: 10px; }
+      .pst-score-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+      .pst-score-value { font-size: 52px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; }
+      .pst-score-value small { font-size: 18px; color: var(--muted); font-weight: 700; }
+      .pst-score-note { color: var(--muted); font-size: 12px; line-height: 1.45; }
+      .pst-trend { width: 100%; height: 64px; display: block; overflow: visible; }
+      .pst-kpis { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+      .pst-kpi { padding: 14px; display: flex; flex-direction: column; gap: 8px; justify-content: flex-start; }
+      .pst-kpi-label { color: var(--muted); font-size: 12px; font-weight: 700; }
+      .pst-kpi-value { font-size: 28px; font-weight: 800; line-height: 1.05; }
+      .pst-kpi-sub { color: var(--muted); font-size: 12px; min-height: 16px; }
+      .pst-meter { height: 6px; border-radius: 999px; background: #e7edf4; overflow: hidden; }
+      .pst-meter span { display: block; height: 100%; border-radius: 999px; }
+      .pst-riskbar-wrap { grid-column: 1 / -1; padding: 14px 16px; }
+      .pst-riskbar { display: flex; gap: 2px; height: 14px; margin: 10px 0 10px; }
+      .pst-riskbar span { display: block; height: 100%; min-width: 3px; }
+      .pst-riskbar span:first-child { border-radius: 4px 0 0 4px; }
+      .pst-riskbar span:last-child { border-radius: 0 4px 4px 0; }
+      .pst-riskbar span:only-child { border-radius: 4px; }
+      .pst-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--muted); }
+      .pst-legend button { display: inline-flex; align-items: center; gap: 6px; border: 0; padding: 2px 0; background: none; color: inherit; cursor: pointer; font: inherit; }
+      .pst-legend button:hover strong { text-decoration: underline; }
+      .pst-legend strong { color: var(--ink); }
+      .pst-dot { width: 10px; height: 10px; border-radius: 3px; display: inline-block; flex: none; }
+      .pst-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 14px; }
+      .pst-panel-head { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+      .pst-panel-head h2 { margin: 0; font-size: 15px; }
+      .pst-panel-head p { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+      .pst-risk-row { width: 100%; display: grid; grid-template-columns: 74px minmax(0, 1fr) 110px 40px; align-items: center; gap: 10px; padding: 9px 4px; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+      .pst-risk-row:last-child { border-bottom: 0; }
+      .pst-risk-row:hover { background: #f6f9fc; }
+      .pst-risk-row strong { font-size: 13px; }
+      .pst-risk-row .pst-count { text-align: right; font-weight: 800; }
+      .pst-mini-bar { height: 8px; border-radius: 0 4px 4px 0; background: #e7edf4; overflow: hidden; }
+      .pst-mini-bar span { display: block; height: 100%; border-radius: 0 4px 4px 0; }
+      .pst-sev { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); }
+      .pst-coverage { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+      .pst-cov { padding: 12px; border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); }
+      .pst-cov span { display: block; color: var(--muted); font-size: 12px; }
+      .pst-cov strong { display: block; font-size: 22px; margin-top: 4px; }
+      .pst-cov em { font-style: normal; color: var(--muted); font-size: 12px; }
+      .pst-cov.alert strong { color: var(--red); }
+      .pst-os-group + .pst-os-group { margin-top: 14px; }
+      .pst-os-group h3 { margin: 0 0 6px; font-size: 12px; color: var(--muted); text-transform: uppercase; }
+      .pst-os-row { display: grid; grid-template-columns: 150px minmax(0, 1fr) 34px 118px; align-items: center; gap: 10px; padding: 5px 0; font-size: 13px; }
+      .pst-os-row .pst-mini-bar { height: 12px; background: transparent; }
+      .pst-os-row .pst-n { text-align: right; font-weight: 800; }
+      .pst-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; }
+      .pst-table-panel { margin-top: 14px; }
+      .pst-table-panel table td, .pst-table-panel table th { padding: 10px 12px; }
+      .pst-table-panel tbody tr { cursor: pointer; }
+      .pst-table-panel tbody tr:hover td { background: #f8fbff; }
+      .pst-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 12px; border-bottom: 1px solid var(--line); }
+      .pst-filters input { height: 36px; min-width: 240px; flex: 1; border: 1px solid var(--line); border-radius: 8px; padding: 0 10px; }
+      .pst-chip { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 999px; background: #edf5ff; color: var(--blue); font-size: 12px; font-weight: 800; border: 0; cursor: pointer; }
+      .pst-src-chips { display: inline-flex; gap: 4px; }
+      .pst-src { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 5px; border-radius: 5px; font-size: 11px; font-weight: 800; color: #fff; }
+      .pst-src.off { background: #eef2f6 !important; color: #a4b0bd; }
+      .pst-src.intune { background: #2563eb; } .pst-src.jamf { background: #4b5563; } .pst-src.crowdstrike { background: #be123c; } .pst-src.agent { background: #0f988e; }
+      .pst-score-cell { display: inline-flex; align-items: center; gap: 8px; }
+      .pst-score-cell .pst-mini-bar { width: 54px; height: 6px; border-radius: 999px; }
+      .pst-score-cell .pst-mini-bar span { border-radius: 999px; }
+      .pst-issue-text { color: var(--muted); font-size: 12px; max-width: 280px; }
+      .pst-table-foot { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; color: var(--muted); font-size: 12px; border-top: 1px solid var(--line); }
+      .pst-empty { padding: 26px; text-align: center; color: var(--muted); }
+      .pst-drawer-backdrop { position: fixed; inset: 0; background: rgba(7, 22, 41, .35); z-index: 60; }
+      .pst-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 100vw); background: #fff; z-index: 61; box-shadow: -18px 0 45px rgba(28, 43, 65, .18); display: flex; flex-direction: column; }
+      .pst-drawer-head { display: flex; justify-content: space-between; gap: 12px; padding: 18px 20px; border-bottom: 1px solid var(--line); }
+      .pst-drawer-head h2 { margin: 0; font-size: 20px; }
+      .pst-drawer-head p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+      .pst-drawer-body { padding: 16px 20px 24px; overflow-y: auto; display: grid; gap: 16px; align-content: start; }
+      .pst-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 16px; font-size: 13px; }
+      .pst-facts span { display: block; color: var(--muted); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+      .pst-issue { display: grid; grid-template-columns: 4px minmax(0, 1fr); gap: 10px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 9px; }
+      .pst-issue > i { display: block; border-radius: 4px; min-height: 100%; }
+      .pst-issue strong { font-size: 13px; }
+      .pst-issue p { margin: 3px 0 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+      .pst-drawer h3 { margin: 0 0 8px; font-size: 13px; }
+      .pst-app-table { width: 100%; font-size: 12px; }
+      .pst-app-table td, .pst-app-table th { padding: 7px 8px; font-size: 12px; }
+      .pst-tip { position: fixed; z-index: 80; pointer-events: none; background: #0b1b2e; color: #fff; padding: 7px 9px; border-radius: 7px; font-size: 12px; line-height: 1.4; max-width: 260px; box-shadow: 0 8px 24px rgba(0,0,0,.2); }
+      .pst-setup { margin-top: 14px; }
+      .pst-setup ol { margin: 6px 0 0; padding-left: 18px; color: var(--muted); font-size: 13px; line-height: 1.6; }
+      .pst-setup code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 12px; color: var(--ink); }
+      @media (max-width: 1250px) { .pst-kpis { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+      @media (max-width: 1050px) { .pst-exec, .pst-grid { grid-template-columns: 1fr; } }
+      @media (max-width: 760px) {
+        .pst-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .pst-os-row { grid-template-columns: 110px minmax(0, 1fr) 30px; }
+        .pst-os-row .pst-status { display: none; }
+        .pst-risk-row { grid-template-columns: 64px minmax(0, 1fr) 36px; }
+        .pst-risk-row .pst-mini-bar { display: none; }
+        .pst-hide-sm { display: none; }
+      }
+
+      /* ---- Dashboards / Explore / Fleet rules ---- */
+      #fleet-dashboards, #fleet-explore, #fleet-rules, .fd-modal { --sev-critical: #d03b3b; --sev-high: #ec835a; --sev-medium: #fab219; --sev-low: #9aa8b8; --sev-healthy: #0ca30c; }
+      .fd-toolbar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+      .fd-toolbar-left, .fd-toolbar-right { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      .fd-toolbar .select { min-width: 240px; font-weight: 700; }
+      .fd-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+      .fd-card { display: flex; flex-direction: column; min-height: 330px; background: rgba(255,255,255,.95); border: 1px solid rgba(217,226,236,.9); border-radius: 9px; box-shadow: var(--shadow); break-inside: avoid; }
+      .fd-card.wide { grid-column: span 2; }
+      .fd-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 13px 14px; border-bottom: 1px solid var(--line); }
+      .fd-card-head h3 { margin: 0; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .fd-card-actions { display: flex; gap: 2px; flex: none; }
+      .fd-icon-btn { border: 0; background: none; color: var(--muted); font-size: 12px; font-weight: 700; padding: 4px 7px; border-radius: 6px; cursor: pointer; }
+      .fd-icon-btn:hover { background: #eef3f8; color: var(--ink); }
+      .fd-card-body { flex: 1; padding: 14px 12px; display: flex; align-items: center; gap: 12px; min-width: 0; }
+      .fd-card-foot { padding: 9px 14px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; text-align: center; }
+      .fd-donut { width: 128px; height: 128px; flex: none; }
+      .fd-donut text { font-weight: 800; }
+      .fd-legend { flex: 1; min-width: 0; display: grid; gap: 4px; }
+      .fd-legend button { display: grid; grid-template-columns: 12px minmax(0, 1fr) auto; align-items: center; gap: 8px; width: 100%; padding: 5px 6px; border: 0; border-radius: 6px; background: none; color: var(--ink); text-align: left; font: inherit; font-size: 12px; cursor: pointer; }
+      .fd-legend button:hover { background: #f1f6fc; }
+      .fd-legend span:nth-child(2) { line-height: 1.25; overflow-wrap: anywhere; }
+      .fd-legend strong { white-space: nowrap; }
+      .fd-legend em { font-style: normal; color: var(--muted); font-weight: 600; }
+      .fd-swatch { width: 12px; height: 12px; border-radius: 3px; }
+      .fd-number { width: 100%; text-align: center; cursor: pointer; }
+      .fd-number strong { display: block; font-size: 54px; line-height: 1; }
+      .fd-number span { color: var(--muted); font-size: 13px; }
+      .fd-bars { width: 100%; display: grid; gap: 6px; }
+      .fd-bar { display: grid; grid-template-columns: minmax(70px, 120px) minmax(0, 1fr) 44px; align-items: center; gap: 10px; border: 0; background: none; padding: 3px 4px; border-radius: 6px; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; text-align: left; }
+      .fd-bar:hover { background: #f1f6fc; }
+      .fd-bar > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+      .fd-bar-track { height: 14px; }
+      .fd-bar-track span { display: block; height: 100%; border-radius: 0 4px 4px 0; background: #2563eb; min-width: 2px; }
+      .fd-bar strong { text-align: right; }
+      .fd-trend { width: 100%; display: flex; flex-direction: column; gap: 6px; align-self: stretch; }
+      .fd-trend svg { width: 100%; flex: 1; min-height: 190px; overflow: visible; }
+      .fd-trend-legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12px; color: var(--muted); }
+      .fd-trend-legend span { display: inline-flex; align-items: center; gap: 6px; }
+      .fd-trend-legend i { width: 14px; height: 2px; border-radius: 2px; display: inline-block; }
+      .fd-trend-now { font-size: 12px; color: var(--muted); }
+      .fd-trend-now strong { color: var(--ink); font-size: 20px; margin-right: 4px; }
+      .fd-table { width: 100%; align-self: stretch; overflow: auto; max-height: 260px; }
+      .fd-table table td, .fd-table table th { padding: 8px 10px; font-size: 12px; }
+      .fd-table tbody tr { cursor: pointer; }
+      .fd-table tbody tr:hover td { background: #f8fbff; }
+      .fd-error { color: var(--red); font-size: 13px; line-height: 1.45; }
+      .fd-empty-dash { grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 10px; }
+      .fd-modal-backdrop { position: fixed; inset: 0; background: rgba(7, 22, 41, .4); z-index: 70; display: grid; place-items: center; padding: 20px; }
+      .fd-modal { width: min(760px, 100%); max-height: calc(100vh - 40px); overflow: auto; background: #fff; border-radius: 12px; box-shadow: 0 30px 80px rgba(0,0,0,.3); }
+      .fd-modal-head { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--line); position: sticky; top: 0; background: #fff; z-index: 1; }
+      .fd-modal-head h2 { margin: 0; font-size: 18px; }
+      .fd-modal-body { padding: 16px 20px; display: grid; gap: 14px; }
+      .fd-modal-foot { display: flex; justify-content: space-between; gap: 8px; padding: 14px 20px; border-top: 1px solid var(--line); position: sticky; bottom: 0; background: #fff; }
+      .fd-form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; }
+      .fd-field { display: grid; gap: 5px; font-size: 12px; font-weight: 700; color: var(--muted); }
+      .fd-field input, .fd-field select, .fd-field textarea, .fx-query { font: inherit; font-size: 13px; color: var(--ink); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: #fff; font-weight: 500; }
+      .fd-field textarea, .fx-query { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.5; resize: vertical; }
+      .fd-series { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 8px; background: var(--panel-2); }
+      .fd-series-head { display: grid; grid-template-columns: minmax(0, 1fr) 130px auto auto; gap: 8px; align-items: end; }
+      .fd-series-result { font-size: 12px; color: var(--muted); min-height: 16px; }
+      .fd-series-result.error { color: var(--red); }
+      .fx-layout { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+      .fx-query { width: 100%; min-height: 96px; }
+      .fx-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 10px; }
+      .fx-error { color: var(--red); font-size: 13px; margin-top: 8px; white-space: pre-wrap; }
+      .fx-examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+      .fx-example { border: 1px solid var(--line); background: #fff; border-radius: 999px; padding: 5px 10px; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; }
+      .fx-example:hover { border-color: #bcd4fb; background: #edf5ff; }
+      .fx-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; margin: 14px 0 10px; }
+      .fx-summary strong { font-size: 28px; }
+      .fx-ref details { border-bottom: 1px solid var(--line); padding: 8px 0; }
+      .fx-ref summary { cursor: pointer; font-weight: 800; font-size: 13px; }
+      .fx-ref p { margin: 6px 0; color: var(--muted); font-size: 12px; }
+      .fx-ref ul { margin: 6px 0 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+      .fx-ref li { font-size: 12px; color: var(--muted); }
+      .fx-ref code, .fr-patterns code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 11.5px; color: var(--ink); background: #f1f5f9; padding: 1px 5px; border-radius: 4px; cursor: pointer; }
+      .fr-section + .fr-section { margin-top: 18px; }
+      .fr-patterns { display: flex; flex-wrap: wrap; gap: 4px; }
+      .fr-patterns code { cursor: default; }
+      .fr-cov { display: grid; gap: 4px; min-width: 120px; font-size: 12px; }
+      .fr-cov .pst-meter { height: 6px; }
+      .fr-help { color: var(--muted); font-size: 13px; line-height: 1.55; margin: 0 0 12px; }
+      .fr-help code { background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 12px; color: var(--ink); }
+      .fr-actions { display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
+      @media (max-width: 1250px) { .fd-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+      @media (max-width: 1050px) { .fx-layout { grid-template-columns: 1fr; } }
+      @media (max-width: 760px) { .fd-grid { grid-template-columns: 1fr; } .fd-card.wide { grid-column: auto; } .fd-card-body { flex-direction: column; } }
+      @media print {
+        @page { size: landscape; margin: 10mm; }
+        body { background: #fff !important; }
+        .sidebar, .topbar, .fd-toolbar-right, .fd-card-actions, .toast-region, .pst-tip, #fd-banner { display: none !important; }
+        .app { display: block !important; }
+        .content { padding: 0 !important; }
+        .view { display: none !important; }
+        #fleet-dashboards { display: block !important; }
+        .fd-toolbar .select { border: 0; font-size: 20px; padding: 0; appearance: none; }
+        .fd-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .fd-card { box-shadow: none; page-break-inside: avoid; }
+      }
+
+      [hidden] { display: none !important; }
+      /* ---- Vulnerabilities & Data Sources ---- */
+      #fleet-vulns, #fleet-sources { --sev-critical: #d03b3b; --sev-high: #ec835a; --sev-medium: #fab219; --sev-low: #9aa8b8; --sev-healthy: #0ca30c; }
+      #fleet-vulns a { color: var(--blue); text-decoration: none; }
+      #fleet-vulns a:hover { text-decoration: underline; }
+      .ds-cap { border: 1px solid var(--line); border-radius: 9px; padding: 10px 12px; margin-top: 10px; background: var(--panel-2); }
+      .ds-cap summary { display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer; font-size: 13px; }
+      .ds-cap-title code, .ds-cap code { font-size: 11.5px; background: #fff; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--line); }
+      .ds-cap-meta { color: var(--muted); font-size: 12px; display: inline-flex; gap: 8px; align-items: center; }
+      .ds-sample-head { display: flex; justify-content: space-between; align-items: center; margin: 12px 0 6px; font-size: 13px; }
+      .ds-json { margin: 0; max-height: 420px; overflow: auto; background: #0b1b2e; color: #dbe7f5; padding: 12px; border-radius: 8px; font-size: 11.5px; line-height: 1.5; white-space: pre; }
+      .pst-raw summary { cursor: pointer; font-size: 13px; font-weight: 700; padding: 6px 0; }
     </style>
   </head>
   <body>
@@ -2135,7 +2358,31 @@
 
         <nav class="nav-group" aria-label="Primary">
           <div class="nav-title">Operate</div>
-          <button class="nav-btn active" data-view="overview" title="Overview">
+          <button class="nav-btn active" data-view="posture" title="Fleet Posture">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M8 12h2l1.5-3 2 6 1.5-3h1"/></svg>
+            <span>Fleet Posture</span>
+          </button>
+          <button class="nav-btn" data-view="fleet-dashboards" title="Dashboards">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="7.5" r="4.5"/><path d="M7.5 3v4.5H12"/><rect x="14" y="3" width="7" height="8" rx="1.5"/><path d="M3 21v-5"/><path d="M8 21v-3"/><path d="M13 21v-7"/><path d="M18 21v-4"/></svg>
+            <span>Dashboards</span>
+          </button>
+          <button class="nav-btn" data-view="fleet-explore" title="Explore">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
+            <span>Explore</span>
+          </button>
+          <button class="nav-btn" data-view="fleet-rules" title="Fleet Rules">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
+            <span>Fleet Rules</span>
+          </button>
+          <button class="nav-btn" data-view="fleet-vulns" title="Vulnerabilities">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2l1.5 2.5"/><path d="M16 2l-1.5 2.5"/><path d="M9 7.5a3 3 0 0 1 6 0"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a6 6 0 0 1 12 0v3c0 3.3-2.7 6-6 6Z"/><path d="M12 20v-9"/><path d="M6 13H2"/><path d="M22 13h-4"/></svg>
+            <span>Vulnerabilities</span>
+          </button>
+          <button class="nav-btn" data-view="fleet-sources" title="Data Sources">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+            <span>Data Sources</span>
+          </button>
+          <button class="nav-btn" data-view="overview" title="Overview">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3v10Z"/><path d="M13 21h8V11h-8v10Z"/><path d="M13 3v6h8V3h-8Z"/><path d="M3 21h8v-6H3v6Z"/></svg>
             <span>Overview</span>
           </button>
@@ -2201,8 +2448,8 @@
       <main class="main">
         <header class="topbar">
           <div class="title-block">
-            <h1 id="page-title">Overview</h1>
-            <p id="page-subtitle">Live vulnerability exposure, patch posture, and compliance reporting.</p>
+            <h1 id="page-title">Fleet Posture</h1>
+            <p id="page-subtitle">Device health, OS currency and outdated apps across Intune, Jamf and the PatchOps agent.</p>
           </div>
           <label class="search">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -2224,7 +2471,166 @@
         </header>
 
         <section class="content">
-          <div class="view active" id="overview">
+          <div class="view active" id="posture">
+            <div id="pst-banner"></div>
+            <div class="pst-toolbar">
+              <div class="pst-sources" id="pst-sources"></div>
+              <div class="pst-actions">
+                <span class="pst-updated" id="pst-updated"></span>
+                <button class="ghost-btn" type="button" id="pst-export">Export CSV</button>
+                <button class="primary-btn" type="button" id="pst-sync">Sync now</button>
+              </div>
+            </div>
+
+            <div class="pst-exec">
+              <article class="panel pst-score">
+                <div class="pst-score-head">
+                  <span class="metric-label">Posture score</span>
+                  <span class="badge" id="pst-score-badge"></span>
+                </div>
+                <div class="pst-score-value" id="pst-score">—</div>
+                <svg class="pst-trend" id="pst-trend" role="img" aria-label="Posture score trend"></svg>
+                <div class="pst-score-note" id="pst-score-note">100 means no open issues. Each device loses 40 points per critical, 20 per high, 8 per medium and 3 per low issue; the fleet score is the average.</div>
+              </article>
+              <div class="pst-kpis" id="pst-kpis"></div>
+              <article class="panel pst-riskbar-wrap">
+                <div class="pst-panel-head"><div><h2>Devices by highest risk</h2><p>Click a level to filter the device list.</p></div><span class="pst-updated" id="pst-device-total"></span></div>
+                <div class="pst-riskbar" id="pst-riskbar" role="img" aria-label="Devices by risk level"></div>
+                <div class="pst-legend" id="pst-risk-legend"></div>
+              </article>
+            </div>
+
+            <div class="pst-grid">
+              <article class="panel">
+                <div class="pst-panel-head"><div><h2>Top risks</h2><p>Ranked by severity × devices affected. Click to see the devices.</p></div></div>
+                <div id="pst-top-risks"></div>
+              </article>
+              <article class="panel">
+                <div class="pst-panel-head"><div><h2>Coverage</h2><p>Where each device is visible across Intune, Jamf and the PatchOps agent.</p></div></div>
+                <div class="pst-coverage" id="pst-coverage"></div>
+              </article>
+            </div>
+
+            <div class="pst-grid">
+              <article class="panel">
+                <div class="pst-panel-head"><div><h2>OS currency</h2><p id="pst-os-note">Versions in use, newest first.</p></div></div>
+                <div id="pst-os"></div>
+              </article>
+              <article class="panel">
+                <div class="pst-panel-head"><div><h2>Outdated applications</h2><p>Compared with your approved baseline, or the newest version already deployed in the fleet.</p></div><button class="ghost-btn" type="button" id="pst-apps-toggle">Show all</button></div>
+                <div class="table-panel" style="box-shadow:none">
+                  <table>
+                    <thead><tr><th>Application</th><th class="pst-hide-sm">Installs</th><th>Behind</th><th class="pst-hide-sm">Target</th><th>Severity</th></tr></thead>
+                    <tbody id="pst-apps"></tbody>
+                  </table>
+                </div>
+              </article>
+            </div>
+
+            <div class="table-panel pst-table-panel">
+              <div class="pst-filters">
+                <input type="search" id="pst-search" placeholder="Search device, user, serial, or app" aria-label="Search devices" />
+                <select class="select" id="pst-filter-platform" aria-label="Platform"><option value="">All platforms</option><option value="macos">macOS</option><option value="windows">Windows</option></select>
+                <select class="select" id="pst-filter-risk" aria-label="Risk level"><option value="">All risk levels</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option><option value="healthy">Healthy</option></select>
+                <select class="select" id="pst-filter-source" aria-label="Source"><option value="">All sources</option><option value="intune">In Intune</option><option value="jamf">In Jamf</option><option value="crowdstrike">In CrowdStrike</option><option value="agent">Has PatchOps agent</option><option value="no-agent">No PatchOps agent</option></select>
+                <span id="pst-issue-chip"></span>
+              </div>
+              <table>
+                <thead><tr><th>Device</th><th>OS</th><th>Sources</th><th class="pst-hide-sm">Last check-in</th><th class="pst-hide-sm">Encrypted</th><th>Risk</th><th class="pst-hide-sm">Top issue</th></tr></thead>
+                <tbody id="pst-devices"><tr><td colspan="7" class="pst-empty">Loading fleet posture…</td></tr></tbody>
+              </table>
+              <div class="pst-table-foot"><span id="pst-device-count"></span><button class="ghost-btn" type="button" id="pst-more" hidden>Show more</button></div>
+            </div>
+          </div>
+
+          <div class="view" id="fleet-dashboards">
+            <div id="fd-banner"></div>
+            <div class="fd-toolbar">
+              <div class="fd-toolbar-left">
+                <select class="select" id="fd-select" aria-label="Dashboard"></select>
+                <span class="pst-updated" id="fd-updated"></span>
+              </div>
+              <div class="fd-toolbar-right">
+                <button class="ghost-btn" type="button" id="fd-new">New dashboard</button>
+                <button class="ghost-btn" type="button" id="fd-rename">Rename</button>
+                <button class="ghost-btn" type="button" id="fd-delete">Delete dashboard</button>
+                <button class="ghost-btn" type="button" id="fd-pdf">Download PDF</button>
+                <button class="primary-btn" type="button" id="fd-add">Add widget</button>
+              </div>
+            </div>
+            <div class="fd-grid" id="fd-grid"></div>
+          </div>
+
+          <div class="view" id="fleet-explore">
+            <div class="fx-layout">
+              <div>
+                <article class="panel">
+                  <div class="pst-panel-head"><div><h2>Query</h2><p>Cyclops-style syntax: <code>e/</code> entity, <code>f/</code> filter, <code>r/ ( … )</code> related records, <code>not r/</code> for none. ⌘/Ctrl + Enter runs it.</p></div></div>
+                  <textarea class="fx-query" id="fx-query" spellcheck="false" aria-label="Query">e/ Device f/ Platform = windows f/ OSRelease = 11 f/ LastSeenAt &lt; 7d</textarea>
+                  <div class="fx-actions">
+                    <button class="primary-btn" type="button" id="fx-run">Run</button>
+                    <select class="select" id="fx-group" aria-label="Group results by">
+                      <option value="">No grouping</option><option>Platform</option><option>OSRelease</option><option>OSVersion</option><option>RiskLevel</option><option>Compliance</option><option>Encrypted</option><option>LastSeenAt</option><option>Model</option><option>InIntune</option><option>InJamf</option><option>InCrowdStrike</option><option>CrowdStrikeReporting</option><option>CrowdStrikeSensorVersion</option><option>HasAgent</option>
+                    </select>
+                    <button class="ghost-btn" type="button" id="fx-save">Save to dashboard</button>
+                    <button class="ghost-btn" type="button" id="fx-copy">Copy query</button>
+                  </div>
+                  <div class="fx-error" id="fx-error" role="alert"></div>
+                  <div class="fx-examples" id="fx-examples"></div>
+                </article>
+                <div id="fx-results"></div>
+              </div>
+              <aside class="panel fx-ref" id="fx-reference"><div class="pst-panel-head"><div><h2>Fields</h2><p>Click a field to insert it.</p></div></div></aside>
+            </div>
+          </div>
+
+          <div class="view" id="fleet-rules">
+            <div id="fr-banner"></div>
+            <article class="panel fr-section">
+              <div class="pst-panel-head"><div><h2>Required and prohibited software</h2><p>Matched against installed apps from the PatchOps agent, Jamf and Intune. A name matches if it contains any pattern.</p></div><button class="primary-btn" type="button" id="fr-add-rule">Add rule</button></div>
+              <div class="table-panel" style="box-shadow:none">
+                <table>
+                  <thead><tr><th>Software</th><th>Rule</th><th class="pst-hide-sm">Mac patterns</th><th class="pst-hide-sm">Windows patterns</th><th>Mac</th><th>Windows</th><th></th></tr></thead>
+                  <tbody id="fr-rules"></tbody>
+                </table>
+              </div>
+            </article>
+            <article class="panel fr-section">
+              <div class="pst-panel-head"><div><h2>Tracked Windows updates</h2><p id="fr-kb-status"></p></div><button class="primary-btn" type="button" id="fr-add-patch">Track an update</button></div>
+              <p class="fr-help">Monthly Windows updates are cumulative, and each KB moves Windows to a known build, for example <code>26100.7171</code>. Enter the build(s) a KB produces and PatchOps marks every PC at or above that build as patched, using the build Intune already reports. Microsoft's <em>Windows 11 update history</em> page lists each KB as "KB50xxxxx (OS Build 26100.xxxx)". Updates that don't change the build (such as .NET) need the optional Intune Remediation script: see <code>docs/fleet-posture.md</code>.</p>
+              <div class="table-panel" style="box-shadow:none">
+                <table>
+                  <thead><tr><th>Update</th><th class="pst-hide-sm">Builds</th><th>Installed</th><th>Missing</th><th class="pst-hide-sm">Unknown</th><th></th></tr></thead>
+                  <tbody id="fr-patches"></tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+
+          <div class="view" id="fleet-vulns">
+            <div id="vx-banner"></div>
+            <div class="pst-kpis" id="vx-kpis" style="margin-bottom:14px"></div>
+            <div class="table-panel">
+              <div class="pst-filters">
+                <input type="search" id="vx-search" placeholder="Search CVE, product or KB" aria-label="Search vulnerabilities" />
+                <select class="select" id="vx-severity" aria-label="Severity"><option value="">All severities</option><option value="critical">Critical</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option></select>
+                <select class="select" id="vx-exploit" aria-label="Exploitation"><option value="">Any exploit status</option><option value="exploited">Actively exploited / CISA KEV</option><option value="available">Exploit available or worse</option></select>
+                <select class="select" id="vx-platform" aria-label="Platform"><option value="">All platforms</option><option value="windows">Windows</option><option value="macos">macOS</option></select>
+              </div>
+              <table>
+                <thead><tr><th>CVE</th><th>Severity</th><th class="pst-hide-sm">CVSS</th><th class="pst-hide-sm">ExPRT</th><th>Exploit</th><th class="pst-hide-sm">Affected product</th><th>Devices</th><th class="pst-hide-sm">Fix</th></tr></thead>
+                <tbody id="vx-rows"><tr><td colspan="8" class="pst-empty">Loading vulnerabilities…</td></tr></tbody>
+              </table>
+              <div class="pst-table-foot"><span id="vx-count"></span><button class="ghost-btn" type="button" id="vx-more" hidden>Show more</button></div>
+            </div>
+          </div>
+
+          <div class="view" id="fleet-sources">
+            <p class="fr-help">Everything each connected system sent on its last sync: what your API permissions allow, how often each field is filled, and a few raw sample records (secrets redacted). Open any device in Fleet Posture to see its complete raw record from every source.</p>
+            <div id="ds-list"></div>
+          </div>
+
+          <div class="view" id="overview">
             <div class="toolbar-row">
               <div class="segmented" aria-label="Time range">
                 <button>24h</button>
@@ -3266,6 +3672,12 @@
     <script src="config.js"></script>
     <script>
       const labels = {
+        posture: ["Fleet Posture", "Device health, OS currency and outdated apps across Intune, Jamf and the PatchOps agent."],
+        "fleet-dashboards": ["Dashboards", "Saved views of your fleet for reporting: agent coverage, patch rollout and device health."],
+        "fleet-explore": ["Explore", "Query the merged Intune, Jamf and PatchOps fleet with Cyclops-style syntax."],
+        "fleet-vulns": ["Vulnerabilities", "Open CVEs on your Macs and PCs from CrowdStrike Spotlight, ranked by exploitation and severity."],
+        "fleet-sources": ["Data Sources", "Exactly what Intune, Jamf and CrowdStrike send: permissions, fields and raw records."],
+        "fleet-rules": ["Fleet Rules", "Required and prohibited software, and the Windows updates you track."],
         overview: ["Overview", "Live vulnerability exposure, patch posture, and compliance reporting."],
         findings: ["Findings", "Prioritized CVEs, unsupported software, SLAs, and remediation actions."],
         "finding-detail": ["Finding Detail", "Affected devices, fixed versions, remediation status, and compliance evidence."],
@@ -3506,6 +3918,7 @@
           sessionStorage.setItem("patchops_dashboard_token", dashboardToken);
           sessionStorage.setItem("patchops_dashboard_user", JSON.stringify(currentUser));
           hideAuthGate();
+          loadPosture();
           await refreshLiveDevices();
           await loadNotificationSettings();
         } catch (error) {
@@ -3678,9 +4091,1094 @@
         }
       }
 
+
+      // ---- Fleet Posture: Intune + Jamf + PatchOps agent ----
+      const PST_SEVERITY = {
+        critical: { label: "Critical", color: "var(--sev-critical)" },
+        high: { label: "High", color: "var(--sev-high)" },
+        medium: { label: "Medium", color: "var(--sev-medium)" },
+        low: { label: "Low", color: "var(--sev-low)" },
+        healthy: { label: "Healthy", color: "var(--sev-healthy)" },
+        none: { label: "Current", color: "var(--sev-healthy)" }
+      };
+      const PST_OS_STATUS = {
+        current: ["Current", "var(--sev-healthy)"],
+        update_available: ["Update pending", "var(--sev-medium)"],
+        older_release: ["Older release", "var(--sev-low)"],
+        below_minimum: ["Below minimum", "var(--sev-high)"],
+        unsupported: ["Unsupported", "var(--sev-critical)"],
+        unknown: ["Unknown", "#c3ccd6"]
+      };
+      const PST_SOURCES = { intune: ["I", "Intune"], jamf: ["J", "Jamf"], crowdstrike: ["C", "CrowdStrike"], agent: ["A", "PatchOps agent"] };
+      const pstState = { data: null, filter: null, limit: 50, allApps: false, loading: false };
+
+      const pstAgo = (iso) => {
+        if (!iso) return "never";
+        const minutes = Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000));
+        if (minutes < 1) return "just now";
+        if (minutes < 60) return `${minutes} min ago`;
+        const hours = Math.round(minutes / 60);
+        if (hours < 48) return `${hours} h ago`;
+        return `${Math.round(hours / 24)} days ago`;
+      };
+      const pstPct = (value) => (value === null || value === undefined ? "—" : `${Number.isInteger(value) ? value : value.toFixed(1)}%`);
+      const pstSevTag = (level) => {
+        const meta = PST_SEVERITY[level] ?? PST_SEVERITY.low;
+        return `<span class="pst-sev"><i class="pst-dot" style="background:${meta.color}"></i>${meta.label}</span>`;
+      };
+      const pstOsLabel = (os, platform) => {
+        if (platform === "windows") {
+          const [, , build, ubr] = String(os.version ?? "").split(".");
+          return `${String(os.name || "Windows").replace("Windows ", "Win ")} · ${build ?? "?"}${ubr ? `.${ubr}` : ""}`;
+        }
+        return `${os.name || "macOS"} ${os.version || ""}`.trim();
+      };
+
+      async function pstFetch(path, options = {}) {
+        const response = await fetch(`${apiBaseUrl}${path}`, { ...options, headers: { authorization: `Bearer ${dashboardToken}`, ...(options.headers ?? {}) } });
+        if (response.status === 401) {
+          showAuthGate("Your session expired. Please sign in again.");
+          throw new Error("unauthorized");
+        }
+        if (!response.ok) throw new Error(`API returned ${response.status}`);
+        return response;
+      }
+
+      async function loadPosture({ sync = false } = {}) {
+        if (!dashboardToken || !apiBaseUrl || pstState.loading) return;
+        pstState.loading = true;
+        const syncButton = document.getElementById("pst-sync");
+        if (sync) { syncButton.disabled = true; syncButton.textContent = "Syncing…"; }
+        try {
+          const response = await pstFetch(sync ? "/posture/sync" : "/posture", sync ? { method: "POST" } : {});
+          pstState.data = await response.json();
+          renderPosture();
+          if (sync) showToast("Sync complete", `${pstState.data.summary.devices} devices evaluated across your sources.`);
+        } catch (error) {
+          if (error.message !== "unauthorized") {
+            document.getElementById("pst-banner").innerHTML = `<div class="pst-banner error"><div><strong>Fleet posture is unavailable</strong>${escapeHtml(error.message)}. Check that the API is running (npm run dev).</div></div>`;
+          }
+        } finally {
+          pstState.loading = false;
+          syncButton.textContent = "Sync now";
+          syncButton.disabled = !canWrite();
+          syncButton.title = canWrite() ? "Pull fresh data from Intune and Jamf now" : "Read-only reviewers cannot start a sync";
+        }
+      }
+
+      function renderPosture() {
+        const data = pstState.data;
+        if (!data) return;
+        renderPostureBanner(data);
+        renderPostureSources(data);
+        renderPostureScore(data);
+        renderPostureKpis(data);
+        renderPostureRiskBar(data);
+        renderPostureTopRisks(data);
+        renderPostureCoverage(data);
+        renderPostureOs(data);
+        renderPostureApps(data);
+        renderPostureDevices();
+        document.getElementById("pst-updated").textContent = `Updated ${new Date(data.generated_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+      }
+
+      function renderPostureBanner(data) {
+        const problems = Object.values(data.sources).filter((source) => source.error);
+        const parts = [];
+        if (data.mode === "sample") {
+          parts.push(`<div class="pst-banner"><div><strong>You're looking at a sample fleet</strong>Intune, Jamf and CrowdStrike aren't connected yet, so this view shows realistic made-up devices. Add your read-only API credentials to a <code>.env</code> file and restart <code>npm run dev</code>; see <code>docs/fleet-posture.md</code> for the five-minute setup. Real PatchOps agent check-ins are included either way.</div></div>`);
+        }
+        if (problems.length) {
+          parts.push(`<div class="pst-banner error"><div><strong>A data source needs attention</strong>${problems.map((source) => `${escapeHtml(source.label)}: ${escapeHtml(source.error)}`).join("<br>")}${problems.some((source) => source.state === "stale") ? "<br>Showing the last successful sync until the next attempt." : ""}</div></div>`);
+        }
+        document.getElementById("pst-banner").innerHTML = parts.join("");
+      }
+
+      function renderPostureSources(data) {
+        const colors = { intune: "#2563eb", jamf: "#4b5563", crowdstrike: "#be123c", agent: "#0f988e" };
+        document.getElementById("pst-sources").innerHTML = ["intune", "jamf", "crowdstrike", "agent"].filter((key) => data.sources[key]).map((key) => {
+          const source = data.sources[key];
+          const text = {
+            sample: `Sample data · ${source.device_count} devices`,
+            ok: `${source.device_count} device${source.device_count === 1 ? "" : "s"} · synced ${pstAgo(source.synced_at)}`,
+            not_configured: "Not connected",
+            pending: "Waiting for first sync",
+            syncing: "Syncing…",
+            error: "Sync failed",
+            stale: `Last good sync ${pstAgo(source.synced_at)}`
+          }[source.state] ?? source.state;
+          const badge = { ok: ["good", "Live"], sample: ["info", "Sample"], error: ["danger", "Error"], stale: ["warn", "Stale"], not_configured: ["", "Off"], syncing: ["info", "Syncing"], pending: ["info", "Pending"] }[source.state] ?? ["", source.state];
+          return `<div class="pst-source"><span class="pst-source-mark" style="background:${colors[key]}">${PST_SOURCES[key][0]}</span><div><strong>${escapeHtml(source.label)}</strong><span>${escapeHtml(text)}</span></div><span class="badge ${badge[0]}">${badge[1]}</span></div>`;
+        }).join("");
+      }
+
+      function renderPostureScore(data) {
+        const score = data.summary.score;
+        document.getElementById("pst-score").innerHTML = score === null ? "—" : `${score}<small> / 100</small>`;
+        const badge = document.getElementById("pst-score-badge");
+        const [cls, label] = score === null ? ["", "No devices"] : score >= 85 ? ["good", "Good"] : score >= 70 ? ["warn", "Fair"] : ["danger", "At risk"];
+        badge.className = `badge ${cls}`;
+        badge.textContent = label;
+        renderPostureTrend(data.trend ?? [], data.mode);
+      }
+
+      function renderPostureTrend(points, mode) {
+        const svg = document.getElementById("pst-trend");
+        if (points.length < 2) {
+          svg.innerHTML = `<text x="0" y="36" fill="#5d6b7c" font-size="12">The trend line appears after a second daily snapshot.</text>`;
+          svg.onmousemove = svg.onmouseleave = null;
+          return;
+        }
+        const width = Math.max(200, svg.clientWidth || 300);
+        const height = 64;
+        const pad = { top: 6, bottom: 14, left: 2, right: 6 };
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        const scores = points.map((point) => point.score);
+        const min = Math.max(0, Math.min(...scores) - 5);
+        const max = Math.min(100, Math.max(...scores) + 5);
+        const x = (index) => pad.left + (index / (points.length - 1)) * (width - pad.left - pad.right);
+        const y = (value) => pad.top + (1 - (value - min) / Math.max(1, max - min)) * (height - pad.top - pad.bottom);
+        const line = points.map((point, index) => `${index ? "L" : "M"}${x(index).toFixed(1)},${y(point.score).toFixed(1)}`).join("");
+        const area = `${line}L${x(points.length - 1).toFixed(1)},${height - pad.bottom}L${x(0).toFixed(1)},${height - pad.bottom}Z`;
+        const last = points.length - 1;
+        const fmt = (date) => new Date(`${date}T12:00:00`).toLocaleDateString([], { month: "short", day: "numeric" });
+        svg.innerHTML = `
+          <line x1="0" x2="${width}" y1="${height - pad.bottom}" y2="${height - pad.bottom}" stroke="#e3e9f0" stroke-width="1"/>
+          <path d="${area}" fill="#2563eb" opacity="0.1"/>
+          <path d="${line}" fill="none" stroke="#2563eb" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+          <line id="pst-trend-cross" x1="0" x2="0" y1="${pad.top}" y2="${height - pad.bottom}" stroke="#94a3b8" stroke-width="1" opacity="0"/>
+          <circle cx="${x(last)}" cy="${y(points[last].score)}" r="4.5" fill="#2563eb" stroke="#fff" stroke-width="2"/>
+          <text x="0" y="${height - 2}" fill="#5d6b7c" font-size="10">${fmt(points[0].date)}</text>
+          <text x="${width}" y="${height - 2}" fill="#5d6b7c" font-size="10" text-anchor="end">${fmt(points[last].date)}${mode === "sample" ? " · sample trend" : ""}</text>`;
+        svg.onmousemove = (event) => {
+          const rect = svg.getBoundingClientRect();
+          const index = Math.max(0, Math.min(last, Math.round(((event.clientX - rect.left) / rect.width * width - pad.left) / (width - pad.left - pad.right) * last)));
+          const cross = svg.querySelector("#pst-trend-cross");
+          cross.setAttribute("x1", x(index)); cross.setAttribute("x2", x(index)); cross.setAttribute("opacity", "1");
+          const point = points[index];
+          pstShowTip(`<strong>${fmt(point.date)}</strong><br>Score ${point.score} · ${point.critical} critical, ${point.high} high`, event.clientX, event.clientY);
+        };
+        svg.onmouseleave = () => { svg.querySelector("#pst-trend-cross")?.setAttribute("opacity", "0"); pstHideTip(); };
+      }
+
+      function renderPostureKpis(data) {
+        const s = data.summary;
+        const count = (predicate) => data.devices.filter(predicate).length;
+        const kpis = [
+          ["Disk encrypted", s.encrypted_pct, `${count((d) => d.encrypted === false)} unencrypted`, "FileVault on Macs, BitLocker on PCs"],
+          ["Intune compliant", s.compliant_pct, `${count((d) => ["noncompliant", "conflict", "error"].includes(d.compliance))} non-compliant`, "Of devices that report an Intune compliance state"],
+          ["OS current", s.os_current_pct, `${count((d) => d.os_status === "unsupported")} unsupported`, "Running the newest OS build seen in the fleet"],
+          ["Checked in ≤ 7 days", s.checked_in_7d_pct, `${count((d) => d.check_in_age_days > data.settings.stale_days)} overdue (>${data.settings.stale_days}d)`, "Most recent check-in across all sources"],
+          ["Apps current", s.apps_current_pct, `${data.apps.reduce((sum, app) => sum + app.behind, 0)} outdated installs`, "Devices with no application behind its target version"]
+        ];
+        document.getElementById("pst-kpis").innerHTML = kpis.map(([label, value, sub, tip]) => {
+          const color = value === null ? "#c3ccd6" : value >= 90 ? "var(--sev-healthy)" : value >= 75 ? "var(--sev-medium)" : "var(--sev-critical)";
+          return `<article class="panel pst-kpi" data-tip="${escapeHtml(tip)}">
+            <span class="pst-kpi-label">${label}</span>
+            <span class="pst-kpi-value">${pstPct(value)}</span>
+            <div class="pst-meter"><span style="width:${value ?? 0}%;background:${color}"></span></div>
+            <span class="pst-kpi-sub">${value === null ? "No data from connected sources" : escapeHtml(sub)}</span>
+          </article>`;
+        }).join("");
+      }
+
+      function renderPostureRiskBar(data) {
+        const levels = ["critical", "high", "medium", "low", "healthy"];
+        const total = data.summary.devices || 1;
+        document.getElementById("pst-device-total").textContent = `${data.summary.devices} devices · ${data.summary.macos} Mac · ${data.summary.windows} Windows`;
+        document.getElementById("pst-riskbar").innerHTML = levels.filter((level) => data.summary.by_risk[level]).map((level) => {
+          const value = data.summary.by_risk[level];
+          return `<span style="flex:${value} 1 0;background:${PST_SEVERITY[level].color}" data-tip="${PST_SEVERITY[level].label}: ${value} device${value === 1 ? "" : "s"} (${Math.round((value / total) * 100)}%)"></span>`;
+        }).join("");
+        document.getElementById("pst-risk-legend").innerHTML = levels.map((level) => `<button type="button" data-pst-risk="${level}"><i class="pst-dot" style="background:${PST_SEVERITY[level].color}"></i>${PST_SEVERITY[level].label} <strong>${data.summary.by_risk[level]}</strong></button>`).join("");
+      }
+
+      function renderPostureTopRisks(data) {
+        const risks = data.top_risks.slice(0, 8);
+        const max = Math.max(1, ...risks.map((risk) => risk.count));
+        document.getElementById("pst-top-risks").innerHTML = risks.length ? risks.map((risk) => `
+          <button type="button" class="pst-risk-row" data-pst-issue="${escapeHtml(risk.id)}" data-pst-issue-label="${escapeHtml(risk.title)}">
+            ${pstSevTag(risk.severity)}
+            <span><strong>${escapeHtml(risk.title)}</strong><div class="item-sub">${[risk.platforms.macos ? `${risk.platforms.macos} Mac` : "", risk.platforms.windows ? `${risk.platforms.windows} Windows` : ""].filter(Boolean).join(" · ")}</div></span>
+            <span class="pst-mini-bar"><span style="width:${(risk.count / max) * 100}%;background:${PST_SEVERITY[risk.severity].color}"></span></span>
+            <span class="pst-count">${risk.count}</span>
+          </button>`).join("") : `<div class="pst-empty">No open risks. Nice work.</div>`;
+      }
+
+      function renderPostureCoverage(data) {
+        const c = data.coverage;
+        const s = data.summary;
+        const tiles = [
+          ["Macs in Jamf", `${c.in_jamf}`, `of ${s.macos} Macs`, false],
+          ["Devices in Intune", `${c.in_intune}`, `of ${s.devices} devices`, false],
+          ["Macs in both Jamf and Intune", `${c.jamf_and_intune}`, "compliance partnership", false],
+          ["In CrowdStrike", `${c.in_crowdstrike ?? 0}`, `${c.crowdstrike_reporting ?? 0} reported in the last 7 days`, false],
+          ["PatchOps agent installed", `${c.with_agent}`, `${c.without_agent} without`, false],
+          ["Macs missing from Jamf", `${c.macs_missing_jamf}`, "seen only by other sources", c.macs_missing_jamf > 0],
+          ["PCs missing from Intune", `${c.pcs_missing_intune}`, "seen only by other sources", c.pcs_missing_intune > 0]
+        ];
+        document.getElementById("pst-coverage").innerHTML = tiles.map(([label, value, sub, alert]) => `<div class="pst-cov ${alert ? "alert" : ""}"><span>${label}</span><strong>${value}</strong><em>${sub}</em></div>`).join("");
+      }
+
+      function renderPostureOs(data) {
+        const groups = [["macos", "macOS"], ["windows", "Windows"]].filter(([key]) => data.os[key]?.length);
+        document.getElementById("pst-os-note").textContent = `Newest seen: macOS ${data.baselines.macos.latest ?? "—"} · Windows ${data.baselines.windows.latest ?? "—"}. Set your own baseline in .env.`;
+        document.getElementById("pst-os").innerHTML = groups.map(([key, title]) => {
+          const rows = data.os[key];
+          const max = Math.max(1, ...rows.map((row) => row.count));
+          return `<div class="pst-os-group"><h3>${title}</h3>${rows.map((row) => {
+            const [label, color] = PST_OS_STATUS[row.status] ?? PST_OS_STATUS.unknown;
+            return `<div class="pst-os-row" data-tip="${escapeHtml(pstOsLabel(row, key))}: ${row.count} device${row.count === 1 ? "" : "s"} · ${label}">
+              <span>${escapeHtml(pstOsLabel(row, key))}</span>
+              <span class="pst-mini-bar"><span style="width:${(row.count / max) * 100}%;background:${color}"></span></span>
+              <span class="pst-n">${row.count}</span>
+              <span class="pst-status"><i class="pst-dot" style="background:${color}"></i>${label}</span>
+            </div>`;
+          }).join("")}</div>`;
+        }).join("") || `<div class="pst-empty">No OS data yet.</div>`;
+      }
+
+      function renderPostureApps(data) {
+        const behind = data.apps.filter((app) => app.behind > 0);
+        const rows = pstState.allApps ? behind : behind.slice(0, 8);
+        document.getElementById("pst-apps-toggle").textContent = pstState.allApps ? "Show top 8" : `Show all (${behind.length})`;
+        document.getElementById("pst-apps-toggle").hidden = behind.length <= 8;
+        document.getElementById("pst-apps").innerHTML = rows.length ? rows.map((app) => `
+          <tr data-pst-app="${escapeHtml(app.name)}" data-pst-app-platform="${app.platform}" title="Show devices running an older ${escapeHtml(app.name)}">
+            <td><strong>${escapeHtml(app.name)}</strong><div class="item-sub">${app.platform === "macos" ? "macOS" : "Windows"}${app.watchlisted ? " · high-exposure app" : ""}</div></td>
+            <td class="pst-hide-sm">${app.installs}</td>
+            <td><strong>${app.behind}</strong> <span class="item-sub">(${Math.round((app.behind / app.installs) * 100)}%)</span></td>
+            <td class="pst-hide-sm">${escapeHtml(app.target_version)}<div class="item-sub">${app.target_source === "approved_baseline" ? "approved baseline" : "newest in fleet"}</div></td>
+            <td>${pstSevTag(app.severity)}</td>
+          </tr>`).join("") : `<tr><td colspan="5" class="pst-empty">Every inventoried app is on its target version.</td></tr>`;
+      }
+
+      function pstFilteredDevices() {
+        const data = pstState.data;
+        if (!data) return [];
+        const query = document.getElementById("pst-search").value.trim().toLowerCase();
+        const platform = document.getElementById("pst-filter-platform").value;
+        const risk = document.getElementById("pst-filter-risk").value;
+        const source = document.getElementById("pst-filter-source").value;
+        const filter = pstState.filter;
+        return data.devices.filter((device) => {
+          if (platform && device.platform !== platform) return false;
+          if (risk && device.risk_level !== risk) return false;
+          if (source === "no-agent" ? device.sources.agent : source && !device.sources[source]) return false;
+          if (filter?.kind === "issue" && !device.issues.some((issue) => issue.key === filter.id)) return false;
+          if (filter?.kind === "app" && !(device.platform === filter.platform && device.apps_behind.some((app) => app.name === filter.name))) return false;
+          if (!query) return true;
+          return [device.hostname, device.serial_number, device.user.name, device.user.email, device.model, device.os.version, ...device.apps_behind.map((app) => app.name), ...device.issues.map((issue) => issue.title)]
+            .some((value) => String(value ?? "").toLowerCase().includes(query));
+        });
+      }
+
+      function renderPostureDevices() {
+        const data = pstState.data;
+        if (!data) return;
+        const devices = pstFilteredDevices();
+        const shown = devices.slice(0, pstState.limit);
+        const stale = data.settings.stale_days;
+        document.getElementById("pst-issue-chip").innerHTML = pstState.filter ? `<button type="button" class="pst-chip" id="pst-clear-filter" title="Clear filter">${escapeHtml(pstState.filter.label)} ✕</button>` : "";
+        document.getElementById("pst-devices").innerHTML = shown.length ? shown.map((device) => {
+          const top = device.issues[0];
+          const encrypted = device.encrypted === true ? `<span class="pst-status"><i class="pst-dot" style="background:var(--sev-healthy)"></i>Yes</span>` : device.encrypted === false ? `<span class="pst-status"><i class="pst-dot" style="background:var(--sev-critical)"></i><strong style="color:var(--ink)">No</strong></span>` : `<span class="pst-status">Unknown</span>`;
+          const level = PST_SEVERITY[device.risk_level];
+          const overdue = device.check_in_age_days !== null && device.check_in_age_days > stale;
+          return `<tr data-pst-device="${escapeHtml(device.id)}">
+            <td data-label="Device"><div class="device-cell"><span class="os-chip">${device.platform === "windows" ? "W" : "M"}</span><div><strong>${escapeHtml(device.hostname)}</strong><div class="item-sub">${escapeHtml(device.user.name || device.user.email || "Unassigned")}${device.sample ? " · sample" : ""}</div></div></div></td>
+            <td data-label="OS">${escapeHtml(pstOsLabel(device.os, device.platform))}</td>
+            <td data-label="Sources"><span class="pst-src-chips">${Object.entries(PST_SOURCES).map(([key, [letter, label]]) => `<span class="pst-src ${key} ${device.sources[key] ? "" : "off"}" data-tip="${label}: ${device.sources[key] ? `last check-in ${pstAgo(device.sources[key].last_check_in)}` : "not present"}">${letter}</span>`).join("")}</span></td>
+            <td data-label="Last check-in" class="pst-hide-sm">${overdue ? `<strong style="color:var(--red)">${pstAgo(device.last_check_in)}</strong>` : pstAgo(device.last_check_in)}</td>
+            <td data-label="Encrypted" class="pst-hide-sm">${encrypted}</td>
+            <td data-label="Risk"><span class="pst-score-cell"><span class="pst-sev"><i class="pst-dot" style="background:${level.color}"></i>${level.label}</span><span class="pst-mini-bar" data-tip="Risk score ${device.risk_score} / 100"><span style="width:${device.risk_score}%;background:${level.color}"></span></span></span></td>
+            <td data-label="Top issue" class="pst-hide-sm"><div class="pst-issue-text">${top ? `${escapeHtml(top.title)}${device.issues.length > 1 ? ` <span class="item-sub">+${device.issues.length - 1} more</span>` : ""}` : "No issues"}</div></td>
+          </tr>`;
+        }).join("") : `<tr><td colspan="7" class="pst-empty">No devices match these filters.</td></tr>`;
+        document.getElementById("pst-device-count").textContent = `Showing ${shown.length} of ${devices.length} matching devices (${data.devices.length} total)`;
+        document.getElementById("pst-more").hidden = devices.length <= shown.length;
+      }
+
+      function pstSetFilter(filter) {
+        pstState.filter = filter;
+        pstState.limit = 50;
+        renderPostureDevices();
+        document.querySelector(".pst-table-panel").scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+
+      async function openPostureDevice(id) {
+        let device;
+        try {
+          device = await (await pstFetch(`/posture/devices/${encodeURIComponent(id)}`)).json();
+        } catch (error) {
+          if (error.message !== "unauthorized") showToast("Device unavailable", error.message);
+          return;
+        }
+        const yesNo = (value, good = true) => value === null || value === undefined ? "Unknown" : (value === good ? "Yes" : "No");
+        const behind = new Map(device.apps_behind.map((app) => [app.name, app]));
+        const facts = [
+          ["Serial", device.serial_number || "—"], ["Model", device.model || "—"],
+          ["User", device.user.name || "—"], ["Email / UPN", device.user.email || "—"],
+          ["OS", pstOsLabel(device.os, device.platform)], ["Last check-in", `${pstAgo(device.last_check_in)}`],
+          ["Disk encrypted", yesNo(device.encrypted)], ["Intune compliance", device.compliance ?? "Not in Intune"],
+          ...(device.crowdstrike ? [["Falcon sensor", `${device.crowdstrike.version || "—"}${device.crowdstrike.rfm ? " · reduced functionality" : ""}${device.crowdstrike.contained ? " · contained" : ""}`], ["Falcon last seen", pstAgo(device.sources.crowdstrike?.last_check_in)]] : []),
+          ...(device.platform === "macos" ? [["SIP", yesNo(device.security.sip)], ["Gatekeeper", yesNo(device.security.gatekeeper)], ["Firewall", yesNo(device.security.firewall)], ["Jamf managed", device.sources.jamf ? yesNo(device.jamf_managed) : "Not in Jamf"]] : [["Ownership", device.ownership || "—"]])
+        ];
+        const backdrop = document.createElement("div");
+        backdrop.className = "pst-drawer-backdrop";
+        const drawer = document.createElement("aside");
+        drawer.className = "pst-drawer";
+        drawer.setAttribute("role", "dialog");
+        drawer.setAttribute("aria-label", `${device.hostname} posture`);
+        drawer.innerHTML = `
+          <div class="pst-drawer-head">
+            <div><h2>${escapeHtml(device.hostname)}</h2><p>${pstSevTag(device.risk_level)} &nbsp;Risk score ${device.risk_score} / 100${device.sample ? " · sample device" : ""}</p></div>
+            <button class="ghost-btn" type="button" data-pst-close>Close</button>
+          </div>
+          <div class="pst-drawer-body">
+            <div class="pst-facts">${facts.map(([label, value]) => `<div><span>${label}</span>${escapeHtml(value)}</div>`).join("")}</div>
+            <div><h3>Seen by</h3><div class="pst-facts">${Object.entries(PST_SOURCES).map(([key, [, label]]) => `<div><span>${label}</span>${device.sources[key] ? `Checked in ${escapeHtml(pstAgo(device.sources[key].last_check_in))}` : "Not present"}</div>`).join("")}</div></div>
+            <div><h3>Issues (${device.issues.length})</h3><div style="display:grid;gap:8px">${device.issues.length ? device.issues.map((issue) => `<div class="pst-issue"><i style="background:${PST_SEVERITY[issue.severity].color}"></i><div><strong>${escapeHtml(issue.title)}</strong> ${pstSevTag(issue.severity)}<p>${escapeHtml(issue.detail)}</p></div></div>`).join("") : `<div class="pst-empty">No open issues.</div>`}</div></div>
+            ${Array.isArray(device.vulnerabilities) ? `<div><h3>Open vulnerabilities (${device.vulnerabilities.length}) <span class="item-sub">from CrowdStrike Spotlight</span></h3>${device.vulnerabilities.length ? `<table class="pst-app-table"><thead><tr><th>CVE</th><th>Severity</th><th>Product</th><th>Fix</th></tr></thead><tbody>${[...device.vulnerabilities].sort((a, b) => Number(b.kev || b.exploit === "Actively used") - Number(a.kev || a.exploit === "Actively used") || (b.score ?? 0) - (a.score ?? 0)).slice(0, 40).map((vuln) => `<tr><td><strong>${escapeHtml(vuln.cve)}</strong>${vuln.kev || vuln.exploit === "Actively used" ? ` <span class="badge danger">Exploited</span>` : ""}</td><td>${pstSevTag(vuln.severity)} <span class="item-sub">${vuln.score ?? ""}</span></td><td>${escapeHtml(vuln.product || "—")}</td><td>${escapeHtml([...(vuln.kbs ?? []), ...(vuln.remediation ?? [])].slice(0, 1).join("") || "—")}</td></tr>`).join("")}</tbody></table>${device.vulnerabilities.length > 40 ? `<p class="item-sub">Showing 40 of ${device.vulnerabilities.length}. See all on the Vulnerabilities page.</p>` : ""}` : `<div class="pst-empty">No open vulnerabilities.</div>`}</div>` : ""}
+            <div><h3>Installed applications (${device.apps.length})${device.apps_source ? ` <span class="item-sub">from ${escapeHtml(PST_SOURCES[device.apps_source]?.[1] ?? device.apps_source)}</span>` : ""}</h3>
+              ${device.apps.length ? `<input type="search" class="select" style="width:100%;margin-bottom:8px" placeholder="Filter applications" data-pst-app-filter />
+              <table class="pst-app-table"><thead><tr><th>Application</th><th>Version</th><th>Status</th></tr></thead><tbody>${[...device.apps].sort((a, b) => (behind.has(b.name) - behind.has(a.name)) || a.name.localeCompare(b.name)).map((app) => {
+                const lag = behind.get(app.name);
+                return `<tr data-app-name="${escapeHtml(app.name.toLowerCase())}"><td>${escapeHtml(app.name)}</td><td>${escapeHtml(app.version || "—")}</td><td>${lag ? `${pstSevTag(lag.severity)} <span class="item-sub">→ ${escapeHtml(lag.target_version)}</span>` : `<span class="pst-status"><i class="pst-dot" style="background:var(--sev-healthy)"></i>Current</span>`}</td></tr>`;
+              }).join("")}</tbody></table>` : `<div class="pst-empty">No application inventory for this device. Install the PatchOps agent or enable app inventory in Intune / Jamf.</div>`}
+            </div>
+            ${Object.keys(device.raw ?? {}).length ? `<div><h3>Raw data from each source</h3>${Object.entries(device.raw).map(([source, record]) => `<details class="pst-raw"><summary>${escapeHtml(PST_SOURCES[source]?.[1] ?? source)} · ${Object.keys(record).length} fields</summary><pre class="ds-json">${escapeHtml(JSON.stringify(record, null, 2))}</pre></details>`).join("")}</div>` : ""}
+          </div>`;
+        const close = () => { backdrop.remove(); drawer.remove(); document.removeEventListener("keydown", onKey); pstHideTip(); };
+        const onKey = (event) => { if (event.key === "Escape") close(); };
+        backdrop.addEventListener("click", close);
+        drawer.querySelector("[data-pst-close]").addEventListener("click", close);
+        drawer.querySelector("[data-pst-app-filter]")?.addEventListener("input", (event) => {
+          const query = event.target.value.trim().toLowerCase();
+          drawer.querySelectorAll("tr[data-app-name]").forEach((row) => { row.hidden = Boolean(query) && !row.dataset.appName.includes(query); });
+        });
+        document.addEventListener("keydown", onKey);
+        document.body.append(backdrop, drawer);
+        drawer.querySelector("[data-pst-close]").focus();
+      }
+
+      let pstTipElement = null;
+      function pstShowTip(html, clientX, clientY) {
+        if (!pstTipElement) {
+          pstTipElement = document.createElement("div");
+          pstTipElement.className = "pst-tip";
+          document.body.appendChild(pstTipElement);
+        }
+        pstTipElement.innerHTML = html;
+        pstTipElement.hidden = false;
+        const { width, height } = pstTipElement.getBoundingClientRect();
+        pstTipElement.style.left = `${Math.min(window.innerWidth - width - 8, clientX + 14)}px`;
+        pstTipElement.style.top = `${Math.max(8, clientY - height - 12)}px`;
+      }
+      function pstHideTip() { if (pstTipElement) pstTipElement.hidden = true; }
+      document.addEventListener("mousemove", (event) => {
+        const target = event.target.closest?.("#posture [data-tip], .pst-drawer [data-tip], #fleet-dashboards [data-tip], #fleet-explore [data-tip]");
+        if (target) pstShowTip(escapeHtml(target.dataset.tip), event.clientX, event.clientY);
+        else if (!event.target.closest?.("#pst-trend, svg[data-fd-trend]")) pstHideTip();
+      });
+
+      document.getElementById("pst-sync").addEventListener("click", () => loadPosture({ sync: true }));
+      document.getElementById("pst-export").addEventListener("click", async () => {
+        try {
+          const blob = await (await pstFetch("/posture/export.csv")).blob();
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = `fleet-posture-${new Date().toISOString().slice(0, 10)}.csv`;
+          link.click();
+          setTimeout(() => URL.revokeObjectURL(link.href), 2000);
+        } catch (error) {
+          if (error.message !== "unauthorized") showToast("Export failed", error.message);
+        }
+      });
+      document.getElementById("pst-apps-toggle").addEventListener("click", () => { pstState.allApps = !pstState.allApps; renderPostureApps(pstState.data); });
+      document.getElementById("pst-more").addEventListener("click", () => { pstState.limit += 100; renderPostureDevices(); });
+      ["pst-search", "pst-filter-platform", "pst-filter-risk", "pst-filter-source"].forEach((id) => document.getElementById(id).addEventListener("input", () => { pstState.limit = 50; renderPostureDevices(); }));
+      document.getElementById("posture").addEventListener("click", (event) => {
+        const issue = event.target.closest("[data-pst-issue]");
+        if (issue) return pstSetFilter({ kind: "issue", id: issue.dataset.pstIssue, label: issue.dataset.pstIssueLabel });
+        const app = event.target.closest("[data-pst-app]");
+        if (app) return pstSetFilter({ kind: "app", name: app.dataset.pstApp, platform: app.dataset.pstAppPlatform, label: `Outdated ${app.dataset.pstApp}` });
+        const risk = event.target.closest("[data-pst-risk]");
+        if (risk) {
+          document.getElementById("pst-filter-risk").value = risk.dataset.pstRisk;
+          return pstSetFilter(pstState.filter);
+        }
+        if (event.target.closest("#pst-clear-filter")) return pstSetFilter(null);
+        const row = event.target.closest("[data-pst-device]");
+        if (row) openPostureDevice(row.dataset.pstDevice);
+      });
+      window.addEventListener("resize", () => { if (pstState.data) renderPostureTrend(pstState.data.trend ?? [], pstState.data.mode); });
+
+
+      // ---- Dashboards, Explore and Fleet rules ----
+      const FD_TONES = {
+        good: ["#0ca30c", "#5cc95c", "#0a7a0a", "#8fdc8f"],
+        bad: ["#d03b3b", "#e88080", "#a32626", "#f2b0b0"],
+        warn: ["#fab219", "#f6cd6b", "#c98a00", "#fbe3a6"],
+        neutral: ["#2563eb", "#7c3aed", "#0f988e", "#9aa8b8", "#e67b2f", "#64748b"]
+      };
+      const fdState = { config: null, dashboardId: null, data: null };
+      const fdCompact = (value) => (value >= 10000 ? `${(value / 1000).toFixed(value >= 100000 ? 0 : 1)}K` : value >= 1000 ? `${(value / 1000).toFixed(1)}K` : String(value));
+      const fdQuote = (value) => (/[\s,()"]/.test(value) ? `"${String(value).replace(/"/g, "")}"` : value);
+      const fdPlatformLabel = (value) => ({ windows: "Windows", macos: "macOS" })[value] ?? value;
+      const fdRefinable = (field, label) => !/^lastseen/i.test(field) && !["Unknown", "Never"].includes(label);
+
+      async function fleetApi(path, init = {}) {
+        const response = await fetch(`${apiBaseUrl}${path}`, { ...init, headers: { authorization: `Bearer ${dashboardToken}`, ...(init.body ? { "content-type": "application/json" } : {}) } });
+        if (response.status === 401) { showAuthGate("Your session expired. Please sign in again."); throw new Error("unauthorized"); }
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.message || (response.status === 403 ? "Your role is read-only." : `API returned ${response.status}`));
+        return payload;
+      }
+
+      function fdColors(series) {
+        const used = { good: 0, bad: 0, warn: 0, neutral: 0 };
+        return series.map((item) => { const palette = FD_TONES[item.tone] ?? FD_TONES.neutral; const color = palette[used[item.tone] % palette.length]; used[item.tone] += 1; return color; });
+      }
+
+      async function loadFleetConfig() {
+        fdState.config = await fleetApi("/fleet/config");
+        return fdState.config;
+      }
+
+      // ---------- Dashboards ----------
+      async function loadDashboards({ keep = true } = {}) {
+        if (!dashboardToken || !apiBaseUrl) return;
+        try {
+          const config = await loadFleetConfig();
+          const select = document.getElementById("fd-select");
+          if (!keep || !config.dashboards.some((dashboard) => dashboard.id === fdState.dashboardId)) fdState.dashboardId = config.dashboards[0]?.id ?? null;
+          select.innerHTML = config.dashboards.map((dashboard) => `<option value="${escapeHtml(dashboard.id)}">${escapeHtml(dashboard.name)}</option>`).join("") || `<option value="">No dashboards yet</option>`;
+          select.value = fdState.dashboardId ?? "";
+          ["fd-new", "fd-rename", "fd-delete", "fd-add"].forEach((id) => { document.getElementById(id).disabled = !canWrite(); });
+          document.getElementById("fd-banner").innerHTML = config.mode === "sample" ? `<div class="pst-banner"><div><strong>Sample fleet</strong>These dashboards run on the sample devices until Intune or Jamf is connected. Trends on sample data are illustrative; real trends build one point per day.</div></div>` : "";
+          await renderDashboard();
+        } catch (error) {
+          if (error.message !== "unauthorized") document.getElementById("fd-grid").innerHTML = `<div class="fd-empty-dash">Dashboards are unavailable: ${escapeHtml(error.message)}</div>`;
+        }
+      }
+
+      async function renderDashboard() {
+        const grid = document.getElementById("fd-grid");
+        if (!fdState.dashboardId) { grid.innerHTML = `<div class="fd-empty-dash">No dashboards yet. Click <strong>New dashboard</strong> to create one.</div>`; return; }
+        fdState.data = await fleetApi(`/fleet/dashboards/${encodeURIComponent(fdState.dashboardId)}`);
+        document.getElementById("fd-updated").textContent = `Updated ${new Date(fdState.data.generated_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
+        grid.innerHTML = fdState.data.widgets.length ? fdState.data.widgets.map(fdWidgetCard).join("") : `<div class="fd-empty-dash">This dashboard is empty. Click <strong>Add widget</strong>, or save a query from <strong>Explore</strong>.</div>`;
+        grid.querySelectorAll("svg[data-fd-trend]").forEach((svg) => fdDrawTrend(svg, fdState.data.widgets.find((widget) => widget.id === svg.dataset.fdTrend)));
+      }
+
+      function fdWidgetCard(widget) {
+        const actions = canWrite() ? `<div class="fd-card-actions"><button class="fd-icon-btn" type="button" data-fd-edit="${escapeHtml(widget.id)}">Edit</button><button class="fd-icon-btn" type="button" data-fd-remove="${escapeHtml(widget.id)}">Remove</button></div>` : "";
+        let body = "";
+        let foot = "";
+        if (widget.error) {
+          body = `<div class="fd-error">${escapeHtml(widget.error)}</div>`;
+        } else if (widget.type === "donut") {
+          const total = widget.series.reduce((sum, item) => sum + item.count, 0);
+          const colors = fdColors(widget.series);
+          body = `${fdDonut(widget.series, colors, total)}<div class="fd-legend">${widget.series.map((item, index) => `<button type="button" data-fd-query="${escapeHtml(item.query)}" data-tip="${escapeHtml(item.label)}: ${item.count} devices">
+            <i class="fd-swatch" style="background:${colors[index]}"></i><span>${escapeHtml(item.label)}</span><strong>${item.count} <em>(${total ? ((item.count / total) * 100).toFixed(1) : "0.0"}%)</em></strong></button>`).join("")}</div>`;
+          foot = `${widget.series.length} categor${widget.series.length === 1 ? "y" : "ies"}`;
+        } else if (widget.type === "number") {
+          const item = widget.series[0];
+          body = `<div class="fd-number" data-fd-query="${escapeHtml(item.query)}" role="button" tabindex="0"><strong>${fdCompact(item.count)}</strong><span>${escapeHtml(item.label)}</span></div>`;
+          foot = "Click to see the devices";
+        } else if (widget.type === "breakdown") {
+          const item = widget.series[0];
+          const groups = item.groups ?? [];
+          const top = groups.slice(0, 8);
+          const rest = groups.slice(8).reduce((sum, group) => sum + group.count, 0);
+          const max = Math.max(1, ...top.map((group) => group.count), rest);
+          const label = (value) => (widget.group_by.toLowerCase() === "platform" ? fdPlatformLabel(value) : value);
+          body = `<div class="fd-bars">${top.map((group) => `<${fdRefinable(widget.group_by, group.label) ? `button type="button" data-fd-query="${escapeHtml(`${item.query} f/ ${widget.group_by} = ${fdQuote(group.label)}`)}"` : `div style="cursor:default"`} class="fd-bar" data-tip="${escapeHtml(label(group.label))}: ${group.count} devices">
+              <span>${escapeHtml(label(group.label))}</span><span class="fd-bar-track"><span style="width:${(group.count / max) * 100}%"></span></span><strong>${group.count}</strong></${fdRefinable(widget.group_by, group.label) ? "button" : "div"}>`).join("")}
+            ${rest ? `<div class="fd-bar" style="cursor:default"><span>Other</span><span class="fd-bar-track"><span style="width:${(rest / max) * 100}%;background:#9aa8b8"></span></span><strong>${rest}</strong></div>` : ""}</div>`;
+          foot = `${escapeHtml(item.label)} by ${escapeHtml(widget.group_by)} · ${item.count} devices`;
+        } else if (widget.type === "trend") {
+          const colors = fdColors(widget.series);
+          body = `<div class="fd-trend">
+            <div class="fd-trend-now">${widget.series.length === 1 ? `<strong>${widget.series[0].count}</strong>${escapeHtml(widget.series[0].label)} today` : ""}</div>
+            <svg data-fd-trend="${escapeHtml(widget.id)}" role="img" aria-label="${escapeHtml(widget.title)} trend"></svg>
+            ${widget.series.length > 1 ? `<div class="fd-trend-legend">${widget.series.map((item, index) => `<span><i style="background:${colors[index]}"></i>${escapeHtml(item.label)} · ${item.count}</span>`).join("")}</div>` : ""}
+          </div>`;
+          const points = widget.series[0].trend?.length ?? 0;
+          foot = points < 2 ? "A point is recorded each day; the line appears after day two." : `${points} days${fdState.data.mode === "sample" ? " · sample trend" : ""}`;
+        } else if (widget.type === "table") {
+          const item = widget.series[0];
+          body = `<div class="fd-table"><table><thead><tr><th>Device</th><th>User</th><th>OS</th><th>Last seen</th><th>Risk</th></tr></thead><tbody>${(item.devices ?? []).map((device) => `<tr data-pst-device="${escapeHtml(device.id)}">
+            <td><strong>${escapeHtml(device.hostname)}</strong></td><td>${escapeHtml(device.user.name || device.user.email || "—")}</td><td>${escapeHtml(pstOsLabel(device.os, device.platform))}</td><td>${pstAgo(device.last_check_in)}</td><td>${pstSevTag(device.risk_level)}</td></tr>`).join("") || `<tr><td colspan="5" class="pst-empty">No matching devices.</td></tr>`}</tbody></table></div>`;
+          foot = `${item.count} device${item.count === 1 ? "" : "s"}${item.count > 50 ? " · showing 50" : ""}`;
+        }
+        const warning = widget.warning ? `<div class="pst-banner error" style="margin:12px 12px 0">${escapeHtml(widget.warning)}</div>` : "";
+        return `<article class="fd-card ${widget.size === "wide" ? "wide" : ""}"><div class="fd-card-head"><h3 title="${escapeHtml(widget.title)}">${escapeHtml(widget.title)}</h3>${actions}</div>${warning}<div class="fd-card-body">${body}</div>${foot ? `<div class="fd-card-foot">${foot}</div>` : ""}</article>`;
+      }
+
+      function fdDonut(series, colors, total) {
+        const size = 150, radius = 62, thickness = 26, center = size / 2;
+        if (!total) return `<svg class="fd-donut" viewBox="0 0 ${size} ${size}"><circle cx="${center}" cy="${center}" r="${radius - thickness / 2}" fill="none" stroke="#e7edf4" stroke-width="${thickness}"/><text x="${center}" y="${center + 7}" text-anchor="middle" font-size="22" fill="#111827">0</text></svg>`;
+        const gapAngle = series.filter((item) => item.count).length > 1 ? 2 / (radius - thickness / 2) : 0; // 2px gap
+        let angle = -Math.PI / 2;
+        const arcs = series.map((item, index) => {
+          if (!item.count) return "";
+          const sweep = (item.count / total) * Math.PI * 2;
+          const start = angle + gapAngle / 2;
+          const end = angle + sweep - gapAngle / 2;
+          angle += sweep;
+          if (sweep >= Math.PI * 2 - 0.0001) return `<circle cx="${center}" cy="${center}" r="${radius - thickness / 2}" fill="none" stroke="${colors[index]}" stroke-width="${thickness}" data-tip="${escapeHtml(item.label)}: ${item.count}"/>`;
+          if (end <= start) return "";
+          const outer = radius, inner = radius - thickness;
+          const point = (r, a) => `${(center + r * Math.cos(a)).toFixed(2)} ${(center + r * Math.sin(a)).toFixed(2)}`;
+          const large = end - start > Math.PI ? 1 : 0;
+          return `<path d="M ${point(outer, start)} A ${outer} ${outer} 0 ${large} 1 ${point(outer, end)} L ${point(inner, end)} A ${inner} ${inner} 0 ${large} 0 ${point(inner, start)} Z" fill="${colors[index]}" data-tip="${escapeHtml(item.label)}: ${item.count} (${((item.count / total) * 100).toFixed(1)}%)" data-fd-query="${escapeHtml(item.query)}" style="cursor:pointer"/>`;
+        }).join("");
+        return `<svg class="fd-donut" viewBox="0 0 ${size} ${size}" role="img" aria-label="Total ${total}">${arcs}<text x="${center}" y="${center + 8}" text-anchor="middle" font-size="24" fill="#111827">${fdCompact(total)}</text></svg>`;
+      }
+
+      function fdDrawTrend(svg, widget) {
+        if (!widget || widget.error) return;
+        const series = widget.series.filter((item) => item.trend?.length);
+        const dates = [...new Set(series.flatMap((item) => item.trend.map((point) => point.date)))].sort();
+        if (dates.length < 2) {
+          svg.innerHTML = `<text x="0" y="90" fill="#5d6b7c" font-size="12">Collecting history: one point per day.</text>`;
+          return;
+        }
+        const width = Math.max(240, svg.clientWidth || 360);
+        const height = Math.max(190, svg.clientHeight || 190);
+        const pad = { top: 10, right: 10, bottom: 22, left: 34 };
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        const values = series.flatMap((item) => item.trend.map((point) => point.count));
+        const rawMax = Math.max(1, ...values);
+        const step = Math.pow(10, Math.floor(Math.log10(rawMax))) / (rawMax / Math.pow(10, Math.floor(Math.log10(rawMax))) > 5 ? 1 : 2);
+        const max = Math.ceil(rawMax / step) * step || 1;
+        const x = (date) => pad.left + (dates.indexOf(date) / (dates.length - 1)) * (width - pad.left - pad.right);
+        const y = (value) => pad.top + (1 - value / max) * (height - pad.top - pad.bottom);
+        const colors = fdColors(widget.series);
+        const ticks = [0, max / 2, max];
+        const fmt = (date) => new Date(`${date}T12:00:00`).toLocaleDateString([], { month: "short", day: "numeric" });
+        const labelIndexes = [...new Set([0, Math.floor((dates.length - 1) / 2), dates.length - 1])];
+        let markup = ticks.map((tick) => `<line x1="${pad.left}" x2="${width - pad.right}" y1="${y(tick)}" y2="${y(tick)}" stroke="#e3e9f0" stroke-width="1"/><text x="${pad.left - 6}" y="${y(tick) + 4}" text-anchor="end" font-size="10" fill="#5d6b7c">${fdCompact(Math.round(tick))}</text>`).join("");
+        markup += labelIndexes.map((index) => `<text x="${x(dates[index])}" y="${height - 6}" text-anchor="${index === 0 ? "start" : index === dates.length - 1 ? "end" : "middle"}" font-size="10" fill="#5d6b7c">${fmt(dates[index])}</text>`).join("");
+        series.forEach((item) => {
+          const color = colors[widget.series.indexOf(item)];
+          const path = item.trend.map((point, index) => `${index ? "L" : "M"}${x(point.date).toFixed(1)},${y(point.count).toFixed(1)}`).join("");
+          if (series.length === 1) markup += `<path d="${path}L${x(item.trend.at(-1).date).toFixed(1)},${y(0)}L${x(item.trend[0].date).toFixed(1)},${y(0)}Z" fill="${color}" opacity="0.1"/>`;
+          markup += `<path d="${path}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`;
+          const last = item.trend.at(-1);
+          markup += `<circle cx="${x(last.date)}" cy="${y(last.count)}" r="4.5" fill="${color}" stroke="#fff" stroke-width="2"/>`;
+        });
+        markup += `<line class="fd-cross" x1="0" x2="0" y1="${pad.top}" y2="${y(0)}" stroke="#94a3b8" stroke-width="1" opacity="0"/>`;
+        svg.innerHTML = markup;
+        svg.onmousemove = (event) => {
+          const rect = svg.getBoundingClientRect();
+          const relative = ((event.clientX - rect.left) / rect.width) * width;
+          const index = Math.max(0, Math.min(dates.length - 1, Math.round(((relative - pad.left) / (width - pad.left - pad.right)) * (dates.length - 1))));
+          const date = dates[index];
+          const cross = svg.querySelector(".fd-cross");
+          cross.setAttribute("x1", x(date)); cross.setAttribute("x2", x(date)); cross.setAttribute("opacity", "1");
+          pstShowTip(`<strong>${fmt(date)}</strong>${series.map((item) => { const point = item.trend.find((entry) => entry.date === date); return `<br>${escapeHtml(item.label)}: ${point ? point.count : "—"}`; }).join("")}`, event.clientX, event.clientY);
+        };
+        svg.onmouseleave = () => { svg.querySelector(".fd-cross")?.setAttribute("opacity", "0"); pstHideTip(); };
+      }
+
+      // ---------- Modal helpers ----------
+      function fdOpenModal(title, bodyHtml, { saveLabel = "Save", onSave, extraFoot = "" } = {}) {
+        const backdrop = document.createElement("div");
+        backdrop.className = "fd-modal-backdrop";
+        backdrop.innerHTML = `<div class="fd-modal" role="dialog" aria-label="${escapeHtml(title)}">
+          <div class="fd-modal-head"><h2>${escapeHtml(title)}</h2><button class="fd-icon-btn" type="button" data-fd-close>Close</button></div>
+          <div class="fd-modal-body">${bodyHtml}</div>
+          <div class="fd-modal-foot"><div>${extraFoot}</div><div style="display:flex;gap:8px"><span class="fd-error" data-fd-modal-error style="align-self:center"></span><button class="ghost-btn" type="button" data-fd-close>Cancel</button><button class="primary-btn" type="button" data-fd-save>${escapeHtml(saveLabel)}</button></div></div>
+        </div>`;
+        const close = () => { backdrop.remove(); document.removeEventListener("keydown", onKey); };
+        const onKey = (event) => { if (event.key === "Escape") close(); };
+        backdrop.addEventListener("click", (event) => { if (event.target === backdrop || event.target.closest("[data-fd-close]")) close(); });
+        backdrop.querySelector("[data-fd-save]").addEventListener("click", async () => {
+          const errorBox = backdrop.querySelector("[data-fd-modal-error]");
+          errorBox.textContent = "";
+          try { await onSave(backdrop.querySelector(".fd-modal"), close); } catch (error) { errorBox.textContent = error.message; }
+        });
+        document.addEventListener("keydown", onKey);
+        document.body.appendChild(backdrop);
+        backdrop.querySelector("input, textarea, select")?.focus();
+        return backdrop.querySelector(".fd-modal");
+      }
+
+      function fdSeriesRow(series = { label: "", tone: "neutral", query: "e/ Device" }) {
+        return `<div class="fd-series">
+          <div class="fd-series-head">
+            <label class="fd-field">Label<input data-s-label value="${escapeHtml(series.label)}" placeholder="e.g. Windows - Installed" /></label>
+            <label class="fd-field">Color<select data-s-tone>${["good", "bad", "warn", "neutral"].map((tone) => `<option value="${tone}" ${series.tone === tone ? "selected" : ""}>${{ good: "Green (good)", bad: "Red (bad)", warn: "Amber (warning)", neutral: "Blue (neutral)" }[tone]}</option>`).join("")}</select></label>
+            <button class="ghost-btn" type="button" data-s-test>Test</button>
+            <button class="ghost-btn" type="button" data-s-remove>Remove</button>
+          </div>
+          <label class="fd-field">Query<textarea data-s-query rows="2" spellcheck="false">${escapeHtml(series.query)}</textarea></label>
+          <div class="fd-series-result" data-s-result></div>
+        </div>`;
+      }
+
+      function fdWidgetEditor(existing = null, preset = null) {
+        const widget = existing ?? preset ?? { title: "", type: "donut", size: "normal", group_by: "Platform", series: [{ label: "", tone: "good", query: "e/ Device" }] };
+        const templates = fdState.config?.suggested_widgets ?? [];
+        const modal = fdOpenModal(existing ? "Edit widget" : "Add widget", `
+          ${!existing && templates.length ? `<label class="fd-field">Start from a template<select data-w-template><option value="">Blank widget</option>${templates.map((item, index) => `<option value="${index}">${escapeHtml(item.widget.title)}</option>`).join("")}</select></label>` : ""}
+          <div class="fd-form-row">
+            <label class="fd-field">Title<input data-w-title value="${escapeHtml(widget.title)}" placeholder="e.g. CrowdStrike Deployment" /></label>
+            <label class="fd-field">Chart<select data-w-type>${[["donut", "Donut: compare categories"], ["trend", "Trend: count over time"], ["number", "Number: one count"], ["breakdown", "Breakdown: group one query"], ["table", "Table: list devices"]].map(([value, label]) => `<option value="${value}" ${widget.type === value ? "selected" : ""}>${label}</option>`).join("")}</select></label>
+            <label class="fd-field" data-w-group-wrap>Group by<select data-w-group>${["Platform", "OSRelease", "OSVersion", "RiskLevel", "Compliance", "Encrypted", "LastSeenAt", "Model", "Manufacturer", "InIntune", "InJamf", "InCrowdStrike", "CrowdStrikeReporting", "CrowdStrikeSensorVersion", "HasAgent", "Ownership"].map((field) => `<option ${widget.group_by === field ? "selected" : ""}>${field}</option>`).join("")}</select></label>
+            <label class="fd-field">Size<select data-w-size><option value="normal">Normal</option><option value="wide" ${widget.size === "wide" ? "selected" : ""}>Wide</option></select></label>
+          </div>
+          <div data-w-series>${widget.series.map(fdSeriesRow).join("")}</div>
+          <div><button class="ghost-btn" type="button" data-w-add-series>Add category</button></div>
+        `, {
+          onSave: async (root, close) => {
+            const next = {
+              ...(existing ?? {}),
+              title: root.querySelector("[data-w-title]").value,
+              type: root.querySelector("[data-w-type]").value,
+              group_by: root.querySelector("[data-w-group]").value,
+              size: root.querySelector("[data-w-size]").value,
+              series: [...root.querySelectorAll(".fd-series")].map((row) => ({ label: row.querySelector("[data-s-label]").value, tone: row.querySelector("[data-s-tone]").value, query: row.querySelector("[data-s-query]").value }))
+            };
+            const dashboard = await fdCurrentDashboard();
+            dashboard.widgets = existing ? dashboard.widgets.map((item) => (item.id === existing.id ? next : item)) : [...dashboard.widgets, next];
+            await fleetApi("/fleet/dashboards", { method: "POST", body: JSON.stringify({ dashboard }) });
+            close();
+            showToast(existing ? "Widget updated" : "Widget added", next.title || "Saved to the dashboard.");
+            await renderDashboard();
+          }
+        });
+        const syncType = () => {
+          const type = modal.querySelector("[data-w-type]").value;
+          modal.querySelector("[data-w-group-wrap]").hidden = type !== "breakdown";
+          modal.querySelector("[data-w-add-series]").hidden = ["number", "breakdown", "table"].includes(type);
+        };
+        modal.querySelector("[data-w-type]").addEventListener("change", syncType);
+        syncType();
+        modal.querySelector("[data-w-template]")?.addEventListener("change", (event) => {
+          const template = templates[Number(event.target.value)]?.widget;
+          if (!template) return;
+          modal.querySelector("[data-w-title]").value = template.title;
+          modal.querySelector("[data-w-type]").value = template.type;
+          modal.querySelector("[data-w-series]").innerHTML = template.series.map(fdSeriesRow).join("");
+          syncType();
+        });
+        modal.querySelector("[data-w-add-series]").addEventListener("click", () => modal.querySelector("[data-w-series]").insertAdjacentHTML("beforeend", fdSeriesRow({ label: "", tone: "bad", query: modal.querySelector(".fd-series:last-child [data-s-query]")?.value ?? "e/ Device" })));
+        modal.addEventListener("click", async (event) => {
+          const row = event.target.closest(".fd-series");
+          if (event.target.closest("[data-s-remove]") && modal.querySelectorAll(".fd-series").length > 1) row.remove();
+          if (event.target.closest("[data-s-test]")) {
+            const result = row.querySelector("[data-s-result]");
+            try {
+              const response = await fleetApi("/fleet/query", { method: "POST", body: JSON.stringify({ query: row.querySelector("[data-s-query]").value, limit: 0 }) });
+              result.className = "fd-series-result";
+              result.textContent = `${response.count} of ${response.total} devices match.`;
+            } catch (error) {
+              result.className = "fd-series-result error";
+              result.textContent = error.message;
+            }
+          }
+        });
+      }
+
+      async function fdCurrentDashboard() {
+        const config = await loadFleetConfig();
+        const meta = config.dashboards.find((dashboard) => dashboard.id === fdState.dashboardId);
+        if (!meta) throw new Error("Create a dashboard first.");
+        // Saved widget definitions (without computed data).
+        return { id: meta.id, name: meta.name, widgets: fdState.data.widgets.map(({ id, title, type, group_by, size, series }) => ({ id, title, type, group_by, size, series: series.map(({ label, tone, query }) => ({ label, tone, query })) })) };
+      }
+
+      function fdNameDialog(title, value, onSave) {
+        fdOpenModal(title, `<label class="fd-field">Dashboard name<input data-d-name value="${escapeHtml(value)}" maxlength="80" /></label>`, { onSave: async (root, close) => { await onSave(root.querySelector("[data-d-name]").value.trim()); close(); } });
+      }
+
+      // ---------- Explore ----------
+      const FX_EXAMPLES = [
+        ["Windows 11 seen in 7 days", "e/ Device f/ CrowdstrikeFalconOSDistribution = 11 f/ FalconSpotlightOSType = windows f/ LastSeenAt < 7d"],
+        ["…with this month's KBs", "e/ Device f/ CrowdstrikeFalconOSDistribution = 11 f/ FalconSpotlightOSType = windows r/ ( e/ SecurityPatch f/ UniquePatchId contains_any (KB5132061,KB5132059,KB5131087,KB5135385,KB5132043) ) f/ LastSeenAt < 7d"],
+        ["Missing a tracked update", "e/ Device f/ Platform = windows f/ LastSeenAt < 7d r/ ( e/ MissingPatch )"],
+        ["Macs without Okta Verify", 'e/ Device f/ Platform = macos not r/ ( e/ SoftwareRule f/ Name = "Okta Verify" f/ Status = installed )'],
+        ["Not syncing CrowdStrike", "e/ Device f/ LastSeenAt < 7d f/ CrowdStrikeReporting = false"],
+        ["Falcon reduced functionality", "e/ Device f/ CrowdStrikeRFM = true"],
+        ["Actively exploited CVEs", "e/ Device r/ ( e/ Vulnerability f/ KEV = true ) or e/ Device r/ ( e/ Vulnerability f/ ExploitStatus = \"Actively used\" )"],
+        ["Critical CVEs on Windows", "e/ Device f/ Platform = windows r/ ( e/ Vulnerability f/ Severity = critical )"],
+        ["KBs CrowdStrike says are missing", "e/ Device r/ ( e/ MissingPatch f/ Method = spotlight )"],
+        ["Old Chrome", "e/ Device r/ ( e/ App f/ Name contains chrome f/ Version < 142 )"],
+        ["Unencrypted, seen this week", "e/ Device f/ Encrypted = false f/ LastSeenAt < 7d"],
+        ["Not seen in 30 days", "e/ Device f/ LastSeenAt > 30d"]
+      ];
+
+      function renderExploreChrome() {
+        document.getElementById("fx-examples").innerHTML = FX_EXAMPLES.map(([label, query]) => `<button type="button" class="fx-example" data-fx-example="${escapeHtml(query)}">${escapeHtml(label)}</button>`).join("");
+        const reference = fdState.config?.reference;
+        if (!reference) return;
+        document.getElementById("fx-reference").innerHTML = `<div class="pst-panel-head"><div><h2>Fields</h2><p>Click a field to insert it. Text matching ignores case. Dates take durations like <code>7d</code>, <code>24h</code>, <code>2w</code>.</p></div></div>
+          ${Object.entries(reference).map(([entity, info], index) => `<details ${index === 0 ? "open" : ""}><summary>${entity}${info.relations.length ? ` <span class="item-sub">→ ${info.relations.join(", ")}</span>` : ""}</summary><p>${escapeHtml(info.description)}</p><ul>${info.fields.map((field) => `<li><code data-fx-insert="${entity === "Device" ? `f/ ${field.field} ` : `r/ ( e/ ${entity} f/ ${field.field} `}">${field.field}</code> ${escapeHtml(field.description)}</li>`).join("")}</ul></details>`).join("")}
+          <details><summary>Operators</summary><p><code>=</code> <code>!=</code> <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> <code>contains</code> <code>not_contains</code> <code>contains_any (a,b)</code> <code>in (a,b)</code> <code>not_in (a,b)</code> <code>starts_with</code> <code>exists</code> <code>not_exists</code>. Combine whole queries with <code>and</code> / <code>or</code>. Field names from Cyclops/CrowdStrike such as <code>CrowdstrikeFalconOSDistribution</code> and <code>FalconSpotlightOSType</code> also work.</p></details>`;
+      }
+
+      async function runExplore() {
+        const query = document.getElementById("fx-query").value;
+        const groupBy = document.getElementById("fx-group").value;
+        const error = document.getElementById("fx-error");
+        const results = document.getElementById("fx-results");
+        error.textContent = "";
+        try {
+          const response = await fleetApi("/fleet/query", { method: "POST", body: JSON.stringify({ query, group_by: groupBy || null, limit: 500 }) });
+          const max = Math.max(1, ...(response.groups ?? []).map((group) => group.count));
+          results.innerHTML = `
+            <div class="fx-summary"><strong>${response.count}</strong><span class="pst-updated">of ${response.total} devices match${response.count > response.devices.length ? ` · showing ${response.devices.length}` : ""}</span></div>
+            ${response.groups?.length ? `<article class="panel" style="margin-bottom:14px"><div class="fd-bars">${response.groups.slice(0, 15).map((group) => `<${fdRefinable(groupBy, group.label) ? `button type="button" data-fx-refine="${escapeHtml(`${query.trim()} f/ ${groupBy} = ${fdQuote(group.label)}`)}"` : `div style="cursor:default"`} class="fd-bar"><span>${escapeHtml(groupBy === "Platform" ? fdPlatformLabel(group.label) : group.label)}</span><span class="fd-bar-track"><span style="width:${(group.count / max) * 100}%"></span></span><strong>${group.count}</strong></${fdRefinable(groupBy, group.label) ? "button" : "div"}>`).join("")}</div></article>` : ""}
+            <div class="table-panel"><table><thead><tr><th>Device</th><th>OS</th><th>Sources</th><th>Last check-in</th><th>Risk</th><th class="pst-hide-sm">Top issue</th></tr></thead><tbody>
+            ${response.devices.map((device) => `<tr data-pst-device="${escapeHtml(device.id)}" style="cursor:pointer">
+              <td><div class="device-cell"><span class="os-chip">${device.platform === "windows" ? "W" : "M"}</span><div><strong>${escapeHtml(device.hostname)}</strong><div class="item-sub">${escapeHtml(device.user.name || device.user.email || "Unassigned")}</div></div></div></td>
+              <td>${escapeHtml(pstOsLabel(device.os, device.platform))}</td>
+              <td><span class="pst-src-chips">${Object.entries(PST_SOURCES).map(([key, [letter]]) => `<span class="pst-src ${key} ${device.sources[key] ? "" : "off"}">${letter}</span>`).join("")}</span></td>
+              <td>${pstAgo(device.last_check_in)}</td><td>${pstSevTag(device.risk_level)}</td>
+              <td class="pst-hide-sm"><div class="pst-issue-text">${escapeHtml(device.issues[0]?.title ?? "No issues")}</div></td></tr>`).join("") || `<tr><td colspan="6" class="pst-empty">No devices match.</td></tr>`}
+            </tbody></table></div>`;
+        } catch (failure) {
+          if (failure.message !== "unauthorized") error.textContent = failure.message;
+        }
+      }
+
+      async function openExplore(query) {
+        showView("fleet-explore");
+        if (!fdState.config) await loadFleetConfig().catch(() => {});
+        renderExploreChrome();
+        if (query) document.getElementById("fx-query").value = query;
+        await runExplore();
+      }
+
+      // ---------- Fleet rules ----------
+      async function loadFleetRules() {
+        if (!dashboardToken || !apiBaseUrl) return;
+        let config;
+        try { config = await loadFleetConfig(); } catch (error) { if (error.message !== "unauthorized") document.getElementById("fr-rules").innerHTML = `<tr><td colspan="7" class="fd-error">${escapeHtml(error.message)}</td></tr>`; return; }
+        const write = canWrite();
+        ["fr-add-rule", "fr-add-patch"].forEach((id) => { document.getElementById(id).disabled = !write; });
+        document.getElementById("fr-banner").innerHTML = config.mode === "sample" ? `<div class="pst-banner"><div><strong>Sample fleet</strong>Coverage numbers below come from sample devices until Intune or Jamf is connected. Your rules are saved and apply to real data as soon as it arrives.</div></div>` : "";
+        const coverage = (tally) => {
+          const known = tally.installed + tally.missing;
+          if (!known && !tally.unknown) return `<span class="item-sub">No devices</span>`;
+          const percent = known ? Math.round((tally.installed / known) * 100) : 0;
+          return { known, percent };
+        };
+        document.getElementById("fr-rules").innerHTML = config.software_rules.map((rule) => {
+          const cells = ["macos", "windows"].map((platform) => {
+            const tally = rule.tally[platform];
+            if (!rule[platform]?.length) return `<td><span class="item-sub">Not checked</span></td>`;
+            const result = coverage(tally);
+            if (typeof result === "string") return `<td>${result}</td>`;
+            const good = rule.mode === "required";
+            const value = good ? result.percent : 100 - result.percent;
+            const color = value >= 95 ? "var(--sev-healthy)" : value >= 85 ? "var(--sev-medium)" : "var(--sev-critical)";
+            return `<td><div class="fr-cov"><span><strong>${good ? tally.installed : tally.installed}</strong> ${good ? "installed" : "still installed"} · ${good ? `${tally.missing} missing` : `${tally.missing} removed`}${tally.unknown ? ` · ${tally.unknown} no inventory` : ""}</span><div class="pst-meter"><span style="width:${value}%;background:${color}"></span></div></div></td>`;
+          }).join("");
+          return `<tr>
+            <td><strong>${escapeHtml(rule.name)}</strong></td>
+            <td><span class="badge ${rule.mode === "required" ? "info" : "warn"}">${rule.mode === "required" ? "Required" : "Remove"}</span> ${pstSevTag(rule.severity)}</td>
+            <td class="pst-hide-sm"><div class="fr-patterns">${rule.macos.map((pattern) => `<code>${escapeHtml(pattern)}</code>`).join("") || "—"}</div></td>
+            <td class="pst-hide-sm"><div class="fr-patterns">${rule.windows.map((pattern) => `<code>${escapeHtml(pattern)}</code>`).join("") || "—"}</div></td>
+            ${cells}
+            <td><div class="fr-actions"><button class="fd-icon-btn" type="button" data-fr-explore="${escapeHtml(rule.id)}">Devices</button>${write ? `<button class="fd-icon-btn" type="button" data-fr-widget="${escapeHtml(rule.id)}">Add to dashboard</button><button class="fd-icon-btn" type="button" data-fr-edit-rule="${escapeHtml(rule.id)}">Edit</button><button class="fd-icon-btn" type="button" data-fr-delete-rule="${escapeHtml(rule.id)}">Delete</button>` : ""}</div></td>
+          </tr>`;
+        }).join("") || `<tr><td colspan="7" class="pst-empty">No software rules yet.</td></tr>`;
+
+        const kb = config.kb_reporting;
+        document.getElementById("fr-kb-status").innerHTML = `Exact KB reporting (Intune Remediation): ${kb.configured ? `<strong>${kb.devices} device${kb.devices === 1 ? "" : "s"} reporting</strong>` : "not set up, so build-number inference only"}${kb.error ? ` · <span style="color:var(--red)">${escapeHtml(kb.error)}</span>` : ""}${config.tracked_patches_are_sample ? " · showing sample updates until you track your own" : ""}`;
+        document.getElementById("fr-patches").innerHTML = config.tracked_patches.map((patch) => `<tr>
+          <td><strong>${escapeHtml(patch.kb)}</strong>${patch.sample ? ` <span class="badge info">Sample</span>` : ""} ${pstSevTag(patch.severity)}<div class="item-sub">${escapeHtml(patch.title || "")}</div></td>
+          <td class="pst-hide-sm">${patch.builds.length ? patch.builds.map((build) => `<code>${escapeHtml(build)}</code>`).join(" ") : `<span class="item-sub">No build: needs Remediation reporting</span>`}</td>
+          <td><strong>${patch.tally.installed}</strong>${patch.tally.reported ? ` <span class="item-sub">(${patch.tally.reported} reported)</span>` : ""}</td>
+          <td><strong style="color:${patch.tally.missing ? "var(--red)" : "inherit"}">${patch.tally.missing}</strong></td>
+          <td class="pst-hide-sm">${patch.tally.unknown}</td>
+          <td><div class="fr-actions"><button class="fd-icon-btn" type="button" data-fr-patch-devices="${escapeHtml(patch.kb)}">Missing devices</button>${write ? `<button class="fd-icon-btn" type="button" data-fr-edit-patch="${escapeHtml(patch.kb)}">Edit</button><button class="fd-icon-btn" type="button" data-fr-delete-patch="${escapeHtml(patch.kb)}">Delete</button>` : ""}</div></td>
+        </tr>`).join("") || `<tr><td colspan="6" class="pst-empty">No tracked updates yet. Click <strong>Track an update</strong> and enter a KB with its OS build.</td></tr>`;
+      }
+
+      const frRuleFields = (rule) => ({ id: rule.id, name: rule.name, mode: rule.mode, severity: rule.severity, macos: rule.macos, windows: rule.windows });
+
+      function frRuleEditor(existing = null) {
+        const rule = existing ?? { name: "", mode: "required", severity: "high", macos: [], windows: [] };
+        fdOpenModal(existing ? `Edit ${rule.name}` : "Add software rule", `
+          <div class="fd-form-row">
+            <label class="fd-field">Software name<input data-r-name value="${escapeHtml(rule.name)}" placeholder="e.g. Okta Verify" /></label>
+            <label class="fd-field">Rule<select data-r-mode><option value="required">Must be installed</option><option value="prohibited" ${rule.mode === "prohibited" ? "selected" : ""}>Must be removed</option></select></label>
+            <label class="fd-field">Severity when violated<select data-r-severity>${["critical", "high", "medium", "low"].map((level) => `<option ${rule.severity === level ? "selected" : ""}>${level}</option>`).join("")}</select></label>
+          </div>
+          <label class="fd-field">Mac app name patterns (comma separated, blank = don't check Macs)<input data-r-macos value="${escapeHtml(rule.macos.join(", "))}" placeholder="e.g. Okta Verify" /></label>
+          <label class="fd-field">Windows app name patterns (comma separated, blank = don't check Windows)<input data-r-windows value="${escapeHtml(rule.windows.join(", "))}" placeholder="e.g. Okta Verify" /></label>
+          <p class="fr-help" style="margin:0">Tip: open any device in <strong>Fleet Posture</strong> and filter its installed applications to see the exact name Jamf, Intune or the agent reports.</p>`, {
+          onSave: async (root, close) => {
+            const next = { ...(existing ? frRuleFields(existing) : {}), name: root.querySelector("[data-r-name]").value, mode: root.querySelector("[data-r-mode]").value, severity: root.querySelector("[data-r-severity]").value, macos: root.querySelector("[data-r-macos]").value.split(","), windows: root.querySelector("[data-r-windows]").value.split(",") };
+            const rules = fdState.config.software_rules.map(frRuleFields);
+            await fleetApi("/fleet/software-rules", { method: "POST", body: JSON.stringify({ rules: existing ? rules.map((item) => (item.id === existing.id ? next : item)) : [...rules, next] }) });
+            close();
+            showToast("Rule saved", `${next.name} is now evaluated on every device.`);
+            await loadFleetRules();
+          }
+        });
+      }
+
+      const frPatchFields = (patch) => ({ kb: patch.kb, title: patch.title, builds: patch.builds, severity: patch.severity, released: patch.released });
+
+      function frPatchEditor(existing = null) {
+        const patch = existing ?? { kb: "", title: "", builds: [], severity: "high" };
+        fdOpenModal(existing ? `Edit ${patch.kb}` : "Track a Windows update", `
+          <div class="fd-form-row">
+            <label class="fd-field">KB number<input data-p-kb value="${escapeHtml(patch.kb)}" placeholder="KB5032190" /></label>
+            <label class="fd-field">Severity if missing<select data-p-severity>${["critical", "high", "medium", "low"].map((level) => `<option ${patch.severity === level ? "selected" : ""}>${level}</option>`).join("")}</select></label>
+          </div>
+          <label class="fd-field">Title (optional)<input data-p-title value="${escapeHtml(patch.title)}" placeholder="November 2026 cumulative update" /></label>
+          <label class="fd-field">OS build(s) this KB produces, comma separated<input data-p-builds value="${escapeHtml(patch.builds.join(", "))}" placeholder="26100.7171, 26200.7171" /></label>
+          <p class="fr-help" style="margin:0">One KB often covers several Windows 11 releases (for example 24H2 = 26100 and 25H2 = 26200 share an update). Leave builds empty for updates that don't change the build, such as .NET; those rely on the Intune Remediation script.</p>`, {
+          onSave: async (root, close) => {
+            const next = { kb: root.querySelector("[data-p-kb]").value, title: root.querySelector("[data-p-title]").value, builds: root.querySelector("[data-p-builds]").value.split(","), severity: root.querySelector("[data-p-severity]").value };
+            if (!/^\s*(KB)?\d{6,8}\s*$/i.test(next.kb)) throw new Error("Enter a KB number like KB5032190.");
+            const current = fdState.config.tracked_patches_are_sample ? [] : fdState.config.tracked_patches.map(frPatchFields);
+            const patches = existing && !existing.sample ? current.map((item) => (item.kb === existing.kb ? next : item)) : [...current, next];
+            const saved = await fleetApi("/fleet/tracked-patches", { method: "POST", body: JSON.stringify({ patches }) });
+            if (!saved.tracked_patches.some((item) => item.kb === next.kb.trim().toUpperCase().replace(/^(\d)/, "KB$1"))) throw new Error("That update could not be saved. Check the KB and build format (e.g. 26100.7171).");
+            close();
+            showToast("Update tracked", "Every Windows device is now checked for it.");
+            await loadFleetRules();
+          }
+        });
+      }
+
+      // ---------- Wiring ----------
+      document.getElementById("fd-select").addEventListener("change", async (event) => { fdState.dashboardId = event.target.value; await renderDashboard().catch((error) => showToast("Dashboard unavailable", error.message)); });
+      document.getElementById("fd-add").addEventListener("click", () => fdWidgetEditor());
+      document.getElementById("fd-pdf").addEventListener("click", () => window.print());
+      document.getElementById("fd-new").addEventListener("click", () => fdNameDialog("New dashboard", "", async (name) => {
+        const saved = await fleetApi("/fleet/dashboards", { method: "POST", body: JSON.stringify({ dashboard: { name, widgets: [] } }) });
+        fdState.dashboardId = saved.id;
+        await loadDashboards();
+      }));
+      document.getElementById("fd-rename").addEventListener("click", async () => {
+        const dashboard = await fdCurrentDashboard().catch(() => null);
+        if (dashboard) fdNameDialog("Rename dashboard", dashboard.name, async (name) => { await fleetApi("/fleet/dashboards", { method: "POST", body: JSON.stringify({ dashboard: { ...dashboard, name } }) }); await loadDashboards(); });
+      });
+      document.getElementById("fd-delete").addEventListener("click", async () => {
+        const dashboard = fdState.config?.dashboards.find((item) => item.id === fdState.dashboardId);
+        if (!dashboard) return;
+        fdOpenModal("Delete dashboard", `<p class="fr-help" style="margin:0">Delete <strong>${escapeHtml(dashboard.name)}</strong> and its ${dashboard.widget_count} widget${dashboard.widget_count === 1 ? "" : "s"}? Device data is not affected.</p>`, { saveLabel: "Delete", onSave: async (root, close) => { await fleetApi(`/fleet/dashboards/${encodeURIComponent(dashboard.id)}`, { method: "DELETE" }); close(); fdState.dashboardId = null; await loadDashboards({ keep: false }); } });
+      });
+      document.getElementById("fd-grid").addEventListener("click", async (event) => {
+        const edit = event.target.closest("[data-fd-edit]");
+        if (edit) {
+          const dashboard = await fdCurrentDashboard();
+          return fdWidgetEditor(dashboard.widgets.find((widget) => widget.id === edit.dataset.fdEdit));
+        }
+        const remove = event.target.closest("[data-fd-remove]");
+        if (remove) {
+          const dashboard = await fdCurrentDashboard();
+          dashboard.widgets = dashboard.widgets.filter((widget) => widget.id !== remove.dataset.fdRemove);
+          await fleetApi("/fleet/dashboards", { method: "POST", body: JSON.stringify({ dashboard }) });
+          showToast("Widget removed", "The dashboard was updated.");
+          return renderDashboard();
+        }
+        const device = event.target.closest("[data-pst-device]");
+        if (device) return openPostureDevice(device.dataset.pstDevice);
+        const query = event.target.closest("[data-fd-query]");
+        if (query) return openExplore(query.dataset.fdQuery);
+      });
+      document.getElementById("fd-grid").addEventListener("keydown", (event) => { if (event.key === "Enter" && event.target.dataset.fdQuery) openExplore(event.target.dataset.fdQuery); });
+
+      document.getElementById("fx-run").addEventListener("click", runExplore);
+      document.getElementById("fx-group").addEventListener("change", runExplore);
+      document.getElementById("fx-query").addEventListener("keydown", (event) => { if (event.key === "Enter" && (event.metaKey || event.ctrlKey)) { event.preventDefault(); runExplore(); } });
+      document.getElementById("fx-copy").addEventListener("click", async () => { await navigator.clipboard?.writeText(document.getElementById("fx-query").value); showToast("Query copied", "Paste it into a widget or share it."); });
+      document.getElementById("fx-save").addEventListener("click", async () => {
+        if (!canWrite()) return showToast("Read-only", "Reviewers cannot change dashboards.");
+        if (!fdState.config) await loadFleetConfig();
+        if (!fdState.dashboardId) fdState.dashboardId = fdState.config.dashboards[0]?.id ?? null;
+        if (!fdState.dashboardId) return showToast("No dashboard", "Create a dashboard first.");
+        if (!fdState.data || fdState.data.dashboard.id !== fdState.dashboardId) fdState.data = await fleetApi(`/fleet/dashboards/${encodeURIComponent(fdState.dashboardId)}`);
+        const query = document.getElementById("fx-query").value.trim();
+        fdWidgetEditor(null, { title: "", type: "number", size: "normal", group_by: "Platform", series: [{ label: "Matching devices", tone: "neutral", query }] });
+        const picker = document.querySelector(".fd-modal [data-w-template]")?.closest("label");
+        if (picker) picker.insertAdjacentHTML("afterend", `<label class="fd-field">Dashboard<select data-w-dashboard>${fdState.config.dashboards.map((dashboard) => `<option value="${escapeHtml(dashboard.id)}" ${dashboard.id === fdState.dashboardId ? "selected" : ""}>${escapeHtml(dashboard.name)}</option>`).join("")}</select></label>`);
+        document.querySelector(".fd-modal [data-w-dashboard]")?.addEventListener("change", async (event) => { fdState.dashboardId = event.target.value; fdState.data = await fleetApi(`/fleet/dashboards/${encodeURIComponent(fdState.dashboardId)}`); });
+      });
+      document.getElementById("fleet-explore").addEventListener("click", (event) => {
+        const example = event.target.closest("[data-fx-example]");
+        if (example) { document.getElementById("fx-query").value = example.dataset.fxExample; return runExplore(); }
+        const refine = event.target.closest("[data-fx-refine]");
+        if (refine) { document.getElementById("fx-query").value = refine.dataset.fxRefine; document.getElementById("fx-group").value = ""; return runExplore(); }
+        const insert = event.target.closest("[data-fx-insert]");
+        if (insert) {
+          const box = document.getElementById("fx-query");
+          const text = insert.dataset.fxInsert;
+          const at = box.selectionEnd ?? box.value.length;
+          box.value = `${box.value.slice(0, at).replace(/\s*$/, " ")}${text}${box.value.slice(at)}`;
+          box.focus();
+          return;
+        }
+        const device = event.target.closest("[data-pst-device]");
+        if (device) openPostureDevice(device.dataset.pstDevice);
+      });
+
+      document.getElementById("fr-add-rule").addEventListener("click", () => frRuleEditor());
+      document.getElementById("fr-add-patch").addEventListener("click", () => frPatchEditor());
+      document.getElementById("fleet-rules").addEventListener("click", async (event) => {
+        const find = (attribute) => event.target.closest(`[${attribute}]`)?.getAttribute(attribute);
+        const rules = fdState.config?.software_rules ?? [];
+        const patches = fdState.config?.tracked_patches ?? [];
+        let id;
+        if ((id = find("data-fr-edit-rule"))) return frRuleEditor(rules.find((rule) => rule.id === id));
+        if ((id = find("data-fr-explore"))) {
+          const rule = rules.find((item) => item.id === id);
+          return openExplore(`e/ Device r/ ( e/ SoftwareRule f/ Name = ${fdQuote(rule.name)} f/ Status = ${rule.mode === "required" ? "missing" : "installed"} )`);
+        }
+        if ((id = find("data-fr-widget"))) {
+          const rule = rules.find((item) => item.id === id);
+          const template = fdState.config.suggested_widgets.find((item) => item.rule === rule.name)?.widget;
+          if (!fdState.dashboardId) fdState.dashboardId = fdState.config.dashboards[0]?.id ?? null;
+          if (!fdState.dashboardId) return showToast("No dashboard", "Create a dashboard first.");
+          fdState.data = await fleetApi(`/fleet/dashboards/${encodeURIComponent(fdState.dashboardId)}`);
+          const dashboard = await fdCurrentDashboard();
+          dashboard.widgets.push(template);
+          await fleetApi("/fleet/dashboards", { method: "POST", body: JSON.stringify({ dashboard }) });
+          return showToast("Widget added", `${template.title} was added to ${dashboard.name}.`);
+        }
+        if ((id = find("data-fr-delete-rule"))) {
+          const rule = rules.find((item) => item.id === id);
+          return fdOpenModal("Delete rule", `<p class="fr-help" style="margin:0">Stop checking <strong>${escapeHtml(rule.name)}</strong>? Dashboard widgets that use this rule will show zero.</p>`, { saveLabel: "Delete", onSave: async (root, close) => { await fleetApi("/fleet/software-rules", { method: "POST", body: JSON.stringify({ rules: rules.filter((item) => item.id !== id).map(frRuleFields) }) }); close(); await loadFleetRules(); } });
+        }
+        if ((id = find("data-fr-patch-devices"))) return openExplore(`e/ Device f/ Platform = windows r/ ( e/ MissingPatch f/ UniquePatchId = ${id} )`);
+        if ((id = find("data-fr-edit-patch"))) return frPatchEditor(patches.find((patch) => patch.kb === id));
+        if ((id = find("data-fr-delete-patch"))) {
+          const remaining = fdState.config.tracked_patches_are_sample ? [] : patches.filter((patch) => patch.kb !== id).map(frPatchFields);
+          await fleetApi("/fleet/tracked-patches", { method: "POST", body: JSON.stringify({ patches: remaining }) });
+          showToast("Update removed", `${id} is no longer tracked.`);
+          return loadFleetRules();
+        }
+      });
+
+
+      // ---- Vulnerabilities (CrowdStrike Spotlight) and Data Sources ----
+      const vxState = { data: null, limit: 150 };
+      const VX_EXPLOIT_ORDER = { "Actively used": 3, "Easily accessible": 2, Available: 1, Unproven: 0 };
+
+      async function loadVulnerabilities() {
+        if (!dashboardToken || !apiBaseUrl) return;
+        try {
+          vxState.data = await fleetApi("/fleet/vulnerabilities");
+          renderVulnerabilities();
+        } catch (error) {
+          if (error.message !== "unauthorized") document.getElementById("vx-rows").innerHTML = `<tr><td colspan="8" class="fd-error">${escapeHtml(error.message)}</td></tr>`;
+        }
+      }
+
+      function renderVulnerabilities() {
+        const data = vxState.data;
+        const source = data.source;
+        const banner = data.mode === "sample"
+          ? `<div class="pst-banner"><div><strong>Sample vulnerabilities</strong>These CVEs are made up (CVE-2099-…) to show the layout. With CrowdStrike connected and the <code>Vulnerabilities: Read</code> scope, this page lists every open CVE Spotlight reports on your Macs and PCs.</div></div>`
+          : source.state === "ok" ? ""
+          : `<div class="pst-banner error"><div><strong>No vulnerability data yet</strong>${escapeHtml(source.error || (source.state === "not_configured" ? "CrowdStrike is not connected." : source.state === "disabled" ? "Vulnerability collection is turned off (CROWDSTRIKE_VULNERABILITIES=false)." : "Waiting for the first sync."))}${source.state === "no_permission" ? "<br>In Falcon: Support and resources → API clients and keys → edit the PatchOps client → tick <strong>Vulnerabilities: Read</strong>, save, then click Sync now on Fleet Posture." : ""}</div></div>`;
+        document.getElementById("vx-banner").innerHTML = banner;
+        const cves = data.cves;
+        const exploited = cves.filter((cve) => cve.kev || cve.exploit === "Actively used");
+        const kpis = [
+          ["Unique open CVEs", data.summary.unique, `${data.summary.total} device findings`],
+          ["Actively exploited", exploited.length, `${exploited.reduce((sum, cve) => sum + cve.devices, 0)} devices exposed`],
+          ["Critical", cves.filter((cve) => cve.severity === "critical").length, `${cves.filter((cve) => cve.severity === "critical").reduce((sum, cve) => sum + cve.devices, 0)} device findings`],
+          ["High", cves.filter((cve) => cve.severity === "high").length, `${cves.filter((cve) => cve.severity === "high").reduce((sum, cve) => sum + cve.devices, 0)} device findings`],
+          ["Devices reporting", data.summary.devices_reporting, "with Spotlight data"]
+        ];
+        document.getElementById("vx-kpis").innerHTML = kpis.map(([label, value, sub]) => `<article class="panel pst-kpi"><span class="pst-kpi-label">${label}</span><span class="pst-kpi-value">${value.toLocaleString()}</span><span class="pst-kpi-sub">${escapeHtml(sub)}</span></article>`).join("");
+        renderVulnerabilityRows();
+      }
+
+      function renderVulnerabilityRows() {
+        const data = vxState.data;
+        if (!data) return;
+        const query = document.getElementById("vx-search").value.trim().toLowerCase();
+        const severity = document.getElementById("vx-severity").value;
+        const exploit = document.getElementById("vx-exploit").value;
+        const platform = document.getElementById("vx-platform").value;
+        const rows = data.cves.filter((cve) => {
+          if (severity && cve.severity !== severity) return false;
+          if (exploit === "exploited" && !(cve.kev || cve.exploit === "Actively used")) return false;
+          if (exploit === "available" && !(cve.kev || (VX_EXPLOIT_ORDER[cve.exploit] ?? 0) >= 1)) return false;
+          if (platform && !cve.platforms[platform]) return false;
+          if (!query) return true;
+          return [cve.cve, ...cve.products, ...cve.kbs, ...cve.remediation].some((value) => String(value).toLowerCase().includes(query));
+        });
+        const shown = rows.slice(0, vxState.limit);
+        document.getElementById("vx-rows").innerHTML = shown.map((cve) => `<tr>
+          <td><a href="https://nvd.nist.gov/vuln/detail/${encodeURIComponent(cve.cve)}" target="_blank" rel="noopener noreferrer"><strong>${escapeHtml(cve.cve)}</strong></a>${cve.kev ? ` <span class="badge danger">CISA KEV</span>` : ""}${cve.description ? `<div class="item-sub" style="max-width:320px">${escapeHtml(cve.description.slice(0, 140))}${cve.description.length > 140 ? "…" : ""}</div>` : ""}</td>
+          <td>${pstSevTag(cve.severity)}</td>
+          <td class="pst-hide-sm">${cve.score ?? "—"}</td>
+          <td class="pst-hide-sm">${escapeHtml(cve.exprt ?? "—")}</td>
+          <td>${cve.exploit ? `<span class="badge ${cve.exploit === "Actively used" ? "danger" : cve.exploit === "Easily accessible" ? "warn" : ""}">${escapeHtml(cve.exploit)}</span>` : "—"}</td>
+          <td class="pst-hide-sm"><div class="pst-issue-text">${escapeHtml(cve.products.join(", ") || "—")}</div></td>
+          <td><button class="fd-icon-btn" type="button" data-vx-devices="${escapeHtml(cve.cve)}"><strong>${cve.devices}</strong> device${cve.devices === 1 ? "" : "s"}</button><div class="item-sub">${[cve.platforms.windows ? `${cve.platforms.windows} Win` : "", cve.platforms.macos ? `${cve.platforms.macos} Mac` : ""].filter(Boolean).join(" · ")}</div></td>
+          <td class="pst-hide-sm"><div class="pst-issue-text">${escapeHtml([...cve.kbs, ...cve.remediation].slice(0, 2).join(" · ") || "—")}</div></td>
+        </tr>`).join("") || `<tr><td colspan="8" class="pst-empty">${data.cves.length ? "No CVEs match these filters." : "No open vulnerabilities reported."}</td></tr>`;
+        document.getElementById("vx-count").textContent = `Showing ${shown.length} of ${rows.length} CVEs`;
+        document.getElementById("vx-more").hidden = rows.length <= shown.length;
+      }
+
+      async function loadDataSources() {
+        if (!dashboardToken || !apiBaseUrl) return;
+        const list = document.getElementById("ds-list");
+        try {
+          const data = await fleetApi("/fleet/sources");
+          const stateBadge = (state) => ({ ok: ["good", "Working"], sample: ["info", "Sample"], no_permission: ["warn", "Missing permission"], error: ["danger", "Error"], disabled: ["", "Turned off"], not_run: ["", "Not run yet"], not_configured: ["", "Not connected"], stale: ["warn", "Stale"], pending: ["info", "Pending"], syncing: ["info", "Syncing"] })[state] ?? ["", state];
+          list.innerHTML = data.sources.map((source) => {
+            const [cls, label] = stateBadge(source.state);
+            const capabilities = Object.entries(source.capabilities);
+            return `<article class="panel fr-section">
+              <div class="pst-panel-head"><div><h2>${escapeHtml(source.label)}</h2><p>${source.synced_at ? `Last sync ${pstAgo(source.synced_at)}` : "Not synced yet"}${source.error ? ` · <span style="color:var(--red)">${escapeHtml(source.error)}</span>` : ""}</p></div><span class="badge ${cls}">${label}</span></div>
+              ${!source.configured ? `<p class="fr-help" style="margin:0">Not connected. Add its API credentials to <code>.env</code> (see <code>docs/fleet-posture.md</code>) and restart.</p>` : ""}
+              ${capabilities.length ? capabilities.map(([key, capability]) => {
+                const [capClass, capLabel] = stateBadge(capability.state);
+                return `<details class="ds-cap" ${key === "hosts" || key === "computers" || key === "devices" || key === "sample" ? "" : ""}>
+                  <summary><span class="ds-cap-title"><strong>${escapeHtml(capability.label)}</strong>${capability.scope ? ` <code>${escapeHtml(capability.scope)}</code>` : ""}</span><span class="ds-cap-meta">${capability.state === "ok" || capability.state === "sample" ? `${capability.count.toLocaleString()} records · ${capability.fields.length} fields` : ""} <span class="badge ${capClass}">${capLabel}</span></span></summary>
+                  ${capability.error ? `<p class="fd-error" style="margin:8px 0">${escapeHtml(capability.error)}</p>` : ""}
+                  ${capability.query ? `<p class="item-sub" style="margin:8px 0">Query used: <code>filter=${escapeHtml(capability.query.filter)}</code> <code>facet=${escapeHtml([capability.query.facet].flat().join(", "))}</code></p>` : ""}
+                  ${capability.fields.length ? `<div class="table-panel" style="box-shadow:none;margin-top:8px;max-height:360px;overflow:auto"><table><thead><tr><th>Field</th><th>Filled</th><th>Example</th></tr></thead><tbody>${capability.fields.map((field) => `<tr><td><code>${escapeHtml(field.field)}</code></td><td><span class="fr-cov"><span>${field.pct}%</span><span class="pst-meter"><span style="width:${field.pct}%;background:#2563eb"></span></span></span></td><td class="pst-issue-text">${escapeHtml(field.example ?? "")}</td></tr>`).join("")}</tbody></table></div>` : ""}
+                  ${capability.samples.length ? `<div class="ds-sample-head"><strong>Raw sample records</strong><button class="fd-icon-btn" type="button" data-ds-copy>Copy JSON</button></div><pre class="ds-json">${escapeHtml(JSON.stringify(capability.samples, null, 2))}</pre>` : ""}
+                </details>`;
+              }).join("") : source.configured ? `<p class="fr-help" style="margin:0">No records captured yet. Click <strong>Sync now</strong> on Fleet Posture.</p>` : ""}
+            </article>`;
+          }).join("");
+        } catch (error) {
+          if (error.message !== "unauthorized") list.innerHTML = `<div class="fd-error">${escapeHtml(error.message)}</div>`;
+        }
+      }
+
+      ["vx-search", "vx-severity", "vx-exploit", "vx-platform"].forEach((id) => document.getElementById(id).addEventListener("input", () => { vxState.limit = 150; renderVulnerabilityRows(); }));
+      document.getElementById("vx-more").addEventListener("click", () => { vxState.limit += 300; renderVulnerabilityRows(); });
+      document.getElementById("fleet-vulns").addEventListener("click", (event) => {
+        const devices = event.target.closest("[data-vx-devices]");
+        if (devices) openExplore(`e/ Device r/ ( e/ Vulnerability f/ CVE = ${devices.dataset.vxDevices} )`);
+      });
+      document.getElementById("fleet-sources").addEventListener("click", async (event) => {
+        const copy = event.target.closest("[data-ds-copy]");
+        if (!copy) return;
+        await navigator.clipboard?.writeText(copy.closest("details").querySelector(".ds-json").textContent);
+        showToast("Copied", "Sample records copied as JSON.");
+      });
+
       document.querySelectorAll(".nav-btn").forEach((button) => {
         button.addEventListener("click", () => {
           showView(button.dataset.view);
+          if (button.dataset.view === "posture") loadPosture();
+          if (button.dataset.view === "fleet-dashboards") loadDashboards();
+          if (button.dataset.view === "fleet-explore") openExplore();
+          if (button.dataset.view === "fleet-rules") loadFleetRules();
+          if (button.dataset.view === "fleet-vulns") loadVulnerabilities();
+          if (button.dataset.view === "fleet-sources") loadDataSources();
           if (button.dataset.view === "settings") showSettingsCatalog();
         });
       });
@@ -3810,7 +5308,7 @@
         }
       });
 
-      document.querySelector('[title="Refresh metrics"]').addEventListener("click", () => refreshLiveDevices({ notify: true }));
+      document.querySelector('[title="Refresh metrics"]').addEventListener("click", () => { refreshLiveDevices({ notify: true }); loadPosture(); });
       document.getElementById("device-rows").addEventListener("click", (event) => {
         const button = event.target.closest("[data-device-id]");
         if (button) openDeviceDetail(button.dataset.deviceId).catch((error) => showToast("Device unavailable", error.message));
@@ -3933,6 +5431,7 @@
       });
       if (dashboardToken) {
         hideAuthGate();
+        loadPosture();
         refreshLiveDevices();
         loadNotificationSettings();
       } else {
