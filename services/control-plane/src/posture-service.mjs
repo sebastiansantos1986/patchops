@@ -6,9 +6,9 @@ import { JamfConnector, jamfConfig } from "./integrations/jamf.mjs";
 import { CrowdStrikeConnector, crowdstrikeConfig } from "./integrations/crowdstrike.mjs";
 import { SAMPLE_TRACKED_PATCHES, sampleFleet } from "./integrations/sample-fleet.mjs";
 import { DEFAULT_SOFTWARE_RULES, coverageWidget, defaultDashboards, describeRule, evaluateSoftwareRule, sanitizeDashboard, sanitizeSoftwareRule, sanitizeTrackedPatch } from "./fleet-config.mjs";
-import { RELAY_SOURCES, buildRelaySnapshot, relayConfig, sendRelaySnapshot } from "./relay.mjs";
+import { RELAY_SOURCES, buildRelaySnapshot, parseRelaySnapshot, relayConfig, sendRelaySnapshot } from "./relay.mjs";
+import { createHash } from "node:crypto";
 import { hostname } from "node:os";
-import { gunzipSync, gzipSync } from "node:zlib";
 import { QueryError, describeQuery, groupValue, parseQuery, queryReference, referencedGroups, runQuery } from "./fleet-query.mjs";
 
 // Demo data: every sample user is in one country group, and some are in Engineering.
@@ -150,9 +150,8 @@ export class PostureService {
       if (this.relayToken) {
         for (const source of RELAY_SOURCES) {
           try {
-            const compressed = await this.store.getRelaySnapshot?.(source);
-            const snapshot = compressed ? JSON.parse(gunzipSync(compressed)) : await this.store.getConfig(`relay:${source}`);
-            if (snapshot?.records) this.relayed[source] = snapshot;
+            const stored = await this.store.getRelaySnapshot?.(source);
+            if (stored) this.relayed[source] = { ...parseRelaySnapshot(stored.data), received_at: stored.received_at };
           } catch (error) { this.log(`[relay] couldn't load the saved ${source} data: ${error.message}`); }
         }
       }
@@ -261,10 +260,22 @@ export class PostureService {
       capabilities: connector?.capabilities ? Object.fromEntries(Object.entries(connector.capabilities).map(([name, capability]) => [name, capability.toJSON()])) : {},
       userGroups: source === "intune" ? connector?.groups?.members ?? null : null
     }, this.relay, hostname());
+    // Skip uploads that wouldn't change anything (e.g. right after a restart), but resend at least
+    // every 6 hours in case the hosted database was reset.
+    const fingerprint = createHash("sha256").update(JSON.stringify([snapshot.records, snapshot.options, snapshot.user_groups ?? null])).digest("hex");
+    this.relaySent ??= (await this.diskCache?.read?.("relay-state").catch(() => null)) ?? {};
+    const previous = this.relaySent[source];
+    if (previous?.fingerprint === fingerprint && previous.url === this.relay.url && this.now() - Date.parse(previous.sent_at) < 6 * 3_600_000) {
+      this.relayStatus[source] = { state: "ok", sent_at: previous.sent_at, devices: snapshot.records.length, bytes: previous.bytes ?? 0, error: null, unchanged: true };
+      this.log(`[relay] ${label}: unchanged since ${new Date(previous.sent_at).toLocaleTimeString()}, not sent again`);
+      return this.relayStatus[source];
+    }
     for (let attempt = 1; attempt <= 2; attempt += 1) {
       try {
         const result = await sendRelaySnapshot(this.relay, snapshot, { fetchImpl: this.relayFetch });
         this.relayStatus[source] = { state: "ok", sent_at: new Date(this.now()).toISOString(), devices: snapshot.records.length, bytes: result.bytes, error: null };
+        this.relaySent[source] = { fingerprint, url: this.relay.url, sent_at: this.relayStatus[source].sent_at, bytes: result.bytes };
+        if (this.diskCache?.enabled) this.diskCache.write("relay-state", this.relaySent).catch?.(() => {});
         this.log(`[relay] ${label}: sent ${snapshot.records.length.toLocaleString("en-US")} devices (${Math.round(result.bytes / 1024).toLocaleString("en-US")} KB) to ${new URL(this.relay.url).host}`);
         return this.relayStatus[source];
       } catch (error) {
@@ -279,13 +290,14 @@ export class PostureService {
   }
 
   // Receiver: keep the newest snapshot per source (also saved in the database).
-  async receiveRelay(snapshot) {
+  // Frees the last calculation before a large upload is parsed (keeps peak memory down).
+  beforeRelayUpload() { this.computed = null; }
+
+  async receiveRelay({ snapshot, compressed }) {
     if (!this.relayToken) throw Object.assign(new Error("relay is not enabled"), { status: 404 });
     if (this.connectors[snapshot.source]) throw Object.assign(new Error(`${snapshot.source} is synced directly here; relay not needed`), { status: 409 });
     const entry = { ...snapshot, received_at: new Date(this.now()).toISOString() };
-    const compressed = gzipSync(JSON.stringify(entry), { level: 6 });
-    if (this.store.saveRelaySnapshot) await this.store.saveRelaySnapshot(snapshot.source, compressed);
-    else await this.store.saveConfig(`relay:${snapshot.source}`, entry);
+    await this.store.saveRelaySnapshot(snapshot.source, compressed, entry.received_at);
     this.relayed[snapshot.source] = entry;
     this.computed = null;
     this.log(`[relay] ${SOURCE_LABELS[snapshot.source] ?? snapshot.source}: received ${entry.records.length.toLocaleString("en-US")} devices from ${entry.sender || "a PatchOps relay"}`);

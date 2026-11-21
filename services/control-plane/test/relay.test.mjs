@@ -48,7 +48,7 @@ test("relay: local copy uploads synced records without credentials, raw data, us
     assert.equal(overview.sources.intune.state, "relayed");
     const sources = await receiver.posture.sources();
     assert.equal(sources.sources.find((item) => item.key === "intune").relay.direction, "received");
-    assert.equal(JSON.parse((await import("node:zlib")).gunzipSync(await receiver.posture.store.getRelaySnapshot("intune"))).records.length, 2, "kept in the database");
+    assert.equal(JSON.parse((await import("node:zlib")).gunzipSync((await receiver.posture.store.getRelaySnapshot("intune")).data)).records.length, 2, "kept in the database");
   } finally { receiver.server.close(); }
 });
 
@@ -99,4 +99,19 @@ test("relay data with NUL characters and broken Unicode can be stored in Postgre
   assert.equal(stored.broken, "x�y");
   assert.equal(stored.ok, "Forcepoint™ Endpoint");
   assert.doesNotMatch(toJsonb({ a: "\u0000" }), /\\u0000/);
+});
+
+test("relay skips uploads that wouldn't change anything", async () => {
+  const receiver = await startReceiver();
+  try {
+    const local = sender(receiver.url, [intuneRecord("G7")]);
+    await local.sync();
+    const first = await local.pushRelay("intune");
+    assert.equal(first.unchanged, undefined);
+    const second = await local.pushRelay("intune");
+    assert.equal(second.unchanged, true);
+    local.cache.intune = [intuneRecord("G7"), intuneRecord("H8")];
+    assert.equal((await local.pushRelay("intune")).unchanged, undefined, "changes are sent");
+    assert.equal(receiver.posture.relayed.intune.records.length, 2);
+  } finally { receiver.server.close(); }
 });

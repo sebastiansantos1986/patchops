@@ -78,7 +78,26 @@ export async function sendRelaySnapshot(config, snapshot, { fetchImpl = globalTh
   return { bytes: body.length, ...JSON.parse(text || "{}") };
 }
 
-// Reads and checks an uploaded snapshot (gzip or plain JSON, size-limited).
+// Most devices run the same apps at the same versions. JSON.parse makes a separate object for each
+// copy; sharing one object per distinct app cuts the hosted copy's memory several times over.
+const sharedApps = new Map();
+export function shareApps(records) {
+  if (sharedApps.size > 400_000) sharedApps.clear();
+  for (const record of records) {
+    if (!Array.isArray(record.apps)) continue;
+    record.apps = record.apps.map((app) => {
+      if (!app || typeof app !== "object") return app;
+      const key = `${app.name}\u0001${app.version}\u0001${app.publisher ?? ""}\u0001${app.bundle_id ?? ""}\u0001${app.install_source ?? ""}`;
+      let shared = sharedApps.get(key);
+      if (!shared) { shared = Object.freeze({ ...app }); sharedApps.set(key, shared); }
+      return shared;
+    });
+  }
+  return records;
+}
+
+// Reads an uploaded snapshot (gzip or plain JSON, size-limited). Returns the checked snapshot and
+// the compressed upload itself, which is stored as-is (no second copy of the JSON in memory).
 export async function readRelaySnapshot(request) {
   const chunks = [];
   let size = 0;
@@ -87,15 +106,20 @@ export async function readRelaySnapshot(request) {
     if (size > MAX_COMPRESSED) throw Object.assign(new Error("snapshot is too large"), { status: 413 });
     chunks.push(chunk);
   }
-  let buffer = Buffer.concat(chunks);
-  if (/gzip/i.test(request.headers["content-encoding"] ?? "")) buffer = gunzipSync(buffer, { maxOutputLength: MAX_JSON });
-  const input = JSON.parse(buffer.toString("utf8"));
+  const body = Buffer.concat(chunks);
+  const compressed = /gzip/i.test(request.headers["content-encoding"] ?? "") ? body : gzipSync(body);
+  return { snapshot: parseRelaySnapshot(compressed), compressed };
+}
+
+// Turns stored or uploaded gzip bytes into a checked snapshot.
+export function parseRelaySnapshot(compressed) {
+  const input = JSON.parse(gunzipSync(compressed, { maxOutputLength: MAX_JSON }).toString("utf8"));
   if (input?.version !== 1 || !RELAY_SOURCES.includes(input.source)) throw Object.assign(new Error("unknown snapshot format or source"), { status: 400 });
   if (!Array.isArray(input.records) || input.records.length > MAX_RECORDS) throw Object.assign(new Error("records must be a list"), { status: 400 });
-  const records = input.records.filter((record) => record && typeof record === "object" && !Array.isArray(record)).map((record) => {
+  const records = shareApps(input.records.filter((record) => record && typeof record === "object" && !Array.isArray(record)).map((record) => {
     const { raw: _raw, ...rest } = record;
     return { ...rest, source: input.source }; // a snapshot can only describe its own source
-  });
+  }));
   return {
     source: input.source,
     sender: String(input.sender ?? "").slice(0, 80),
