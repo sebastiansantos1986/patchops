@@ -48,7 +48,7 @@ test("relay: local copy uploads synced records without credentials, raw data, us
     assert.equal(overview.sources.intune.state, "relayed");
     const sources = await receiver.posture.sources();
     assert.equal(sources.sources.find((item) => item.key === "intune").relay.direction, "received");
-    assert.equal((await receiver.posture.store.getConfig("relay:intune")).records.length, 2, "kept in the database");
+    assert.equal(JSON.parse((await import("node:zlib")).gunzipSync(await receiver.posture.store.getRelaySnapshot("intune"))).records.length, 2, "kept in the database");
   } finally { receiver.server.close(); }
 });
 
