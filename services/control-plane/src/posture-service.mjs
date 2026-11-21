@@ -6,6 +6,8 @@ import { JamfConnector, jamfConfig } from "./integrations/jamf.mjs";
 import { CrowdStrikeConnector, crowdstrikeConfig } from "./integrations/crowdstrike.mjs";
 import { SAMPLE_TRACKED_PATCHES, sampleFleet } from "./integrations/sample-fleet.mjs";
 import { DEFAULT_SOFTWARE_RULES, coverageWidget, defaultDashboards, describeRule, evaluateSoftwareRule, sanitizeDashboard, sanitizeSoftwareRule, sanitizeTrackedPatch } from "./fleet-config.mjs";
+import { RELAY_SOURCES, buildRelaySnapshot, relayConfig, sendRelaySnapshot } from "./relay.mjs";
+import { hostname } from "node:os";
 import { QueryError, describeQuery, groupValue, parseQuery, queryReference, referencedGroups, runQuery } from "./fleet-query.mjs";
 
 // Demo data: every sample user is in one country group, and some are in Engineering.
@@ -123,7 +125,13 @@ export class PostureService {
       ...(crowdstrike.configured ? { crowdstrike: new CrowdStrikeConnector(crowdstrike) } : {})
     };
     this.now = now;
-    this.useSample = this.settings.mode === "sample" || (this.settings.mode === "auto" && !Object.keys(this.connectors).length);
+    // Relay: as the sender (PATCHOPS_RELAY_URL + PATCHOPS_RELAY_TOKEN) this copy uploads what it
+    // syncs; as the receiver (only PATCHOPS_RELAY_TOKEN) it accepts uploads instead of syncing.
+    this.relay = relayConfig(env);
+    this.relayToken = !this.relay.url && this.relay.token ? this.relay.token : null;
+    this.relayed = {};
+    this.relayStatus = {};
+    this.useSample = this.settings.mode === "sample" || (this.settings.mode === "auto" && !Object.keys(this.connectors).length && !this.relayToken);
     this.cache = { intune: null, jamf: null, crowdstrike: null };
     this.status = {
       crowdstrike: { configured: Boolean(this.connectors.crowdstrike), state: this.connectors.crowdstrike ? "pending" : "not_configured", device_count: 0, synced_at: null, error: null },
@@ -138,6 +146,12 @@ export class PostureService {
   async init() {
     if (this.initialized) return this.initialized;
     this.initialized = (async () => {
+      if (this.relayToken) {
+        for (const source of RELAY_SOURCES) {
+          const snapshot = await this.store.getConfig(`relay:${source}`);
+          if (snapshot?.records) this.relayed[source] = snapshot;
+        }
+      }
       if (!this.diskCache?.enabled) return;
       const feeds = await this.diskCache.read("cve-feeds");
       if (feeds && this.feeds.settings.enabled) this.feeds.importState(feeds);
@@ -152,6 +166,8 @@ export class PostureService {
         connector.importState?.(entry.state);
         for (const [name, capability] of Object.entries(entry.capabilities ?? {})) connector.capabilities?.[name]?.restore(capability);
       }
+      // Send what was loaded from disk once, so the hosted copy is current without waiting for a sync.
+      if (this.relay.enabled) setTimeout(() => { for (const source of Object.keys(this.connectors)) if (this.cache[source]) this.pushRelay(source).catch(() => {}); }, 3000).unref?.();
     })();
     return this.initialized;
   }
@@ -200,6 +216,7 @@ export class PostureService {
         this.computed = null;
         if (source === "intune") await this.refreshGroups();
         await this.persistConnectors(); // save each source as soon as it finishes
+        if (this.relay.enabled) this.pushRelay(source).catch(() => {});
       } catch (error) {
         // Keep serving the last good data, but surface the failure to the dashboard.
         Object.assign(this.status[source], { state: this.cache[source] ? "stale" : "error", error: error.message, attempted_at: new Date(this.now()).toISOString(), progress: null });
@@ -214,7 +231,70 @@ export class PostureService {
   async records(devices = null) {
     const agentDevices = agentRecords(devices ?? await this.store.listDevices());
     if (this.useSample) return [...sampleFleet({ now: this.now() }), ...agentDevices];
-    return [...(this.cache.intune ?? []), ...(this.cache.jamf ?? []), ...(this.cache.crowdstrike ?? []), ...agentDevices];
+    const recordsFor = (source) => this.cache[source] ?? this.relayed[source]?.records ?? [];
+    return [...recordsFor("intune"), ...recordsFor("jamf"), ...recordsFor("crowdstrike"), ...agentDevices];
+  }
+
+  // ---- Relay (see relay.mjs) ----
+
+  // Sender: upload one source's records to the hosted PatchOps. Never sends credentials.
+  pushRelay(source) {
+    if (!this.relay.enabled || !this.cache[source]) return Promise.resolve(null);
+    this.relayPushes ??= {};
+    // One upload per source at a time; callers during an upload share its result.
+    // Uploads also go one after another across sources, to keep memory low on both ends.
+    this.relayPushes[source] ??= (this.relayChain = (this.relayChain ?? Promise.resolve()).catch(() => {}).then(() => this.sendRelay(source))).finally(() => { delete this.relayPushes[source]; });
+    return this.relayPushes[source];
+  }
+
+  async sendRelay(source) {
+    const label = SOURCE_LABELS[source] ?? source;
+    const connector = this.connectors[source];
+    this.relayStatus[source] = { ...this.relayStatus[source], state: "sending", error: null };
+    const snapshot = buildRelaySnapshot(source, {
+      records: this.cache[source],
+      status: this.status[source],
+      capabilities: connector?.capabilities ? Object.fromEntries(Object.entries(connector.capabilities).map(([name, capability]) => [name, capability.toJSON()])) : {},
+      userGroups: source === "intune" ? connector?.groups?.members ?? null : null
+    }, this.relay, hostname());
+    for (let attempt = 1; attempt <= 2; attempt += 1) {
+      try {
+        const result = await sendRelaySnapshot(this.relay, snapshot, { fetchImpl: this.relayFetch });
+        this.relayStatus[source] = { state: "ok", sent_at: new Date(this.now()).toISOString(), devices: snapshot.records.length, bytes: result.bytes, error: null };
+        this.log(`[relay] ${label}: sent ${snapshot.records.length.toLocaleString("en-US")} devices (${Math.round(result.bytes / 1024).toLocaleString("en-US")} KB) to ${new URL(this.relay.url).host}`);
+        return this.relayStatus[source];
+      } catch (error) {
+        // A sleeping free Render service can take a minute to wake: try once more.
+        if (attempt === 1 && !error.status) { await new Promise((resolve) => setTimeout(resolve, 20_000)); continue; }
+        this.relayStatus[source] = { ...this.relayStatus[source], state: "error", error: error.message, attempted_at: new Date(this.now()).toISOString() };
+        this.log(`[relay] ${label}: upload failed: ${error.message}`);
+        return this.relayStatus[source];
+      }
+    }
+    return null;
+  }
+
+  // Receiver: keep the newest snapshot per source (also saved in the database).
+  async receiveRelay(snapshot) {
+    if (!this.relayToken) throw Object.assign(new Error("relay is not enabled"), { status: 404 });
+    if (this.connectors[snapshot.source]) throw Object.assign(new Error(`${snapshot.source} is synced directly here; relay not needed`), { status: 409 });
+    const entry = { ...snapshot, received_at: new Date(this.now()).toISOString() };
+    await this.store.saveConfig(`relay:${snapshot.source}`, entry);
+    this.relayed[snapshot.source] = entry;
+    this.computed = null;
+    this.log(`[relay] ${SOURCE_LABELS[snapshot.source] ?? snapshot.source}: received ${entry.records.length.toLocaleString("en-US")} devices from ${entry.sender || "a PatchOps relay"}`);
+    return { ok: true, source: snapshot.source, devices: entry.records.length };
+  }
+
+  // Status of a source as the dashboard shows it, including relayed sources.
+  effectiveStatus(source) {
+    const relayed = !this.connectors[source] && this.relayed[source];
+    const sending = this.relay.enabled && this.relayStatus[source] ? { relay: this.relayStatus[source] } : {};
+    if (!relayed) return { ...this.status[source], ...sending };
+    return {
+      configured: true, state: "relayed", device_count: relayed.records.length, synced_at: relayed.synced_at, received_at: relayed.received_at,
+      relay_sender: relayed.sender, relay_options: relayed.options, error: null
+    };
   }
 
   async compute({ fresh = false } = {}) {
@@ -242,10 +322,11 @@ export class PostureService {
     const fingerprint = `${agentDevices.length}|${agentDevices.reduce((latest, device) => (device.last_seen_at > latest ? device.last_seen_at : latest), "")}|${catalog.map((entry) => `${entry.identity}=${entry.approved_version}`).join(",")}`;
     if (!fresh && this.computed && this.computed.fingerprint === fingerprint && this.now() - this.computed.at < 5 * 60_000) return this.computed.posture;
     const records = await this.records(agentDevices);
-    const connected = { intune: this.useSample || Boolean(this.cache.intune), jamf: this.useSample || Boolean(this.cache.jamf), crowdstrike: this.useSample || Boolean(this.cache.crowdstrike) };
+    const has = (source) => this.useSample || Boolean(this.cache[source] ?? this.relayed[source]);
+    const connected = { intune: has("intune"), jamf: has("jamf"), crowdstrike: has("crowdstrike") };
     const config = await this.fleetConfig();
     const osSettings = { ...(this.feeds.ready ? this.feeds.baselines() : {}), ...Object.fromEntries(Object.entries(this.settings.osSettings).filter(([, value]) => value)) };
-    const userGroups = this.useSample ? SAMPLE_USER_GROUPS : this.connectors.intune?.groups?.members ?? {};
+    const userGroups = this.useSample ? SAMPLE_USER_GROUPS : this.connectors.intune?.groups?.members ?? this.relayed.intune?.user_groups ?? {};
     const posture = computePosture(records, { userGroups, catalog, now: this.now(), staleDays: this.settings.staleDays, osSettings, connected, softwareRules: config.software_rules, trackedPatches: config.tracked_patches, cveFeeds: this.feeds.ready ? this.feeds : null });
     await this.recordHistory(posture);
     await this.recordQueryHistory(posture, config);
@@ -282,7 +363,7 @@ export class PostureService {
   sourceStatus(posture) {
     const sources = Object.fromEntries(["intune", "jamf", "crowdstrike"].map((source) => [source, {
       label: SOURCE_LABELS[source],
-      ...(this.useSample ? { configured: false, state: "sample", device_count: posture.coverage[`in_${source}`], synced_at: posture.generated_at, error: null } : this.status[source])
+      ...(this.useSample ? { configured: false, state: "sample", device_count: posture.coverage[`in_${source}`], synced_at: posture.generated_at, error: null } : this.effectiveStatus(source))
     }]));
     sources.agent = { label: SOURCE_LABELS.agent, configured: true, state: "ok", device_count: posture.coverage.with_agent, synced_at: posture.generated_at, error: null };
     return sources;
@@ -578,14 +659,17 @@ export class PostureService {
     const posture = await this.compute();
     const describe = (key, label) => {
       const connector = this.connectors[key];
+      const status = this.effectiveStatus(key);
+      const relayed = !connector && this.relayed[key];
       return {
         key, label,
-        configured: Boolean(connector) || this.useSample,
-        state: this.useSample ? "sample" : this.status[key]?.state ?? "not_configured",
-        synced_at: this.useSample ? posture.generated_at : this.status[key]?.synced_at ?? null,
-        error: this.useSample ? null : this.status[key]?.error ?? null,
-        progress: this.useSample ? null : this.status[key]?.progress ?? null,
-        capabilities: connector?.capabilities ? Object.fromEntries(Object.entries(connector.capabilities).map(([name, capability]) => [name, capability.toJSON()])) : this.useSample ? sampleCapabilities(key, posture) : {}
+        configured: Boolean(connector) || Boolean(relayed) || this.useSample,
+        state: this.useSample ? "sample" : status.state ?? "not_configured",
+        synced_at: this.useSample ? posture.generated_at : status.synced_at ?? null,
+        error: this.useSample ? null : status.error ?? null,
+        progress: this.useSample ? null : status.progress ?? null,
+        relay: this.useSample ? null : relayed ? { direction: "received", sender: relayed.sender, received_at: relayed.received_at, devices: relayed.records.length, options: relayed.options } : status.relay ? { direction: "sent", to: new URL(this.relay.url).host, ...status.relay, options: { vulnerabilities: this.relay.includeVulnerabilities, users: this.relay.includeUsers } } : null,
+        capabilities: connector?.capabilities ? Object.fromEntries(Object.entries(connector.capabilities).map(([name, capability]) => [name, capability.toJSON()])) : relayed ? relayed.capabilities ?? {} : this.useSample ? sampleCapabilities(key, posture) : {}
       };
     };
     return {
