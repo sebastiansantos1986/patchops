@@ -2,6 +2,7 @@ import { createServer } from "node:http";
 import { pathToFileURL } from "node:url";
 import { bearerToken, createDashboardSession, hashPassword, safeEqual, verifyDashboardSession, verifyPassword } from "./auth.mjs";
 import { PostgresStore } from "./postgres-store.mjs";
+import { readRelaySnapshot, relayAuthorized } from "./relay.mjs";
 import { gzipSync } from "node:zlib";
 import { QueryError } from "./fleet-query.mjs";
 import { PostureService } from "./posture-service.mjs";
@@ -51,6 +52,7 @@ export function createApp(store, options = {}) {
   const feeds = options.feeds ?? (options.env || process.env.NODE_TEST_CONTEXT ? undefined : new CveFeeds(feedSettings(process.env)));
   const diskCache = options.diskCache ?? (options.env || process.env.NODE_TEST_CONTEXT ? null : new DiskCache(cacheSettings(process.env)));
   const realServer = !(options.env || process.env.NODE_TEST_CONTEXT);
+  let relayQueue = Promise.resolve();
   const posture = options.posture ?? new PostureService(store, {
     env: options.env ?? process.env, feeds, diskCache,
     waitForFirstSync: !realServer,
@@ -74,7 +76,12 @@ export function createApp(store, options = {}) {
     };
     const body = async () => {
       const chunks = [];
-      for await (const chunk of request) chunks.push(chunk);
+      let size = 0;
+      for await (const chunk of request) {
+        size += chunk.length;
+        if (size > 8 * 1024 * 1024) throw Object.assign(new Error("request body is too large"), { status: 413 });
+        chunks.push(chunk);
+      }
       return chunks.length ? JSON.parse(Buffer.concat(chunks)) : {};
     };
     const dashboardSession = () => verifyDashboardSession(bearerToken(request), sessionSecret);
@@ -90,6 +97,20 @@ export function createApp(store, options = {}) {
         return send(database === "ok" ? 200 : 503, { status: database === "ok" ? "ok" : "database_unavailable", service: "patchops-control-plane", storage: process.env.DATABASE_URL ? "postgres" : "memory", database });
       }
       await store.ready;
+      // Relay uploads from a local PatchOps (own token; can only upload source records).
+      if (request.method === "POST" && request.url === "/api/relay/snapshot") {
+        if (!posture.relayToken) return send(404, { error: "not_found" });
+        if (!relayAuthorized(request.headers.authorization, posture.relayToken)) return send(401, { error: "unauthorized" });
+        await posture.init();
+        // One upload at a time: a large snapshot is held in memory while it's parsed.
+        const previous = relayQueue;
+        let release;
+        relayQueue = new Promise((resolve) => { release = resolve; });
+        try {
+          await previous;
+          return send(200, await posture.receiveRelay(await readRelaySnapshot(request)));
+        } finally { release(); }
+      }
       if (request.method === "POST" && request.url === "/api/auth/login") {
         const input = await body();
         const storedUser = await store.findConsoleUser(input.username);
@@ -254,6 +275,8 @@ export function createApp(store, options = {}) {
       }
       return send(404, { error: "not_found" });
     } catch (error) {
+      if (error.status === 413 || error.code === "ERR_BUFFER_TOO_LARGE") return send(413, { error: "too_large", message: error.message });
+      if (error.status === 409 || error.status === 404) return send(error.status, { error: error.message });
       return send(400, { error: "invalid_request", message: error.message });
     }
   });

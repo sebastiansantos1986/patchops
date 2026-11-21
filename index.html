@@ -4466,14 +4466,15 @@
           const source = data.sources[key];
           const text = {
             sample: `Sample data · ${source.device_count} devices`,
-            ok: `${source.device_count} device${source.device_count === 1 ? "" : "s"} · synced ${pstAgo(source.synced_at)}${source.from_cache ? " (saved copy)" : ""}`,
+            ok: `${source.device_count} device${source.device_count === 1 ? "" : "s"} · synced ${pstAgo(source.synced_at)}${source.from_cache ? " (saved copy)" : ""}${source.relay ? (source.relay.state === "ok" ? ` · sent to hosted ${pstAgo(source.relay.sent_at)}` : source.relay.state === "error" ? " · upload to hosted failed" : " · uploading to hosted…") : ""}`,
+            relayed: `${source.device_count} device${source.device_count === 1 ? "" : "s"} · relayed from ${source.relay_sender || "your PatchOps"} ${pstAgo(source.received_at)}`,
             not_configured: "Not connected",
             pending: "Waiting for first sync",
             syncing: source.progress || (source.device_count ? `Updating… (showing ${source.device_count} devices)` : "Syncing…"),
             error: "Sync failed",
             stale: `Last good sync ${pstAgo(source.synced_at)}`
           }[source.state] ?? source.state;
-          const badge = { ok: ["good", "Live"], sample: ["info", "Sample"], error: ["danger", "Error"], stale: ["warn", "Stale"], not_configured: ["", "Off"], syncing: ["info", "Syncing"], pending: ["info", "Pending"] }[source.state] ?? ["", source.state];
+          const badge = { ok: ["good", "Live"], relayed: ["good", "Relayed"], sample: ["info", "Sample"], error: ["danger", "Error"], stale: ["warn", "Stale"], not_configured: ["", "Off"], syncing: ["info", "Syncing"], pending: ["info", "Pending"] }[source.state] ?? ["", source.state];
           return `<div class="pst-source"><span class="pst-source-mark" style="background:${colors[key]}">${PST_SOURCES[key][0]}</span><div><strong>${escapeHtml(source.label)}</strong><span>${escapeHtml(text)}</span></div><span class="badge ${badge[0]}">${badge[1]}</span></div>`;
         }).join("");
       }
@@ -5968,18 +5969,28 @@
         document.getElementById("vx-more").hidden = rows.length <= shown.length;
       }
 
+      // Relay: what this copy received from, or sent to, another PatchOps (no credentials involved).
+      function dsRelayLine(relay) {
+        if (!relay) return "";
+        const included = [relay.options?.users ? "user names" : "", relay.options?.vulnerabilities ? "CrowdStrike vulnerabilities" : ""].filter(Boolean);
+        const scope = `Devices, OS and apps${included.length ? ` plus ${included.join(" and ")}` : ""}; ${included.length === 2 ? "" : `${["user names", "CrowdStrike vulnerabilities"].filter((item) => !included.includes(item)).join(" and ")} not included; `}no credentials.`;
+        if (relay.direction === "received") return `<p class="fr-help" style="margin:4px 0 0">Relayed from <strong>${escapeHtml(relay.sender || "your local PatchOps")}</strong> ${pstAgo(relay.received_at)} · ${relay.devices.toLocaleString()} devices. ${escapeHtml(scope)}</p>`;
+        const state = relay.state === "ok" ? `sent ${relay.devices.toLocaleString()} devices ${pstAgo(relay.sent_at)}` : relay.state === "error" ? `upload failed: ${relay.error}` : "uploading…";
+        return `<p class="fr-help" style="margin:4px 0 0">Relay to <strong>${escapeHtml(relay.to)}</strong>: ${escapeHtml(state)}. ${escapeHtml(scope)}</p>`;
+      }
+
       async function loadDataSources() {
         if (!dashboardToken || !apiBaseUrl) return;
         const list = document.getElementById("ds-list");
         try {
           const data = await fleetApi("/fleet/sources");
-          const stateBadge = (state) => ({ running: ["info", "Downloading…"], ok: ["good", "Working"], sample: ["info", "Sample"], no_permission: ["warn", "Missing permission"], error: ["danger", "Error"], disabled: ["", "Turned off"], not_run: ["", "Not run yet"], not_configured: ["", "Not connected"], stale: ["warn", "Stale"], pending: ["info", "Pending"], syncing: ["info", "Syncing"] })[state] ?? ["", state];
+          const stateBadge = (state) => ({ running: ["info", "Downloading…"], ok: ["good", "Working"], relayed: ["good", "Relayed"], sending: ["info", "Uploading…"], sample: ["info", "Sample"], no_permission: ["warn", "Missing permission"], error: ["danger", "Error"], disabled: ["", "Turned off"], not_run: ["", "Not run yet"], not_configured: ["", "Not connected"], stale: ["warn", "Stale"], pending: ["info", "Pending"], syncing: ["info", "Syncing"] })[state] ?? ["", state];
           list.innerHTML = data.sources.map((source) => {
             const [cls, label] = stateBadge(source.state);
             const capabilities = Object.entries(source.capabilities);
             return `<article class="panel fr-section">
-              <div class="pst-panel-head"><div><h2>${escapeHtml(source.label)}</h2><p>${source.progress ? `<strong>Downloading:</strong> ${escapeHtml(source.progress)} · ` : ""}${source.synced_at ? `Last sync ${pstAgo(source.synced_at)}` : source.progress ? "first sync in progress" : "Not synced yet"}${source.error ? ` · <span style="color:var(--red)">${escapeHtml(source.error)}</span>` : ""}</p></div><span class="badge ${cls}">${label}</span></div>
-              ${!source.configured ? `<p class="fr-help" style="margin:0">Not connected. Add its API credentials to <code>.env</code> (see <code>docs/fleet-posture.md</code>) and restart.</p>` : ""}
+              <div class="pst-panel-head"><div><h2>${escapeHtml(source.label)}</h2><p>${source.progress ? `<strong>Downloading:</strong> ${escapeHtml(source.progress)} · ` : ""}${source.synced_at ? `Last sync ${pstAgo(source.synced_at)}` : source.progress ? "first sync in progress" : "Not synced yet"}${source.error ? ` · <span style="color:var(--red)">${escapeHtml(source.error)}</span>` : ""}</p>${dsRelayLine(source.relay)}</div><span class="badge ${cls}">${label}</span></div>
+              ${!source.configured ? `<p class="fr-help" style="margin:0">Not connected. Add its API credentials to <code>.env</code> (see <code>docs/fleet-posture.md</code>) and restart, or relay it from a PatchOps that has them (<code>docs/relay.md</code>).</p>` : ""}
               ${capabilities.length ? capabilities.map(([key, capability]) => {
                 const [capClass, capLabel] = stateBadge(capability.state);
                 return `<details class="ds-cap" ${key === "hosts" || key === "computers" || key === "devices" || key === "sample" ? "" : ""}>
@@ -5990,7 +6001,7 @@
                   ${capability.fields.length ? `<div class="table-panel" style="box-shadow:none;margin-top:8px;max-height:360px;overflow:auto"><table><thead><tr><th>Field</th><th>Filled</th><th>Example</th></tr></thead><tbody>${capability.fields.map((field) => `<tr><td><code>${escapeHtml(field.field)}</code></td><td><span class="fr-cov"><span>${field.pct}%</span><span class="pst-meter"><span style="width:${field.pct}%;background:#2563eb"></span></span></span></td><td class="pst-issue-text">${escapeHtml(field.example ?? "")}</td></tr>`).join("")}</tbody></table></div>` : ""}
                   ${capability.samples.length ? `<div class="ds-sample-head"><strong>Raw sample records</strong><button class="fd-icon-btn" type="button" data-ds-copy>Copy JSON</button></div><pre class="ds-json">${escapeHtml(JSON.stringify(capability.samples, null, 2))}</pre>` : ""}
                 </details>`;
-              }).join("") : source.configured ? `<p class="fr-help" style="margin:0">No records captured yet. Click <strong>Sync now</strong> on Fleet Posture.</p>` : ""}
+              }).join("") : source.relay?.direction === "received" ? "" : source.configured ? `<p class="fr-help" style="margin:0">No records captured yet. Click <strong>Sync now</strong> on Fleet Posture.</p>` : ""}
             </article>`;
           }).join("");
         } catch (error) {
