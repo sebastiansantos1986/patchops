@@ -3,6 +3,9 @@ import pg from "pg";
 import { assessDevice, softwareIdentity } from "./patch-engine.mjs";
 
 const { Pool } = pg;
+// Postgres JSONB rejects the NUL character (\u0000) and broken Unicode surrogates, which some
+// inventories contain (app names, extension attributes). Strip them before storing.
+export const toJsonb = (value) => JSON.stringify(value, (_key, item) => (typeof item === "string" ? item.toWellFormed().replace(/\u0000/g, "") : item));
 const tokenHash = (token) => createHash("sha256").update(token).digest("hex");
 const defaultNotificationSettings = () => ({ presentation: "custom", app_name: "PatchOps Security Updates", organization: "Your Organization", accent_color: "#2563EB", symbol: "arrow.down.circle.fill", popup_width: 540, position: "center", sound: "Funk", primary_label: "Install Now", secondary_label: "Remind Me Later", show_close: true, max_deferrals: 3, require_deferral_reason: false, support_email: "", support_phone: "", help_url: "" });
 const defaultAgentSettings = () => ({ inventory_interval_seconds: 900, notification_poll_seconds: 15, allow_custom_popups: true, allow_system_notifications: true });
@@ -206,7 +209,7 @@ export class PostgresStore {
 
   async saveConfig(key, value) {
     await this.ready;
-    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [`config:${key}`, JSON.stringify(value)]);
+    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ($1, $2::jsonb) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [`config:${key}`, toJsonb(value)]);
     return value;
   }
 
@@ -219,7 +222,7 @@ export class PostgresStore {
   async savePostureHistory(history) {
     await this.ready;
     // Serialize explicitly: node-postgres would otherwise send a JS array as a Postgres array.
-    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ('posture_history', $1::jsonb) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [JSON.stringify(history)]);
+    await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ('posture_history', $1::jsonb) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [toJsonb(history)]);
     return history;
   }
 

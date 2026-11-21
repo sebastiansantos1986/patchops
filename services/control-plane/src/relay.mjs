@@ -70,7 +70,7 @@ export async function sendRelaySnapshot(config, snapshot, { fetchImpl = globalTh
   const text = await response.text();
   if (!response.ok) {
     let message = text.slice(0, 200);
-    try { message = JSON.parse(text).error ?? message; } catch { /* plain text */ }
+    try { const parsed = JSON.parse(text); message = [parsed.error, parsed.message].filter(Boolean).join(": ") || message; } catch { /* plain text */ }
     const error = new Error(`hosted PatchOps answered ${response.status}: ${message}`);
     error.status = response.status;
     throw error;

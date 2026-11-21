@@ -18,7 +18,7 @@ function secret(optionValue, environmentValue, localDefault, name) {
 }
 
 // Agents only update the fields they own, with bounded sizes (never ids, tokens or enrollment state).
-const clip = (value, length = 200) => (value === undefined || value === null ? undefined : String(value).slice(0, length));
+const clip = (value, length = 200) => (value === undefined || value === null ? undefined : String(value).toWellFormed().replace(/\u0000/g, "").slice(0, length));
 const compact = (object) => Object.fromEntries(Object.entries(object).filter(([, value]) => value !== undefined));
 export function agentHeartbeat(input) {
   return compact({
@@ -277,6 +277,7 @@ export function createApp(store, options = {}) {
     } catch (error) {
       if (error.status === 413 || error.code === "ERR_BUFFER_TOO_LARGE") return send(413, { error: "too_large", message: error.message });
       if (error.status === 409 || error.status === 404) return send(error.status, { error: error.message });
+      if (request.url === "/api/relay/snapshot") console.error(`[relay] upload rejected: ${error.message}`);
       return send(400, { error: "invalid_request", message: error.message });
     }
   });
