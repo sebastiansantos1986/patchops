@@ -386,16 +386,28 @@ export function computePosture(records, { userGroups = {}, catalog = [], now = D
     osDistribution[platform] = [...counts.values()].sort((left, right) => compareVersions(right.version, left.version));
   }
 
+  // Index outdated apps once (platform + app) instead of scanning every device for every app.
+  const behindIndex = new Map();
+  for (const device of devices) {
+    for (const app of device.apps_behind) {
+      const key = `${device.platform}|${appKey(app.name)}`;
+      const entry = behindIndex.get(key) ?? { devices: new Set(), severities: [] };
+      entry.devices.add(device);
+      entry.severities.push(app.severity);
+      behindIndex.set(key, entry);
+    }
+  }
   const appSummary = [...apps.values()].map((baseline) => {
     const installs = [...baseline.versions.values()].reduce((sum, count) => sum + count, 0);
-    const behindDevices = devices.filter((device) => device.platform === baseline.platform && device.apps_behind.some((app) => appKey(app.name) === appKey(baseline.name)));
-    const severity = maxSeverity(behindDevices.flatMap((device) => device.apps_behind.filter((app) => appKey(app.name) === appKey(baseline.name)).map((app) => app.severity))) ?? "none";
+    const behind = behindIndex.get(`${baseline.platform}|${appKey(baseline.name)}`);
+    const behindCount = behind?.devices.size ?? 0;
+    const severity = maxSeverity(behind?.severities ?? []) ?? "none";
     return {
       name: baseline.name,
       platform: baseline.platform,
       installs,
-      behind: behindDevices.length,
-      current_pct: pct(installs - behindDevices.length, installs),
+      behind: behindCount,
+      current_pct: pct(installs - behindCount, installs),
       target_version: baseline.target_version,
       target_source: baseline.target_source,
       watchlisted: baseline.watchlisted,
