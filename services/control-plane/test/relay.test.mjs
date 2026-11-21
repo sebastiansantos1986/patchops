@@ -91,3 +91,12 @@ test("relay helpers", () => {
   assert.equal(relayAuthorized("Relay short", "short"), false, "tokens under 24 characters are never accepted");
   assert.deepEqual(Object.keys(relayRecord(intuneRecord("Z"))).includes("raw"), false);
 });
+
+test("relay data with NUL characters and broken Unicode can be stored in Postgres", async () => {
+  const { toJsonb } = await import("../src/postgres-store.mjs");
+  const stored = JSON.parse(toJsonb({ name: "Bad\u0000App", broken: "x\ud800y", ok: "Forcepoint™ Endpoint" }));
+  assert.equal(stored.name, "BadApp");
+  assert.equal(stored.broken, "x�y");
+  assert.equal(stored.ok, "Forcepoint™ Endpoint");
+  assert.doesNotMatch(toJsonb({ a: "\u0000" }), /\\u0000/);
+});
