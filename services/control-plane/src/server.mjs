@@ -196,6 +196,18 @@ export function createApp(store, options = {}) {
           if (request.method === "POST" && request.url === "/api/fleet/software-rules") return writeDenied() ?? send(200, { software_rules: await posture.saveSoftwareRules((await body()).rules) });
           if (request.method === "POST" && request.url === "/api/fleet/tracked-patches") return writeDenied() ?? send(200, { tracked_patches: await posture.saveTrackedPatches((await body()).patches) });
           if (request.method === "POST" && request.url === "/api/fleet/dashboards") return writeDenied() ?? send(200, await posture.saveDashboard((await body()).dashboard));
+          if (request.method === "GET" && request.url === "/api/fleet/update-plans") return send(200, await posture.updatePlansData());
+          if (request.method === "POST" && request.url === "/api/fleet/update-plans/preview") return send(200, await posture.previewUpdatePlan((await body()).plan));
+          if (request.method === "POST" && request.url === "/api/fleet/update-plans") return writeDenied() ?? send(200, await posture.saveUpdatePlan((await body()).plan));
+          if (request.url.startsWith("/api/fleet/update-plans/")) {
+            const id = decodeURIComponent(request.url.slice("/api/fleet/update-plans/".length));
+            if (request.method === "GET") {
+              const data = await posture.updatePlansData({ withDevices: id });
+              const plan = data.plans.find((item) => item.id === id);
+              return plan ? send(200, plan) : send(404, { error: "not_found" });
+            }
+            if (request.method === "DELETE") return writeDenied() ?? send(200, await posture.deleteUpdatePlan(id));
+          }
           if (request.url.startsWith("/api/fleet/dashboards/")) {
             const id = decodeURIComponent(request.url.slice("/api/fleet/dashboards/".length));
             if (request.method === "DELETE") return writeDenied() ?? (await posture.deleteDashboard(id) ? send(200, { deleted: true }) : send(404, { error: "dashboard_not_found" }));
