@@ -159,7 +159,7 @@ export class Store {
 
   getRelaySnapshot(source) { return this.relaySnapshots?.[source] ?? null; }
 
-  saveRelaySnapshot(source, compressed) { this.relaySnapshots = { ...this.relaySnapshots, [source]: compressed }; }
+  saveRelaySnapshot(source, compressed, receivedAt = new Date().toISOString()) { this.relaySnapshots = { ...this.relaySnapshots, [source]: { data: compressed, received_at: receivedAt } }; }
 
   getPostureHistory() { return this.postureHistory ?? []; }
 

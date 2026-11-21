@@ -108,6 +108,7 @@ export function createApp(store, options = {}) {
         relayQueue = new Promise((resolve) => { release = resolve; });
         try {
           await previous;
+          posture.beforeRelayUpload();
           return send(200, await posture.receiveRelay(await readRelaySnapshot(request)));
         } finally { release(); }
       }

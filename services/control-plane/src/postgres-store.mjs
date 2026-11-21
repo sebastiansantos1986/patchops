@@ -206,13 +206,13 @@ export class PostgresStore {
   // huge JSONB value, which a small Postgres instance can't parse in memory.
   async getRelaySnapshot(source) {
     await this.ready;
-    const result = await this.pool.query("SELECT data FROM patchops_relay_snapshots WHERE source = $1", [source]);
-    return result.rowCount ? result.rows[0].data : null;
+    const result = await this.pool.query("SELECT data, received_at FROM patchops_relay_snapshots WHERE source = $1", [source]);
+    return result.rowCount ? { data: result.rows[0].data, received_at: new Date(result.rows[0].received_at).toISOString() } : null;
   }
 
-  async saveRelaySnapshot(source, compressed) {
+  async saveRelaySnapshot(source, compressed, receivedAt = new Date().toISOString()) {
     await this.ready;
-    await this.pool.query("INSERT INTO patchops_relay_snapshots (source, data) VALUES ($1, $2) ON CONFLICT (source) DO UPDATE SET data = EXCLUDED.data, received_at = NOW()", [source, compressed]);
+    await this.pool.query("INSERT INTO patchops_relay_snapshots (source, data, received_at) VALUES ($1, $2, $3) ON CONFLICT (source) DO UPDATE SET data = EXCLUDED.data, received_at = EXCLUDED.received_at", [source, compressed, receivedAt]);
     await this.pool.query("DELETE FROM patchops_settings WHERE key = $1", [`config:relay:${source}`]); // older format
   }
 

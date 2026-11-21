@@ -30,6 +30,9 @@ services:
         value: 22
       - key: HOST
         value: 0.0.0.0
+      # Let Node use most of the instance's memory (its default stops at about half).
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=400
       - key: PATCHOPS_ENROLLMENT_TOKEN
         generateValue: true
       - key: PATCHOPS_DASHBOARD_USERNAME
