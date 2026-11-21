@@ -3,7 +3,7 @@ import { stat } from "node:fs/promises";
 import { createServer } from "node:http";
 import { extname, join, normalize } from "node:path";
 
-const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".csv": "text/csv" };
+const types = { ".html": "text/html; charset=utf-8", ".js": "text/javascript", ".css": "text/css", ".json": "application/json", ".csv": "text/csv", ".svg": "image/svg+xml", ".png": "image/png", ".webp": "image/webp" };
 createServer(async (request, response) => {
   const requested = request.url === "/" ? "/index.html" : request.url.split("?")[0];
   const file = join(process.cwd(), normalize(requested).replace(/^(\.\.(\/|\\|$))+/, ""));

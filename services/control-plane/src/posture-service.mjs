@@ -6,6 +6,7 @@ import { JamfConnector, jamfConfig } from "./integrations/jamf.mjs";
 import { CrowdStrikeConnector, crowdstrikeConfig } from "./integrations/crowdstrike.mjs";
 import { SAMPLE_TRACKED_PATCHES, sampleFleet } from "./integrations/sample-fleet.mjs";
 import { DEFAULT_SOFTWARE_RULES, coverageWidget, defaultDashboards, describeRule, evaluateSoftwareRule, sanitizeDashboard, sanitizeSoftwareRule, sanitizeTrackedPatch } from "./fleet-config.mjs";
+import { evaluateUpdatePlan, sanitizeUpdatePlan } from "./update-plans.mjs";
 import { RELAY_SOURCES, buildRelaySnapshot, parseRelaySnapshot, relayConfig, sendRelaySnapshot } from "./relay.mjs";
 import { createHash } from "node:crypto";
 import { hostname } from "node:os";
@@ -539,6 +540,64 @@ export class PostureService {
     return names;
   }
 
+  // ---- Update plans (see update-plans.mjs) ----
+
+  async updatePlans() {
+    return (await this.store.getConfig("update_plans")) ?? [];
+  }
+
+  async saveUpdatePlan(input) {
+    const plans = await this.updatePlans();
+    const existing = plans.find((plan) => plan.id === input?.id);
+    const plan = sanitizeUpdatePlan({ ...input, created_at: existing?.created_at });
+    if (plans.some((item) => item.id !== plan.id && item.name.toLowerCase() === plan.name.toLowerCase())) throw new QueryError(`A plan named "${plan.name}" already exists`);
+    const next = existing ? plans.map((item) => (item.id === plan.id ? plan : item)) : [...plans, plan].slice(-50);
+    await this.store.saveConfig("update_plans", next);
+    return plan;
+  }
+
+  // Dry run for the editor: progress of an unsaved plan.
+  async previewUpdatePlan(input) {
+    const plan = sanitizeUpdatePlan(input);
+    const posture = await this.compute();
+    const result = evaluateUpdatePlan(plan, posture.devices, { now: this.now() });
+    for (const ring of result.rings) delete ring.members;
+    return result;
+  }
+
+  async deleteUpdatePlan(id) {
+    const plans = await this.updatePlans();
+    await this.store.saveConfig("update_plans", plans.filter((plan) => plan.id !== id));
+    const history = (await this.store.getConfig("update_plan_history")) ?? {};
+    delete history[id];
+    await this.store.saveConfig("update_plan_history", history);
+    return { ok: true };
+  }
+
+  // Progress of every plan, with a daily history point per plan (kept 120 days).
+  async updatePlansData({ withDevices = null } = {}) {
+    const posture = await this.compute();
+    const plans = await this.updatePlans();
+    const history = (await this.store.getConfig("update_plan_history")) ?? {};
+    const today = localDay(this.now());
+    let changed = false;
+    const results = plans.map((plan) => {
+      const result = evaluateUpdatePlan(plan, posture.devices, { now: this.now() });
+      const points = (history[plan.id] ?? []).filter((point) => point.date !== today);
+      const point = { date: today, updated: result.totals.updated, pending: result.totals.pending };
+      const previous = (history[plan.id] ?? []).find((item) => item.date === today);
+      if (!previous || previous.updated !== point.updated || previous.pending !== point.pending) changed = true;
+      history[plan.id] = [...points, point].slice(-120);
+      result.history = history[plan.id];
+      if (withDevices !== plan.id) for (const ring of result.rings) delete ring.members;
+      return result;
+    });
+    if (changed) await this.store.saveConfig("update_plan_history", history);
+    // Outdated apps in the fleet, to start a plan from (newest version seen = suggested target).
+    const suggestions = posture.apps.filter((app) => app.behind > 0).slice(0, 300).map((app) => ({ name: app.name, platform: app.platform, target_version: app.target_version, behind: app.behind, installs: app.installs }));
+    return { generated_at: posture.generated_at, plans: results, suggestions };
+  }
+
   // Text -> tree for the visual builder. Errors come back as data so the editor can show them inline.
   parse(source) {
     try {
@@ -683,6 +742,7 @@ export class PostureService {
         key, label,
         configured: Boolean(connector) || Boolean(relayed) || this.useSample,
         state: this.useSample ? "sample" : status.state ?? "not_configured",
+        device_count: this.useSample ? posture.coverage[`in_${key}`] ?? 0 : status.device_count ?? 0,
         synced_at: this.useSample ? posture.generated_at : status.synced_at ?? null,
         error: this.useSample ? null : status.error ?? null,
         progress: this.useSample ? null : status.progress ?? null,
