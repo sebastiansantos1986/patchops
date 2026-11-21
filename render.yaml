@@ -38,6 +38,23 @@ services:
         generateValue: true
       - key: PATCHOPS_SESSION_SECRET
         generateValue: true
+      # Fleet Posture connectors (read-only). Fill these in the Render dashboard; see docs/fleet-posture.md
+      - key: INTUNE_TENANT_ID
+        sync: false
+      - key: INTUNE_CLIENT_ID
+        sync: false
+      - key: INTUNE_CLIENT_SECRET
+        sync: false
+      - key: JAMF_URL
+        sync: false
+      - key: JAMF_CLIENT_ID
+        sync: false
+      - key: JAMF_CLIENT_SECRET
+        sync: false
+      - key: CROWDSTRIKE_CLIENT_ID
+        sync: false
+      - key: CROWDSTRIKE_CLIENT_SECRET
+        sync: false
       - key: DATABASE_URL
         fromDatabase:
           name: patchops-postgres-sebastiansantos1986

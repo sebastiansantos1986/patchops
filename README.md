@@ -36,6 +36,17 @@ npm run simulate
 
 Run API tests with `npm run check` and agent tests with `npm run check:agent`. Run one safe agent lifecycle cycle with `go run ./agents/cmd/patchops-agent --once`.
 
+## Fleet Posture: Intune + Jamf dashboard
+
+The console opens on **Fleet Posture**, a read-only risk dashboard. It correlates Microsoft Intune, Jamf Pro and the PatchOps agent by serial number and shows device health, OS currency, outdated apps and an executive posture score with CSV export. **Dashboards**, **Explore** (Cyclops-style `e/ f/ r/` queries) and **Fleet Rules** (required agents and tracked Windows KBs) build reporting views on the same data. Everything runs on a labelled sample fleet until you add API credentials:
+
+```bash
+cp .env.example .env   # add Intune and/or Jamf read-only API credentials
+npm run dev
+```
+
+See [docs/fleet-posture.md](docs/fleet-posture.md) for the Entra app registration, the Jamf API client and how the checks work.
+
 ## Native macOS test agent
 
 The SwiftUI lab agent collects read-only system and application inventory and can sync it to the local POC API. Its native notification buttons record actions in simulation mode; they cannot install software or restart the Mac.
@@ -96,6 +107,7 @@ The POC scaffold under `poc-scaffold/` describes how to build the first working 
 
 ## Key Documents
 
+- [Fleet Posture (Intune + Jamf)](docs/fleet-posture.md)
 - [MVP Technical Spec](docs/mvp-technical-spec.md)
 - [Product Architecture](docs/architecture.md)
 - [Security Model](docs/security-model.md)

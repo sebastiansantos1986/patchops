@@ -153,6 +153,14 @@ export class Store {
     return this.notificationSettings;
   }
 
+  getConfig(key) { return this.config?.[key] === undefined ? null : structuredClone(this.config[key]); }
+
+  saveConfig(key, value) { this.config = { ...this.config, [key]: structuredClone(value) }; return value; }
+
+  getPostureHistory() { return this.postureHistory ?? []; }
+
+  savePostureHistory(history) { this.postureHistory = history; return history; }
+
   getAgentSettings() { return this.agentSettings; }
 
   saveAgentSettings(input) {

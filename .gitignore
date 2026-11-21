@@ -5,3 +5,6 @@ dist/
 dist-web/
 data/*.json
 !data/.gitkeep
+.env
+.env.local
+.patchops-cache/
