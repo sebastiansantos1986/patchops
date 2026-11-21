@@ -69,7 +69,7 @@ export class Capability {
     this.synced_at = null;
   }
 
-  begin() { this.stats = new FieldStats(); this.samples = []; this.count = 0; this.error = null; }
+  begin() { this.stats = new FieldStats(); this.samples = []; this.count = 0; this.error = null; this.state = "running"; this.restored = null; }
 
   observe(raw) {
     this.count += 1;
@@ -79,5 +79,13 @@ export class Capability {
 
   finish(state = "ok", error = null) { this.state = state; this.error = error; this.synced_at = new Date().toISOString(); }
 
-  toJSON() { return { label: this.label, scope: this.scope, state: this.state, count: this.count, error: this.error, synced_at: this.synced_at, query: this.query ?? null, fields: this.stats.toJSON().fields, samples: this.samples }; }
+  // Shows the last saved result after a restart until the next sync replaces it.
+  restore(saved) {
+    if (saved && typeof saved === "object" && this.state === "not_run") this.restored = saved;
+  }
+
+  toJSON() {
+    if (this.state === "not_run" && this.restored) return { ...this.restored, label: this.label, scope: this.scope, from_cache: true };
+    return { label: this.label, scope: this.scope, state: this.state, count: this.count, error: this.error, synced_at: this.synced_at, query: this.query ?? null, sync_mode: this.sync_mode ?? null, fields: this.stats.toJSON().fields, samples: this.samples };
+  }
 }

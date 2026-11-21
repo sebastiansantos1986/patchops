@@ -59,8 +59,8 @@ const WIN_APPS = [
 ];
 
 // Security agents, so required / prohibited software rules have something to measure.
-const MAC_AGENTS = [["Falcon", "com.crowdstrike.falcon.App", "CrowdStrike", "7.30.20103", 0.96], ["PrivilegeManagement", "com.beyondtrust.privilegemanagement", "BeyondTrust", "25.6.1", 0.93], ["Okta Verify", "com.okta.mobile.auth-service-extension", "Okta", "9.52.0", 0.9], ["Nessus Agent", "com.tenablesecurity.nessus.agent", "Tenable", "11.0.1", 0.22], ["CyberArk EPM", "com.cyberark.CyberArkEPM", "CyberArk", "25.9.0", 0.12]];
-const WIN_AGENTS = [["CrowdStrike Windows Sensor", "CrowdStrike, Inc.", "7.30.20105.0", 0.97], ["BeyondTrust Privilege Management for Windows", "BeyondTrust Corporation", "25.6.214.0", 0.92], ["Okta Verify", "Okta, Inc.", "6.6.1.0", 0.84], ["Nessus Agent (x64)", "Tenable, Inc.", "11.0.1.20015", 0.3], ["CyberArk Endpoint Privilege Manager Agent", "CyberArk", "25.9.0.1120", 0.18]];
+const MAC_AGENTS = [["Falcon", "com.crowdstrike.falcon.App", "CrowdStrike", "7.30.20103", 0.96], ["PrivilegeManagement", "com.beyondtrust.privilegemanagement", "BeyondTrust", "25.6.1", 0.93], ["Okta Verify", "com.okta.mobile.auth-service-extension", "Okta", "9.52.0", 0.9], ["Nessus Agent", "com.tenablesecurity.nessus.agent", "Tenable", "11.0.1", 0.22], ["CyberArk EPM", "com.cyberark.CyberArkEPM", "CyberArk", "25.9.0", 0.12], ["Forcepoint DLP Endpoint", "com.forcepoint.dlp.endpoint", "Forcepoint", "30.9.750", 0.8]];
+const WIN_AGENTS = [["CrowdStrike Windows Sensor", "CrowdStrike, Inc.", "7.30.20105.0", 0.97], ["BeyondTrust Privilege Management for Windows", "BeyondTrust Corporation", "25.6.214.0", 0.92], ["Okta Verify", "Okta, Inc.", "6.6.1.0", 0.84], ["Nessus Agent (x64)", "Tenable, Inc.", "11.0.1.20015", 0.3], ["CyberArk Endpoint Privilege Manager Agent", "CyberArk", "25.9.0.1120", 0.18], ["Forcepoint Agent 30.9.750", "Forcepoint", "30.9.750", 0.7], ["Forcepoint Agent 29.4.12", "Forcepoint", "29.4.12", 0.12]];
 
 // Clearly-labelled sample KBs that map onto the sample fleet's build numbers.
 export const SAMPLE_TRACKED_PATCHES = [
@@ -81,7 +81,7 @@ function sampleFalcon(base, index, lastSeen, now, random) {
   const stale = index % 13 === 5;
   const platformKey = base.platform === "windows" ? "windows" : "mac";
   const vulnerabilities = SAMPLE_CVES.filter((cve) => cve[platformKey] && random() < cve.rate)
-    .map(({ windows: _w, mac: _m, rate: _r, ...cve }) => ({ ...cve, status: "open", description: "Sample vulnerability used to demonstrate the dashboard.", first_seen: hoursAgo(now, 24 * (3 + random() * 40)), aid: `cs-${index}`, hostname: base.hostname }));
+    .map(({ windows: _w, mac: _m, rate: _r, ...cve }) => ({ ...cve, source: "crowdstrike", status: "open", description: "Sample vulnerability used to demonstrate the dashboard.", first_seen: hoursAgo(now, 24 * (3 + random() * 40)), aid: `cs-${index}`, hostname: base.hostname }));
   return {
     ...base, source: "crowdstrike", source_id: `cs-${index}`, os: { ...base.os }, os_approximate: true,
     last_check_in: stale ? hoursAgo(now, 24 * (9 + random() * 20)) : new Date(Math.min(now, Date.parse(lastSeen) + 3_600_000)).toISOString(),

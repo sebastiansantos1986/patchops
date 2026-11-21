@@ -12,14 +12,18 @@ export class ConnectorError extends Error {
   }
 }
 
-export async function fetchJSON(url, { method = "GET", headers = {}, body, source = "connector", retries = 4, timeoutMs = 30_000, fetchImpl = globalThis.fetch } = {}) {
+const isTimeout = (error) => error?.name === "TimeoutError" || error?.name === "AbortError" || /aborted|timeout/i.test(String(error?.message));
+
+// The time limit covers the whole request, including downloading the body, so large
+// pages get a generous limit; timeouts and dropped connections are retried.
+export async function fetchJSON(url, { method = "GET", headers = {}, body, source = "connector", retries = 4, timeoutMs = 180_000, fetchImpl = globalThis.fetch } = {}) {
   let attempt = 0;
   while (true) {
     let response;
     try {
       response = await fetchImpl(url, { method, headers: { accept: "application/json", ...headers }, body, signal: AbortSignal.timeout(timeoutMs) });
     } catch (error) {
-      if (attempt >= retries) throw new ConnectorError(`${source}: network error (${error.message})`, { source });
+      if (attempt >= retries) throw new ConnectorError(isTimeout(error) ? `${source}: no response within ${Math.round(timeoutMs / 1000)}s after ${retries + 1} attempts (slow network or very large page)` : `${source}: network error (${error.message})`, { source });
       attempt += 1;
       await sleep(Math.min(1000 * 2 ** attempt, 15_000));
       continue;
@@ -42,7 +46,15 @@ export async function fetchJSON(url, { method = "GET", headers = {}, body, sourc
       const hint = response.status === 401 ? "credentials were rejected" : response.status === 403 ? "the API client is missing a required permission" : `HTTP ${response.status}`;
       throw new ConnectorError(`${source}: ${hint}${detail ? ` — ${String(detail).slice(0, 200)}` : ""}`, { status: response.status, source });
     }
-    return response.status === 204 ? null : response.json();
+    if (response.status === 204) return null;
+    try {
+      return await response.json();
+    } catch (error) {
+      // The body stopped arriving (time limit or dropped connection) or was cut short.
+      if (attempt >= retries) throw new ConnectorError(isTimeout(error) ? `${source}: download took longer than ${Math.round(timeoutMs / 1000)}s after ${retries + 1} attempts (slow network or very large page)` : `${source}: incomplete response (${error.message})`, { source });
+      attempt += 1;
+      await sleep(Math.min(1000 * 2 ** attempt, 15_000));
+    }
   }
 }
 

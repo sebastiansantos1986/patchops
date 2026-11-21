@@ -8,6 +8,8 @@
 
 import { ConnectorError, fetchJSON, mapLimit } from "./http.mjs";
 import { Capability } from "./inspect.mjs";
+const fmt = (value) => Number(value).toLocaleString("en-US");
+
 
 const GRAPH = "https://graph.microsoft.com/v1.0";
 const GRAPH_BETA = "https://graph.microsoft.com/beta";
@@ -85,8 +87,11 @@ export class IntuneConnector {
     this.token = null;
     this.capabilities = {
       devices: new Capability("Managed devices", "DeviceManagementManagedDevices.Read.All"),
-      kb_reports: new Capability("Installed KB reports (Remediation)", "DeviceManagementConfiguration.Read.All")
+      kb_reports: new Capability("Installed KB reports (Remediation)", "DeviceManagementConfiguration.Read.All"),
+      groups: new Capability("Group membership (for queries on Group)", "GroupMember.Read.All, User.Read.All")
     };
+    this.groups = { wanted: [], members: {}, fetched_at: null };
+    this.capabilities.groups.finish("disabled");
     if (!this.config.kbScriptId) this.capabilities.kb_reports.finish("disabled");
   }
 
@@ -102,10 +107,62 @@ export class IntuneConnector {
     return this.token.value;
   }
 
-  async graph(pathOrUrl) {
+  async graph(pathOrUrl, extraHeaders = {}) {
     const url = pathOrUrl.startsWith("https://") ? pathOrUrl : `${GRAPH}${pathOrUrl}`;
     if (!url.startsWith(`${GRAPH}/`) && !url.startsWith(`${GRAPH_BETA}/`)) throw new ConnectorError("Intune: refused to follow a non-Graph link", { source: "intune" });
-    return fetchJSON(url, { headers: { authorization: `Bearer ${await this.accessToken()}` }, source: "Intune", fetchImpl: this.fetchImpl });
+    return fetchJSON(url, { headers: { authorization: `Bearer ${await this.accessToken()}`, ...extraHeaders }, source: "Intune", fetchImpl: this.fetchImpl });
+  }
+
+  async pages(first, headers = {}, limit = 100_000) {
+    const items = [];
+    let next = first;
+    while (next && items.length < limit) {
+      const page = await this.graph(next, headers);
+      items.push(...(page.value ?? []));
+      next = page["@odata.nextLink"] ?? null;
+    }
+    return items;
+  }
+
+  // Entra ID group membership, only for the groups that queries and rules mention
+  // (e.g. f/ EntityName = "GRP-Intune-Users-France-Finland"). Nested groups count.
+  // wanted: [{ op: "=" | "starts_with" | "contains", value }]
+  async fetchGroups(wanted) {
+    const capability = this.capabilities.groups;
+    if (!wanted.length) { this.groups = { wanted: [], members: {}, fetched_at: null }; capability.finish("disabled"); return this.groups; }
+    capability.begin();
+    try {
+      const odata = (value) => String(value).replace(/'/g, "''");
+      const found = new Map();
+      for (const { op, value } of wanted.slice(0, 25)) {
+        const groups = op === "contains"
+          ? await this.pages(`/groups?$search=${encodeURIComponent(`"displayName:${String(value).replace(/"/g, "")}"`)}&$select=id,displayName&$top=50`, { ConsistencyLevel: "eventual" }, 50)
+          : await this.pages(`/groups?$filter=${encodeURIComponent(op === "starts_with" ? `startswith(displayName,'${odata(value)}')` : `displayName eq '${odata(value)}'`)}&$select=id,displayName&$top=50`, {}, 50);
+        for (const group of groups) found.set(group.id, group.displayName);
+      }
+      const members = {};
+      let done = 0;
+      for (const [id, name] of [...found].slice(0, 50)) {
+        this.report("groups", `Group members ${done} of ${found.size} groups`);
+        const users = await this.pages(`/groups/${encodeURIComponent(id)}/transitiveMembers/microsoft.graph.user?$select=userPrincipalName,mail&$top=999`, { ConsistencyLevel: "eventual" });
+        for (const user of users) for (const address of new Set([user.userPrincipalName, user.mail].filter(Boolean).map((item) => item.toLowerCase()))) (members[address] ??= []).push(name);
+        done += 1;
+      }
+      this.report("groups", null);
+      capability.count = found.size;
+      capability.finish("ok");
+      this.groups = { wanted, members, fetched_at: new Date().toISOString(), group_names: [...found.values()] };
+    } catch (error) {
+      capability.finish(error.status === 403 ? "no_permission" : "error", error.message);
+      this.groupsError = error.message;
+    }
+    return this.groups;
+  }
+
+  // Live progress for the dashboard and Terminal ("Hosts 2,000 of 4,512 · …").
+  report(part, text) {
+    this.progressParts = { ...(this.progressParts ?? {}), [part]: text };
+    this.onProgress?.(Object.values(this.progressParts).filter(Boolean).join(" · "));
   }
 
   async listManagedDevices() {
@@ -114,6 +171,7 @@ export class IntuneConnector {
     while (next) {
       const page = await this.graph(next);
       devices.push(...(page.value ?? []));
+      this.report("devices", `Devices ${fmt(devices.length)}${page["@odata.nextLink"] ? "…" : ""}`);
       next = page["@odata.nextLink"] ?? null;
     }
     return devices;
@@ -145,7 +203,20 @@ export class IntuneConnector {
     return reports;
   }
 
-  async collect() {
+  // Discovered-app lists are the slow part (one Graph call per device). They only change
+  // when a device syncs, so they are reused while lastSyncDateTime is unchanged.
+  exportState() {
+    return { apps: Object.fromEntries(this.appCache ?? new Map()), groups: this.groups };
+  }
+
+  importState(state) {
+    this.appCache = new Map(Object.entries(state?.apps ?? {}));
+    if (state?.groups?.members) this.groups = state.groups;
+  }
+
+  async collect({ full = false } = {}) {
+    this.progressParts = {};
+    this.appCache ??= new Map();
     let kbReports = new Map();
     if (this.config.kbScriptId) {
       this.capabilities.kb_reports.begin();
@@ -160,7 +231,21 @@ export class IntuneConnector {
     }
     this.capabilities.devices.begin();
     const raw = (await this.listManagedDevices().catch((error) => { this.capabilities.devices.finish("error", error.message); throw error; })).filter((device) => ["windows", "macos"].includes(normalizeIntunePlatform(device.operatingSystem)));
-    const apps = this.config.includeApps ? await mapLimit(raw, this.config.appConcurrency, (device) => this.detectedApps(device.id)) : raw.map(() => null);
+    let fetched = 0;
+    const toFetch = raw.filter((device) => { const cached = this.appCache.get(device.id); return full || !cached || cached.last_sync !== device.lastSyncDateTime; }).length;
+    if (this.config.includeApps) this.report("apps", toFetch ? `Installed apps 0 of ${fmt(toFetch)} PCs` : "Installed apps unchanged");
+    const apps = this.config.includeApps ? await mapLimit(raw, this.config.appConcurrency, async (device) => {
+      const cached = this.appCache.get(device.id);
+      if (!full && cached && cached.last_sync === device.lastSyncDateTime && Array.isArray(cached.apps)) return cached.apps;
+      fetched += 1;
+      if (fetched % 10 === 0 || fetched === toFetch) this.report("apps", `Installed apps ${fmt(fetched)} of ${fmt(toFetch)} PCs`);
+      const result = await this.detectedApps(device.id);
+      if (Array.isArray(result)) this.appCache.set(device.id, { last_sync: device.lastSyncDateTime, apps: result });
+      return result ?? cached?.apps ?? null;
+    }) : raw.map(() => null);
+    const present = new Set(raw.map((device) => device.id));
+    for (const id of this.appCache.keys()) if (!present.has(id)) this.appCache.delete(id);
+    this.capabilities.devices.sync_mode = full || !this.config.includeApps ? "full" : `apps refreshed for ${fetched} of ${raw.length} devices`;
     const records = raw.map((device, index) => {
       this.capabilities.devices.observe(device);
       const record = { ...normalizeIntuneDevice(device, apps[index]), raw: device };

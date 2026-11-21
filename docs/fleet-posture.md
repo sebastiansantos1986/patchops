@@ -15,7 +15,15 @@ The connectors only **read** data. PatchOps never changes anything in Intune or 
 
 ## 1. Connect Microsoft Intune (about 5 minutes)
 
-You need the Global Administrator or Privileged Role Administrator role in Microsoft Entra ID to grant consent.
+**Permissions summary:** Microsoft Graph **application** permissions, read-only, with admin consent.
+
+| Permission | Required? | Used for |
+|---|---|---|
+| `DeviceManagementManagedDevices.Read.All` | Required | Devices, compliance, encryption, OS build, last sync, discovered apps |
+| `DeviceManagementConfiguration.Read.All` | Optional | Exact installed-KB lists from the PatchOps Remediation script |
+| `GroupMember.Read.All` and `User.Read.All` | Optional | Queries on Entra ID groups, e.g. excluding `GRP-Intune-Users-France-Finland` |
+
+No write permissions and no delegated permissions are needed. Granting admin consent requires the Global Administrator or Privileged Role Administrator role in Microsoft Entra ID; creating the app registration can be done by an Application Administrator.
 
 1. Open the [Microsoft Entra admin center](https://entra.microsoft.com) and go to **Identity → Applications → App registrations → New registration**.
 2. Name it `PatchOps Fleet Posture`, choose **Accounts in this organizational directory only**, leave the Redirect URI empty, and click **Register**.
@@ -110,8 +118,10 @@ Add the same variables under the API service's **Environment** settings instead 
 Three more pages in the sidebar turn the merged fleet into reports, in the same style as Cyclops:
 
 - **Dashboards:** saved reporting views. Out of the box you get *IT - Security Agents Status* (one installed/missing donut per required agent, plus removal-progress trends for software being uninstalled), *Windows Patch Rollout* and *Device Health*. **Add widget** builds donuts, trends, numbers, breakdowns or device tables from queries. **Download PDF** prints the dashboard. Clicking any segment, bar or number opens the matching devices in Explore.
-- **Explore:** run ad-hoc queries, group the results, and save a query to a dashboard.
+- **Explore:** ask which devices match. The **Builder** tab lets anyone add conditions without learning the syntax: pick a field, an operator in plain words ("within the last", "is at least") and a value, then use **+ Has / doesn't have…** for related records (software, updates, CVEs, the user and their groups) and **+ Either/or group** for OR. **Query text** accepts pasted Cyclops queries, and switching back turns them into blocks. The match count and a plain-English summary update as you type.
 - **Fleet Rules:** the required/prohibited software list and the Windows updates (KBs) you track.
+
+Every dashboard widget uses the same builder for its categories. Coverage donuts show a headline percentage per platform with the change since last week, and **What counts** spells out each category in plain English.
 
 Trends record one point per day per query, kept for 180 days. A new widget's line appears from its second day.
 
@@ -126,8 +136,10 @@ e/ Device f/ LastSeenAt > 30d or e/ Device f/ Encrypted = false
 ```
 
 - `e/` picks the entity, and `f/` adds a filter; all filters must match.
-- `r/ ( … )` requires a related record that matches the inner query; `not r/ ( … )` requires that none match.
-- Related entities: `App`, `SecurityPatch` (installed KBs), `MissingPatch` (tracked KBs the device lacks), `SoftwareRule` and `Issue`.
+- `( f/ A = 1 ) OR ( f/ B = 2 )` matches either; parentheses can be nested.
+- `r/ ( … )` requires a related record that matches the inner query; `!r/ ( … )` or `not r/ ( … )` requires that none match. Relations nest: `!r/ ( e/ User r/ ( e/ Group f/ EntityName = "GRP-…" ) )`.
+- Related entities: `Software` (or `App`), `SecurityPatch` (installed KBs), `MissingPatch` (tracked KBs the device lacks), `Vulnerability`, `ExtensionAttribute`, `User` (then `Group`), `SoftwareRule` and `Issue`.
+- Cyclops device fields work as-is: `CrowdstrikeFalconHostType`, `CrowdStrikeFalconLastSeenAt`, `DiscoveredBy` (Intune, Jamf, CrowdStrike Falcon, PatchOps Agent), `IntuneManagedDeviceOwnerType`, `OSType`, and `EntityName` on software and groups.
 - Operators: `=`, `!=`, `<`, `>`, `<=`, `>=`, `contains`, `not_contains`, `contains_any (a,b)`, `in (a,b)`, `not_in (a,b)`, `starts_with`, `exists` and `not_exists`.
 - Versions compare as versions, so `OSVersion < 26` and `Version < 142.0.7444` work.
 - Dates take durations: `LastSeenAt < 7d` means seen in the last 7 days.
@@ -137,11 +149,31 @@ The Explore page lists every field.
 
 ### Required and prohibited software
 
-Each rule has per-platform name patterns, and an app matches if its name or bundle ID contains a pattern (case-insensitive). The defaults are:
+Each rule has three parts, all edited with the builder:
+
+- **Applies to** (optional): which devices are checked, e.g. only workstations.
+- **Detection** per platform: the software conditions that count as installed, e.g. name contains `Forcepoint` *and* version is at least `30.9`, or an either/or group for different app names.
+- **Falcon sensor** (optional): a CrowdStrike sensor that reported in the last 7 days counts as installed. CrowdStrike rules use this by default, because Intune and Jamf app lists often miss the sensor.
+
+**Preview on my fleet** shows the counts and example devices before you save. Rules saved by earlier versions are upgraded automatically. The defaults are:
 - Required: CrowdStrike Falcon, BeyondTrust EPM and Okta Verify.
 - Being removed: Tenable Nessus Agent and CyberArk EPM.
 
-Adjust the patterns to the exact names your inventory reports: open a device in Fleet Posture and filter its apps to see them. Devices with no app inventory show as "no inventory" rather than missing. Violations also feed the posture score.
+Adjust the conditions to the exact names your inventory reports: open a device in Fleet Posture and filter its apps to see them. Devices with no app inventory show as "No data" (grey) rather than missing. Violations also feed the posture score.
+
+### Operating system rules
+
+Choose **Add rule → Operating system requirement** to set the OS versions you allow, per platform, with the same builder. For example `OSBuild >= 26100` (Windows 11 24H2 or later) and `OSVersion >= 15.7` for Macs. Devices that match are *compliant*; others get an issue on Fleet posture, and the rule can be added to a dashboard as a compliance donut.
+
+When you pick **Name** in a software condition, the value box lists every app name reported in your fleet (most common first), so you can choose the exact name instead of guessing.
+
+### Appearance
+
+The palette button in the top bar switches the theme (Glacier light, Harbour dark blue, Graphite dark, or match your computer) and the accent colour, including any custom colour. The choice is saved in your browser, so each person can pick their own.
+
+### Group conditions (Entra ID)
+
+Queries can include or exclude users by group: `!r/ ( e/ User r/ ( e/ Group f/ EntityName = "GRP-Intune-Users-France-Finland" ) )`. PatchOps fetches members only for the groups your queries, widgets and rules name (nested groups included), after each Intune sync and the first time a new group appears in Explore. Devices are matched by their primary user's email / UPN. This needs the optional Graph permissions `GroupMember.Read.All` and `User.Read.All` (application, admin consent); without them the query shows a message instead of wrong counts.
 
 ### Tracking Windows updates (KBs)
 
@@ -158,6 +190,61 @@ Adjust the patterns to the exact names your inventory reports: open a device in 
 7. Add `INTUNE_KB_SCRIPT_ID=<that GUID>` to `.env` and restart.
 
 The script only reads the update list; it changes nothing on the PC. Fleet Rules shows how many devices are reporting. Remediations requires the Windows licensing Microsoft lists for that feature (normally Windows Enterprise E3/E5 or equivalent). PatchOps reads the results through the Microsoft Graph **beta** endpoint, which Microsoft may change.
+
+## Independent vulnerability data (Apple, Microsoft, CISA)
+
+Operating-system CVEs don't depend on CrowdStrike. The server downloads three free, public feeds once a day; no accounts or keys are needed.
+- **Apple:** the SOFA feed maintained by the Mac Admins community from Apple's security notes. It lists every macOS release, the CVEs it fixes, and which are actively exploited. A Mac on 26.6.2 is shown every CVE fixed in later macOS 26 releases.
+- **Microsoft:** the MSRC security update API. For every CVE it gives the KB and the exact Windows build that fixes it (12 months are loaded). A PC on build 26200.9711 is shown every CVE fixed in a later 26200 build, with the KB to install.
+- **CISA Known Exploited Vulnerabilities:** marks CVEs being exploited in the wild, whatever source found them.
+
+The same feeds give the real "latest" macOS and Windows builds, so **OS currency** compares against what Apple and Microsoft have released rather than the newest version in your fleet.
+
+On the **Vulnerabilities** page each CVE shows its source (Apple, Microsoft and/or CrowdStrike). **Data Sources** shows each feed's status. Third-party app CVEs still come from CrowdStrike Spotlight.
+
+If the server can't reach the internet, set `POSTURE_CVE_FEEDS=false`.
+
+## Java versions and processor architecture (Macs)
+
+- **Architecture** (`arm64` for Apple silicon or `x86_64` for Intel) comes from Jamf hardware inventory. Use it in Explore with `f/ Architecture = x86_64`.
+- **Jamf extension attributes** are read too, and are queryable as `r/ ( e/ ExtensionAttribute f/ Name = "…" f/ Value contains … )`.
+- To see installed Java runtimes, which Jamf's app list doesn't include, add `scripts/jamf/EA-Java-Versions.sh` as an extension attribute:
+  1. In Jamf Pro, go to **Settings → Computer management → Extension attributes → New**.
+  2. Name it `Java Versions`, with data type **String** and input type **Script**.
+  3. Paste the script.
+
+  After the next inventory update, this finds Macs exposed to a Java issue such as Java4Shell (CVE-2026-114938):
+
+  ```text
+  e/ Device f/ Platform = macos f/ Architecture = x86_64 r/ ( e/ ExtensionAttribute f/ Name = "Java Versions" f/ Value contains_any (17., 21., 25., 27.) )
+  ```
+
+## Saved data and incremental syncs
+
+PatchOps keeps a private copy of what it last downloaded, in `.patchops-cache/` inside the project folder. The copy holds no API secrets or tokens, the folder is readable only by your account (permissions 700/600), and it's git-ignored. After a restart the dashboard shows that copy immediately and refreshes in the background; the source cards say "(saved copy)" until the refresh finishes.
+
+Syncs fetch only what changed:
+
+| Source | What is re-downloaded |
+|---|---|
+| Intune | Device list each sync; installed apps only for PCs whose last sync time changed |
+| Jamf | Computer inventory (a few requests for the whole fleet) |
+| CrowdStrike hosts | Host list (a few requests) |
+| CrowdStrike apps and CVEs | Only records changed since the last sync; closed CVEs are removed. A full refresh runs every 24 hours to catch removals |
+| Apple and CISA feeds | Only if the file changed (conditional download; the server answers "not modified") |
+| Microsoft | Only new or revised monthly documents |
+
+- **Data Sources** shows what each source did on its last sync: incremental, full, or unchanged.
+- **Data Sources → Full resync now** re-downloads everything.
+- Deleting `.patchops-cache/` has the same effect on the next start.
+- If a source rejects an incremental request, PatchOps falls back to a full download automatically.
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `POSTURE_CACHE` | `true` | Set `false` to keep data in memory only |
+| `POSTURE_CACHE_DIR` | `.patchops-cache` | Where the saved copy lives |
+| `CROWDSTRIKE_FULL_SYNC_HOURS` | `24` | How often CrowdStrike apps/CVEs are fully re-downloaded |
+| `POSTURE_CVE_REFRESH_HOURS` | `24` | How often the public feeds are checked |
 
 ## How the checks work
 

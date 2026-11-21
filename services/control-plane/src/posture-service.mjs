@@ -5,10 +5,19 @@ import { IntuneConnector, intuneConfig } from "./integrations/intune.mjs";
 import { JamfConnector, jamfConfig } from "./integrations/jamf.mjs";
 import { CrowdStrikeConnector, crowdstrikeConfig } from "./integrations/crowdstrike.mjs";
 import { SAMPLE_TRACKED_PATCHES, sampleFleet } from "./integrations/sample-fleet.mjs";
-import { DEFAULT_SOFTWARE_RULES, coverageWidget, defaultDashboards, sanitizeDashboard, sanitizeSoftwareRule, sanitizeTrackedPatch } from "./fleet-config.mjs";
-import { QueryError, groupValue, parseQuery, queryReference, runQuery } from "./fleet-query.mjs";
+import { DEFAULT_SOFTWARE_RULES, coverageWidget, defaultDashboards, describeRule, evaluateSoftwareRule, sanitizeDashboard, sanitizeSoftwareRule, sanitizeTrackedPatch } from "./fleet-config.mjs";
+import { QueryError, describeQuery, groupValue, parseQuery, queryReference, referencedGroups, runQuery } from "./fleet-query.mjs";
+
+// Demo data: every sample user is in one country group, and some are in Engineering.
+const SAMPLE_GROUPS = ["GRP-Intune-Users-France-Finland", "GRP-Intune-Users-Germany", "GRP-Intune-Users-United-States", "GRP-Intune-Users-Spain"];
+function SAMPLE_USER_GROUPS(email) {
+  let hash = 0;
+  for (const char of email) hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
+  return [SAMPLE_GROUPS[hash % SAMPLE_GROUPS.length], ...(hash % 5 === 0 ? ["GRP-Engineering"] : [])];
+}
 import { computePosture, deviceListItem } from "./posture-engine.mjs";
 import { redact } from "./integrations/inspect.mjs";
+import { CveFeeds } from "./integrations/cve-feeds.mjs";
 
 export const CROWDSTRIKE_SYNC_WIDGET = {
   title: "Devices Not Syncing CrowdStrike",
@@ -76,7 +85,9 @@ export function agentRecords(devices) {
     serial_number: device.serial_number ?? "",
     platform: String(device.platform ?? "").toLowerCase(),
     model: device.model ?? "",
-    manufacturer: String(device.platform).toLowerCase() === "macos" ? "Apple" : "",
+    manufacturer: String(device.platform).toLowerCase() === "macos" ? "Apple" : device.manufacturer ?? String(device.model ?? "").split(" ")[0] ?? "",
+    architecture: device.architecture ?? "",
+    ...(Array.isArray(device.installed_kbs) ? { reported_kbs: device.installed_kbs, reported_kbs_at: device.installed_kbs_at ?? device.last_seen_at ?? null } : {}),
     os: { name: device.os?.name ?? "", version: device.os?.version ?? "", build: device.os?.build ?? "" },
     user: { name: device.assigned_user ?? "", email: "" },
     last_check_in: device.last_seen_at ?? null,
@@ -90,8 +101,18 @@ export function agentRecords(devices) {
 }
 
 export class PostureService {
-  constructor(store, { env = process.env, connectors, now = () => Date.now() } = {}) {
+  constructor(store, { env = process.env, connectors, now = () => Date.now(), feeds = null, diskCache = null, waitForFirstSync = true, log = null } = {}) {
     this.store = store;
+    // The real server never makes a page wait for a sync: it serves what it has and the
+    // dashboard polls for progress. Tests keep the simpler "wait for the first sync".
+    this.waitForFirstSync = waitForFirstSync;
+    this.log = log ?? (() => {});
+    // Optional on-disk snapshot (the real server passes one): restarts show data at once
+    // and syncs only fetch what changed.
+    this.diskCache = diskCache;
+    // Public Apple / Microsoft / CISA feeds. Off unless a CveFeeds instance is passed in
+    // (the real server does this), so tests and embedded use never reach the internet.
+    this.feeds = feeds ?? new CveFeeds({ enabled: false, msrcMonths: 12, refreshHours: 24 });
     this.settings = postureSettings(env);
     const intune = intuneConfig(env);
     const jamf = jamfConfig(env);
@@ -113,7 +134,46 @@ export class PostureService {
     this.history = [];
   }
 
-  async sync({ force = false } = {}) {
+  // Loads the last saved snapshot once, before the first page is served.
+  async init() {
+    if (this.initialized) return this.initialized;
+    this.initialized = (async () => {
+      if (!this.diskCache?.enabled) return;
+      const feeds = await this.diskCache.read("cve-feeds");
+      if (feeds && this.feeds.settings.enabled) this.feeds.importState(feeds);
+      this.feeds.onRefreshed = () => this.diskCache.write("cve-feeds", this.feeds.exportState());
+      if (this.useSample) return;
+      const saved = await this.diskCache.read("connectors");
+      for (const [source, connector] of Object.entries(this.connectors)) {
+        const entry = saved?.[source];
+        if (!entry) continue;
+        this.cache[source] = entry.records ?? null;
+        Object.assign(this.status[source], entry.status ?? {}, { state: entry.records ? "ok" : this.status[source].state, from_cache: true });
+        connector.importState?.(entry.state);
+        for (const [name, capability] of Object.entries(entry.capabilities ?? {})) connector.capabilities?.[name]?.restore(capability);
+      }
+    })();
+    return this.initialized;
+  }
+
+  persistConnectors() {
+    if (!this.diskCache?.enabled || this.useSample) return;
+    const snapshot = {};
+    for (const [source, connector] of Object.entries(this.connectors)) {
+      if (!this.cache[source]) continue;
+      const { from_cache: _fromCache, ...status } = this.status[source];
+      snapshot[source] = {
+        records: this.cache[source],
+        status,
+        state: connector.exportState?.() ?? null,
+        capabilities: connector.capabilities ? Object.fromEntries(Object.entries(connector.capabilities).map(([name, capability]) => [name, capability.toJSON()])) : {}
+      };
+    }
+    return this.diskCache.write("connectors", snapshot);
+  }
+
+  async sync({ force = false, full = false } = {}) {
+    await this.init();
     if (this.useSample) return;
     if (this.syncing) return this.syncing;
     const due = (source) => {
@@ -123,14 +183,27 @@ export class PostureService {
       return !syncedAt || this.now() - Date.parse(syncedAt) > this.settings.syncMinutes * 60_000;
     };
     const work = Object.entries(this.connectors).filter(([source]) => due(source)).map(async ([source, connector]) => {
-      this.status[source].state = "syncing";
+      const label = SOURCE_LABELS[source] ?? source;
+      const started = Date.now();
+      let lastLogged = 0;
+      Object.assign(this.status[source], { state: "syncing", progress: "Starting…", sync_started_at: new Date(this.now()).toISOString() });
+      this.log(`[sync] ${label}: started${full ? " (full resync)" : ""}`);
+      connector.onProgress = (text) => {
+        this.status[source].progress = text;
+        if (Date.now() - lastLogged > 15_000) { lastLogged = Date.now(); this.log(`[sync] ${label}: ${text}`); }
+      };
       try {
-        const records = await connector.collect();
+        const records = await connector.collect({ full });
         this.cache[source] = records;
-        Object.assign(this.status[source], { state: "ok", device_count: records.length, synced_at: new Date(this.now()).toISOString(), error: null });
+        Object.assign(this.status[source], { state: "ok", device_count: records.length, synced_at: new Date(this.now()).toISOString(), error: null, from_cache: false, progress: null });
+        this.log(`[sync] ${label}: done, ${records.length.toLocaleString("en-US")} devices in ${Math.round((Date.now() - started) / 1000)}s${connector.progressParts ? ` (${Object.values(connector.progressParts).filter(Boolean).join(" · ")})` : ""}`);
+        this.computed = null;
+        if (source === "intune") await this.refreshGroups();
+        await this.persistConnectors(); // save each source as soon as it finishes
       } catch (error) {
         // Keep serving the last good data, but surface the failure to the dashboard.
-        Object.assign(this.status[source], { state: this.cache[source] ? "stale" : "error", error: error.message, attempted_at: new Date(this.now()).toISOString() });
+        Object.assign(this.status[source], { state: this.cache[source] ? "stale" : "error", error: error.message, attempted_at: new Date(this.now()).toISOString(), progress: null });
+        this.log(`[sync] ${label}: failed: ${error.message}`);
       }
     });
     if (!work.length) return;
@@ -138,26 +211,45 @@ export class PostureService {
     return this.syncing;
   }
 
-  async records() {
-    const agentDevices = agentRecords(await this.store.listDevices());
+  async records(devices = null) {
+    const agentDevices = agentRecords(devices ?? await this.store.listDevices());
     if (this.useSample) return [...sampleFleet({ now: this.now() }), ...agentDevices];
     return [...(this.cache.intune ?? []), ...(this.cache.jamf ?? []), ...(this.cache.crowdstrike ?? []), ...agentDevices];
   }
 
   async compute({ fresh = false } = {}) {
-    const firstSync = !this.useSample && Object.keys(this.connectors).some((source) => !this.status[source].synced_at && this.status[source].state !== "error");
+    await this.init();
+    // Wait for a sync only when there is nothing at all to show yet; otherwise serve the
+    // saved/last data and refresh in the background.
+    const firstSync = this.waitForFirstSync && !this.useSample && !Object.values(this.cache).some(Boolean) && Object.keys(this.connectors).some((source) => this.status[source].state !== "error");
     if (firstSync) await this.sync();
     else this.sync().catch(() => {}); // refresh in the background when due
-    // Agent check-ins change often, so recompute at most every 20 seconds.
-    if (!fresh && this.computed && this.now() - this.computed.at < 20_000) return this.computed.posture;
-    const records = await this.records();
+    if (this.feeds.due()) {
+      this.log("[feeds] checking Apple, Microsoft and CISA vulnerability data…");
+      const started = Date.now();
+      this.feeds.refresh().then(() => {
+        this.computed = null;
+        this.log(`[feeds] done in ${Math.round((Date.now() - started) / 1000)}s: ${Object.values(this.feeds.capabilities).map((capability) => `${capability.label.split(" (")[0]}: ${capability.state === "ok" ? capability.sync_mode ?? "ok" : capability.error}`).join(" | ")}`);
+      }).catch(() => {});
+    }
+    // Recalculating a large fleet takes a second or two, so the result is reused until
+    // something actually changes: a sync finishes, rules or dashboards are saved, the
+    // feeds refresh (those clear this.computed), an agent checks in or the catalog
+    // changes (the fingerprint below). Time-based checks ("seen in 7 days") are
+    // refreshed every 5 minutes.
+    const agentDevices = await this.store.listDevices();
     const catalog = await this.store.listCatalogEntries();
+    const fingerprint = `${agentDevices.length}|${agentDevices.reduce((latest, device) => (device.last_seen_at > latest ? device.last_seen_at : latest), "")}|${catalog.map((entry) => `${entry.identity}=${entry.approved_version}`).join(",")}`;
+    if (!fresh && this.computed && this.computed.fingerprint === fingerprint && this.now() - this.computed.at < 5 * 60_000) return this.computed.posture;
+    const records = await this.records(agentDevices);
     const connected = { intune: this.useSample || Boolean(this.cache.intune), jamf: this.useSample || Boolean(this.cache.jamf), crowdstrike: this.useSample || Boolean(this.cache.crowdstrike) };
     const config = await this.fleetConfig();
-    const posture = computePosture(records, { catalog, now: this.now(), staleDays: this.settings.staleDays, osSettings: this.settings.osSettings, connected, softwareRules: config.software_rules, trackedPatches: config.tracked_patches });
+    const osSettings = { ...(this.feeds.ready ? this.feeds.baselines() : {}), ...Object.fromEntries(Object.entries(this.settings.osSettings).filter(([, value]) => value)) };
+    const userGroups = this.useSample ? SAMPLE_USER_GROUPS : this.connectors.intune?.groups?.members ?? {};
+    const posture = computePosture(records, { userGroups, catalog, now: this.now(), staleDays: this.settings.staleDays, osSettings, connected, softwareRules: config.software_rules, trackedPatches: config.tracked_patches, cveFeeds: this.feeds.ready ? this.feeds : null });
     await this.recordHistory(posture);
     await this.recordQueryHistory(posture, config);
-    this.computed = { at: this.now(), posture };
+    this.computed = { at: this.now(), posture, fingerprint };
     return posture;
   }
 
@@ -201,6 +293,8 @@ export class PostureService {
     return {
       mode: this.useSample ? "sample" : "live",
       generated_at: posture.generated_at,
+      syncing: Boolean(this.syncing),
+      feeds_progress: this.feeds.refreshing ? this.feeds.progress ?? "Loading vulnerability feeds…" : null,
       settings: { stale_days: this.settings.staleDays, sync_minutes: this.settings.syncMinutes },
       sources: this.sourceStatus(posture),
       summary: posture.summary,
@@ -218,7 +312,10 @@ export class PostureService {
 
   async fleetConfig() {
     if (this.config) return this.config;
-    const softwareRules = (await this.store.getConfig?.("software_rules")) ?? DEFAULT_SOFTWARE_RULES;
+    // Rules saved by older versions only had name patterns; sanitizing upgrades them to conditions
+    // (and makes CrowdStrike rules use the Falcon sensor instead of app names).
+    const savedRules = await this.store.getConfig?.("software_rules");
+    const softwareRules = savedRules ? savedRules.map((rule) => { try { return sanitizeSoftwareRule(rule); } catch { return null; } }).filter(Boolean) : DEFAULT_SOFTWARE_RULES;
     const savedPatches = await this.store.getConfig?.("tracked_patches");
     const dashboards = (await this.store.getConfig?.("dashboards")) ?? defaultDashboards(softwareRules);
     this.config = {
@@ -278,7 +375,8 @@ export class PostureService {
     const config = await this.fleetConfig();
     return {
       mode: this.useSample ? "sample" : "live",
-      software_rules: posture.software,
+      software_rules: posture.software.map((rule) => ({ ...rule, ...describeRule(rule) })),
+      app_names: this.appNames(posture),
       tracked_patches: posture.patches,
       tracked_patches_are_sample: config.tracked_patches_are_sample,
       kb_reporting: { configured: this.useSample || Boolean(this.connectors.intune?.config?.kbScriptId), devices: posture.kb_reporting.devices, error: this.connectors.intune?.kbError ?? null },
@@ -291,11 +389,88 @@ export class PostureService {
     };
   }
 
+  // Fetch Entra ID members for every group that a saved or ad-hoc query names.
+  async wantedGroups(extra = []) {
+    const config = await this.fleetConfig();
+    const sources = [...config.dashboards.flatMap((dashboard) => dashboard.widgets.flatMap((widget) => widget.series.map((series) => series.query))), ...config.software_rules.map((rule) => rule.scope), ...(this.adhocGroupQueries ?? []), ...extra];
+    return referencedGroups(sources);
+  }
+
+  async refreshGroups(extra = []) {
+    const intune = this.connectors.intune;
+    if (!intune?.fetchGroups) return null;
+    if (this.groupRefresh) return this.groupRefresh;
+    this.groupRefresh = (async () => {
+      const wanted = await this.wantedGroups(extra);
+      await intune.fetchGroups(wanted);
+      this.computed = null;
+      if (wanted.length) this.log(`[sync] Entra groups: ${intune.groups.group_names?.length ?? 0} groups, ${Object.keys(intune.groups.members ?? {}).length.toLocaleString("en-US")} members${intune.capabilities.groups.state === "ok" ? "" : ` (${intune.capabilities.groups.state}: ${intune.capabilities.groups.error ?? ""})`}`);
+    })().finally(() => { this.groupRefresh = null; });
+    return this.groupRefresh;
+  }
+
+  groupWarning(source) {
+    const wanted = referencedGroups([source]);
+    if (!wanted.length || this.useSample) return null;
+    const intune = this.connectors.intune;
+    if (!intune) return "Group conditions need Microsoft Intune connected (group membership comes from Entra ID).";
+    const state = intune.capabilities.groups.state;
+    if (state === "no_permission") return "Group membership can't be read: grant the Intune app GroupMember.Read.All and User.Read.All (application permissions), then resync.";
+    const known = new Set((intune.groups.wanted ?? []).map((item) => `${item.op}|${item.value.toLowerCase()}`));
+    if (wanted.some((item) => !known.has(`${item.op}|${item.value.toLowerCase()}`))) {
+      this.adhocGroupQueries = [...new Set([...(this.adhocGroupQueries ?? []), source])].slice(-20);
+      this.refreshGroups([source]).catch(() => {});
+      return "Loading group members from Entra ID for this query. Counts update in a minute.";
+    }
+    return null;
+  }
+
+  // Every app name seen in the fleet (most common first), for the builder's name picker.
+  appNames(posture) {
+    if (this.appNamesCache?.posture === posture) return this.appNamesCache.names;
+    const counts = { windows: new Map(), macos: new Map() };
+    for (const device of posture.devices) {
+      const map = counts[device.platform];
+      if (!map) continue;
+      for (const name of new Set((device.apps ?? []).map((app) => app.name).filter(Boolean))) map.set(name, (map.get(name) ?? 0) + 1);
+    }
+    const top = (map) => [...map].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).slice(0, 1500).map(([name, devices]) => ({ name, devices }));
+    const names = { windows: top(counts.windows), macos: top(counts.macos) };
+    this.appNamesCache = { posture, names };
+    return names;
+  }
+
+  // Text -> tree for the visual builder. Errors come back as data so the editor can show them inline.
+  parse(source) {
+    try {
+      const clauses = parseQuery(String(source ?? ""));
+      return { ok: true, clauses, description: describeQuery(clauses) };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  // Dry-run a rule before saving: counts per platform and a few example devices of each outcome.
+  async previewSoftwareRule(input) {
+    const rule = sanitizeSoftwareRule(input);
+    if (!rule) throw new QueryError("Give the rule a name and say how to detect it");
+    const posture = await this.compute();
+    const tally = { macos: { installed: 0, missing: 0, unknown: 0 }, windows: { installed: 0, missing: 0, unknown: 0 } };
+    const examples = { installed: [], missing: [], unknown: [] };
+    for (const device of posture.devices) {
+      const outcome = evaluateSoftwareRule(rule, device, this.now());
+      if (!tally[device.platform] || outcome.status === "not_applicable") continue;
+      tally[device.platform][outcome.status] += 1;
+      if (examples[outcome.status].length < 5) examples[outcome.status].push({ id: device.id, hostname: device.hostname, platform: device.platform, match: outcome.match });
+    }
+    return { rule, tally, examples };
+  }
+
   async query(source, { groupBy = null, limit = 100 } = {}) {
     const posture = await this.compute();
     const parsed = parseQuery(source);
     const matches = runQuery(parsed, posture.devices, { now: this.now() });
-    const result = { count: matches.length, total: posture.devices.length, devices: matches.slice(0, Math.min(Number(limit) || 100, 1000)).map(deviceListItem) };
+    const result = { count: matches.length, total: posture.devices.length, devices: matches.slice(0, Math.min(Number(limit) || 100, 1000)).map(deviceListItem), description: describeQuery(parsed), warning: this.groupWarning(source) };
     if (groupBy) result.groups = this.groups(matches, groupBy);
     return result;
   }
@@ -370,8 +545,13 @@ export class PostureService {
         const series = [];
         for (const item of widget.series) {
           const matches = runQuery(item.query, posture.devices, { now: this.now() });
-          const entry = { ...item, count: matches.length };
-          if (widget.type === "trend") entry.trend = await this.trend(item.query, matches.length);
+          const entry = { ...item, count: matches.length, description: describeQuery(item.query) };
+          const history = await this.trend(item.query, matches.length);
+          if (widget.type === "trend") entry.trend = history;
+          // Change over the last week, from the daily history (the oldest point within 7 days).
+          const weekAgo = localDay(this.now() - 7 * 86_400_000);
+          const base = history.find((point) => point.date >= weekAgo && point.date < localDay(this.now()));
+          if (base) Object.assign(entry, { change: matches.length - base.count, change_since: base.date });
           if (widget.type === "table" && series.length === 0) entry.devices = matches.slice(0, 50).map(deviceListItem);
           if (widget.type === "breakdown" && series.length === 0) entry.groups = this.groups(matches, widget.group_by);
           series.push(entry);
@@ -388,7 +568,8 @@ export class PostureService {
     const posture = await this.compute();
     const { list, ...summary } = posture.vulnerabilities;
     const capability = this.useSample ? { state: "sample" } : this.connectors.crowdstrike?.capabilities?.vulnerabilities?.toJSON() ?? { state: "not_configured" };
-    return { mode: this.useSample ? "sample" : "live", generated_at: posture.generated_at, source: { state: capability.state, error: capability.error ?? null, scope: "Vulnerabilities: Read" }, summary, cves: list.slice(0, 2000) };
+    const feeds = Object.fromEntries(Object.entries(this.feeds.capabilities).map(([key, value]) => [key, { state: value.state, error: value.error, synced_at: value.synced_at, label: value.label }]));
+    return { mode: this.useSample ? "sample" : "live", generated_at: posture.generated_at, source: { state: capability.state, error: capability.error ?? null, scope: "Vulnerabilities: Read" }, feeds, feeds_loading: Boolean(this.feeds.refreshing), summary, cves: list.slice(0, 5000) };
   }
 
   // Everything each connector returned on its last sync: capabilities, permission gaps,
@@ -403,13 +584,22 @@ export class PostureService {
         state: this.useSample ? "sample" : this.status[key]?.state ?? "not_configured",
         synced_at: this.useSample ? posture.generated_at : this.status[key]?.synced_at ?? null,
         error: this.useSample ? null : this.status[key]?.error ?? null,
+        progress: this.useSample ? null : this.status[key]?.progress ?? null,
         capabilities: connector?.capabilities ? Object.fromEntries(Object.entries(connector.capabilities).map(([name, capability]) => [name, capability.toJSON()])) : this.useSample ? sampleCapabilities(key, posture) : {}
       };
     };
     return {
       mode: this.useSample ? "sample" : "live",
       generated_at: posture.generated_at,
-      sources: [describe("crowdstrike", SOURCE_LABELS.crowdstrike), describe("jamf", SOURCE_LABELS.jamf), describe("intune", SOURCE_LABELS.intune)]
+      sources: [
+        describe("crowdstrike", SOURCE_LABELS.crowdstrike), describe("jamf", SOURCE_LABELS.jamf), describe("intune", SOURCE_LABELS.intune),
+        {
+          key: "cve_feeds", label: "Public vulnerability feeds (Apple, Microsoft, CISA)", configured: this.feeds.settings.enabled,
+          state: !this.feeds.settings.enabled ? "disabled" : this.feeds.refreshing ? "syncing" : this.feeds.ready ? "ok" : "pending",
+          synced_at: this.feeds.refreshedAt ? new Date(this.feeds.refreshedAt).toISOString() : null, error: null,
+          capabilities: Object.fromEntries(Object.entries(this.feeds.capabilities).map(([name, capability]) => [name, capability.toJSON()]))
+        }
+      ]
     };
   }
 

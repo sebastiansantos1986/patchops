@@ -42,6 +42,8 @@ export const ENTITIES = {
       User: ["string", (d) => d.user?.name, "Primary user's name"],
       Email: ["string", (d) => d.user?.email, "Primary user's email / UPN"],
       Model: ["string", (d) => d.model, "Hardware model"],
+      Architecture: ["string", (d) => d.architecture || (/\bM\d|Apple silicon/i.test(d.model ?? "") ? "arm64" : /Intel/i.test(d.model ?? "") ? "x86_64" : ""), "arm64 (Apple silicon / ARM) or x86_64 (Intel / AMD)"],
+      OSStatus: ["string", (d) => d.os_status, "current, update_available, older_release, below_minimum, unsupported or unknown"],
       Manufacturer: ["string", (d) => d.manufacturer, "Hardware manufacturer"],
       LastSeenAt: ["date", (d) => d.last_check_in, "Most recent check-in. LastSeenAt < 7d = seen in the last 7 days"],
       Encrypted: ["bool", (d) => d.encrypted, "FileVault / BitLocker on"],
@@ -52,6 +54,10 @@ export const ENTITIES = {
       InIntune: ["bool", (d) => Boolean(d.sources?.intune), "Present in Intune"],
       InJamf: ["bool", (d) => Boolean(d.sources?.jamf), "Present in Jamf"],
       HasAgent: ["bool", (d) => Boolean(d.sources?.agent), "PatchOps agent installed"],
+      DiscoveredBy: ["list", (d) => Object.keys(d.sources ?? {}).map((source) => SOURCE_NAMES[source] ?? source), "Which systems report the device: Intune, Jamf, CrowdStrike Falcon, PatchOps Agent"],
+      CrowdStrikeHostType: ["string", (d) => d.crowdstrike?.product_type ?? null, "Falcon host type: Workstation, Server, Domain Controller"],
+      IntuneLastSeenAt: ["date", (d) => d.sources?.intune?.last_check_in ?? null, "Last Intune sync"],
+      JamfLastSeenAt: ["date", (d) => d.sources?.jamf?.last_check_in ?? null, "Last Jamf check-in"],
       InCrowdStrike: ["bool", (d) => Boolean(d.sources?.crowdstrike), "Has a CrowdStrike Falcon host record"],
       CrowdStrikeReporting: ["bool", (d) => Boolean(d.crowdstrike_reporting), "Falcon sensor seen in the last 7 days"],
       CrowdStrikeLastSeenAt: ["date", (d) => d.sources?.crowdstrike?.last_check_in ?? null, "When the Falcon sensor last reported"],
@@ -75,6 +81,8 @@ export const ENTITIES = {
       MissingPatch: (d) => (d.patches ?? []).filter((patch) => patch.status === "missing"),
       SoftwareRule: (d) => d.software ?? [],
       Vulnerability: (d) => d.vulnerabilities ?? [],
+      ExtensionAttribute: (d) => d.extension_attributes ?? [],
+      User: (d) => (d.user?.email || d.user?.name ? [{ name: d.user.name ?? "", email: d.user.email ?? "", groups: d.user_groups ?? [] }] : []),
       Issue: (d) => d.issues ?? []
     }
   },
@@ -105,7 +113,7 @@ export const ENTITIES = {
     }
   },
   Vulnerability: {
-    description: "An open vulnerability reported by CrowdStrike Spotlight.",
+    description: "An open vulnerability: OS CVEs from Apple and Microsoft's own security data (plus CISA KEV), and CVEs reported by CrowdStrike Spotlight.",
     fields: {
       CVE: ["string", (v) => v.cve, "CVE id, e.g. CVE-2025-21298"],
       Severity: ["string", (v) => v.severity, "critical, high, medium or low"],
@@ -116,7 +124,28 @@ export const ENTITIES = {
       Product: ["string", (v) => v.product, "Affected product and version"],
       Remediation: ["string", (v) => (v.remediation ?? []).join(" | "), "Recommended fix"],
       KB: ["string", (v) => (v.kbs ?? []).join(", "), "KBs that fix it (Windows)"],
-      FirstSeen: ["date", (v) => v.first_seen, "When Spotlight first saw it on this device"]
+      FirstSeen: ["date", (v) => v.first_seen, "When Spotlight first saw it on this device"],
+      Source: ["string", (v) => (v.sources ?? [v.source]).join(", "), "crowdstrike, apple and/or microsoft"],
+      FixedIn: ["version", (v) => v.fixed_in ?? null, "OS version or build that fixes it (Apple / Microsoft feeds)"]
+    }
+  },
+  User: {
+    description: "The device's primary user (from Intune or Jamf).",
+    fields: {
+      Name: ["string", (u) => u.name, "Display name"],
+      Email: ["string", (u) => u.email, "Email / user principal name"]
+    },
+    relations: { Group: (u) => (u.groups ?? []).map((name) => ({ name })) }
+  },
+  Group: {
+    description: "A Microsoft Entra ID group the user belongs to (directly or nested). Needs Intune connected with group read permission.",
+    fields: { Name: ["string", (g) => g.name, "Group display name"] }
+  },
+  ExtensionAttribute: {
+    description: "A Jamf Pro extension attribute value on the Mac (e.g. installed Java versions).",
+    fields: {
+      Name: ["string", (a) => a.name, "Extension attribute name as defined in Jamf"],
+      Value: ["string", (a) => a.value, "Reported value (multiple values joined with commas)"]
     }
   },
   SoftwareRule: {
@@ -140,14 +169,17 @@ export const ENTITIES = {
 // Field names used by Cyclops / CrowdStrike, mapped onto PatchOps fields so existing
 // queries can be pasted in unchanged.
 const ALIASES = {
-  device: { crowdstrikefalconosdistribution: "OSRelease", falconspotlightostype: "Platform", ostype: "Platform", lastseen: "LastSeenAt", lastseenat: "LastSeenAt", name: "Hostname", devicename: "Hostname", serial: "SerialNumber", os: "OSName", osdistribution: "OSRelease", user: "User", username: "User", upn: "Email", falconlastseen: "CrowdStrikeLastSeenAt", crowdstrikelastseen: "CrowdStrikeLastSeenAt", sensorversion: "CrowdStrikeSensorVersion", agentversion: "CrowdStrikeSensorVersion", falconsensorversion: "CrowdStrikeSensorVersion", reducedfunctionalitymode: "CrowdStrikeRFM" },
+  user: { entityname: "Name", displayname: "Name", upn: "Email", userprincipalname: "Email", mail: "Email" },
+  group: { entityname: "Name", displayname: "Name", groupname: "Name" },
+  device: { crowdstrikefalconhosttype: "CrowdStrikeHostType", falconhosttype: "CrowdStrikeHostType", hosttype: "CrowdStrikeHostType", producttype: "CrowdStrikeHostType", crowdstrikefalconlastseenat: "CrowdStrikeLastSeenAt", falconlastseenat: "CrowdStrikeLastSeenAt", intunemanageddeviceownertype: "Ownership", ownertype: "Ownership", manageddeviceownertype: "Ownership", discoveredby: "DiscoveredBy", source: "DiscoveredBy", sources: "DiscoveredBy", intunelastseenat: "IntuneLastSeenAt", intunelastsyncdatetime: "IntuneLastSeenAt", jamflastseenat: "JamfLastSeenAt", jamflastcontacttime: "JamfLastSeenAt", entityname: "Hostname", hostname: "Hostname", crowdstrikefalconosdistribution: "OSRelease", falconspotlightostype: "Platform", ostype: "Platform", lastseen: "LastSeenAt", lastseenat: "LastSeenAt", name: "Hostname", devicename: "Hostname", serial: "SerialNumber", os: "OSName", osdistribution: "OSRelease", user: "User", username: "User", upn: "Email", falconlastseen: "CrowdStrikeLastSeenAt", crowdstrikelastseen: "CrowdStrikeLastSeenAt", sensorversion: "CrowdStrikeSensorVersion", agentversion: "CrowdStrikeSensorVersion", falconsensorversion: "CrowdStrikeSensorVersion", reducedfunctionalitymode: "CrowdStrikeRFM" },
   vulnerability: { id: "CVE", cveid: "CVE", severity: "Severity", cvss: "Score", basescore: "Score", exprtrating: "ExPRT", product: "Product", cisakev: "KEV", iskev: "KEV" },
   securitypatch: { kb: "UniquePatchId", patchid: "UniquePatchId", id: "UniquePatchId" },
   missingpatch: { kb: "UniquePatchId", patchid: "UniquePatchId", id: "UniquePatchId" },
-  app: { application: "Name", displayname: "Name", bundleidentifier: "BundleId" },
+  app: { application: "Name", displayname: "Name", entityname: "Name", softwarename: "Name", productname: "Name", bundleidentifier: "BundleId", vendor: "Publisher", manufacturer: "Publisher", softwareversion: "Version" },
   softwarerule: { rule: "Name", state: "Status" }
 };
-const ENTITY_ALIASES = { vulnerability: "Vulnerability", vulnerabilities: "Vulnerability", vuln: "Vulnerability", cve: "Vulnerability", device: "Device", devices: "Device", app: "App", apps: "App", application: "App", software: "App", securitypatch: "SecurityPatch", patch: "SecurityPatch", patches: "SecurityPatch", missingpatch: "MissingPatch", softwarerule: "SoftwareRule", rule: "SoftwareRule", issue: "Issue", issues: "Issue" };
+const SOURCE_NAMES = { intune: "Intune", jamf: "Jamf", crowdstrike: "CrowdStrike Falcon", agent: "PatchOps Agent" };
+const ENTITY_ALIASES = { user: "User", users: "User", group: "Group", groups: "Group",  extensionattribute: "ExtensionAttribute", ea: "ExtensionAttribute",  vulnerability: "Vulnerability", vulnerabilities: "Vulnerability", vuln: "Vulnerability", cve: "Vulnerability", device: "Device", devices: "Device", app: "App", apps: "App", application: "App", software: "App", securitypatch: "SecurityPatch", patch: "SecurityPatch", patches: "SecurityPatch", missingpatch: "MissingPatch", softwarerule: "SoftwareRule", rule: "SoftwareRule", issue: "Issue", issues: "Issue" };
 
 function resolveEntity(name, position) {
   const entity = ENTITY_ALIASES[String(name).toLowerCase()];
@@ -166,6 +198,13 @@ function resolveField(entity, name, position) {
 
 // ---------------- parser ----------------
 
+// Grammar (case-insensitive keywords):
+//   query   := clause (("and" | "or") clause)*            whole queries combined
+//   clause  := "e/" Entity expr
+//   expr    := andExpr ("OR" andExpr)*
+//   andExpr := term term*                                 terms side by side are AND-ed
+//   term    := "f/" Field op value | ["!" | "not"] "r/" "(" clause ")" | "(" expr ")"
+// Values: bare words, "quoted text" or lists in parentheses for in / contains_any.
 export function parseQuery(source) {
   const input = String(source ?? "");
   let position = 0;
@@ -177,6 +216,7 @@ export function parseQuery(source) {
     position += match[0].length;
     return match;
   };
+  const CLAUSE_JOIN = /^(and|or)\s+e\//i;
 
   function parseValue() {
     skip();
@@ -192,20 +232,81 @@ export function parseQuery(source) {
       position += 1;
       return inner.split(",").map((item) => item.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
     }
-    if (input[position] === '"' || input[position] === "'") {
-      const quoteChar = input[position];
-      const end = input.indexOf(quoteChar, position + 1);
+    if (input[position] === '"' || input[position] === "'" || input[position] === "\u201c") {
+      const close = input[position] === "\u201c" ? "\u201d" : input[position];
+      const end = input.indexOf(close, position + 1);
       if (end === -1) throw new QueryError("Unclosed quote", position);
       const value = input.slice(position + 1, end);
       position = end + 1;
       return value;
     }
     const rest = input.slice(position);
-    const stop = /\s+(?:f\/|!?r\/|not\s+r\/|(?:and|or)\s+e\/)|\)/i.exec(rest);
+    const stop = /\s+(?:f\/|!?r\/|not\s+r\/|(?:and|or)\s+e\/|or\s+(?=f\/|\(|!?r\/|not\s+r\/))|\)|\s+\((?=\s*(?:f\/|!?r\/|not\s+r\/))/i.exec(rest);
     const value = (stop ? rest.slice(0, stop.index) : rest).trim();
     position += stop ? stop.index : rest.length;
     if (!value) throw new QueryError("Missing value", position);
     return value;
+  }
+
+  function parseFilter(entity) {
+    position += 2; // "f/"
+    const fieldStart = (skip(), position);
+    const fieldName = take(/^[A-Za-z_][\w.]*/, "Expected a field name after f/")[0];
+    const field = resolveField(entity, fieldName, fieldStart);
+    skip();
+    const opMatch = OPERATORS.map((op) => ({ op, ok: op.match(/^\w/) ? new RegExp(`^${op}\\b`, "i").test(input.slice(position)) : input.startsWith(op, position) })).find((item) => item.ok);
+    if (!opMatch) throw new QueryError(`Expected an operator after "${fieldName}" (=, !=, <, >, contains, contains_any, in, exists…)`, position);
+    position += opMatch.op.length;
+    const op = opMatch.op.toLowerCase();
+    return { type: "filter", field, op, value: UNARY.has(op) ? null : parseValue() };
+  }
+
+  function parseTerm(entity) {
+    if (peek(/^f\//i)) return parseFilter(entity);
+    const relation = peek(/^(not\s+|!)?r\//i);
+    if (relation) {
+      position += relation[0].length;
+      take(/^\(/, 'Expected "(" after r/');
+      const inner = parseClause();
+      if (!ENTITIES[entity].relations?.[inner.entity]) throw new QueryError(`${entity} has no related ${inner.entity}. Related entities: ${Object.keys(ENTITIES[entity].relations ?? {}).join(", ") || "none"}`, position);
+      take(/^\)/, 'Expected ")" to close r/ (');
+      return { type: "relation", negate: Boolean(relation[1]), clause: inner };
+    }
+    if (peek(/^\(/)) {
+      const start = position;
+      position += 1;
+      const expr = parseExpr(entity);
+      if (!expr) throw new QueryError("Empty parentheses", start);
+      take(/^\)/, 'Expected ")" to close the group');
+      return expr;
+    }
+    return null;
+  }
+
+  function parseAnd(entity) {
+    const items = [];
+    while (true) {
+      if (peek(CLAUSE_JOIN) || peek(/^or\b/i) || peek(/^\)/)) break;
+      skip();
+      if (position >= input.length) break;
+      const term = parseTerm(entity);
+      if (!term) break;
+      items.push(term);
+    }
+    return items.length === 0 ? null : items.length === 1 ? items[0] : { type: "and", items };
+  }
+
+  function parseExpr(entity) {
+    const items = [];
+    const first = parseAnd(entity);
+    if (first) items.push(first);
+    while (peek(/^or\b/i) && !peek(CLAUSE_JOIN)) {
+      take(/^or\b/i, "");
+      const next = parseAnd(entity);
+      if (!next) throw new QueryError('Expected a condition after "OR"', position);
+      items.push(next);
+    }
+    return items.length === 0 ? null : items.length === 1 ? items[0] : { type: "or", items };
   }
 
   function parseClause() {
@@ -213,39 +314,11 @@ export function parseQuery(source) {
     take(/^e\//i, 'Expected "e/" followed by an entity, e.g. "e/ Device"');
     const entityName = take(/^[A-Za-z_]+/, "Expected an entity name after e/")[0];
     const entity = resolveEntity(entityName, start);
-    const filters = [];
-    const relations = [];
-    while (true) {
-      if (peek(/^f\//i)) {
-        position += 2;
-        const fieldStart = (skip(), position);
-        const fieldName = take(/^[A-Za-z_][\w.]*/, "Expected a field name after f/")[0];
-        const field = resolveField(entity, fieldName, fieldStart);
-        skip();
-        const opMatch = OPERATORS.map((op) => ({ op, ok: op.match(/^\w/) ? new RegExp(`^${op}\\b`, "i").test(input.slice(position)) : input.startsWith(op, position) })).find((item) => item.ok);
-        if (!opMatch) throw new QueryError(`Expected an operator after "${fieldName}" (=, !=, <, >, contains, contains_any, in, exists…)`, position);
-        position += opMatch.op.length;
-        const op = opMatch.op.toLowerCase();
-        filters.push({ field, op, value: UNARY.has(op) ? null : parseValue() });
-        continue;
-      }
-      const relation = peek(/^(not\s+|!)?r\//i);
-      if (relation) {
-        position += relation[0].length;
-        take(/^\(/, 'Expected "(" after r/');
-        const inner = parseClause();
-        if (!ENTITIES[entity].relations?.[inner.entity]) throw new QueryError(`${entity} has no related ${inner.entity}. Related entities: ${Object.keys(ENTITIES[entity].relations ?? {}).join(", ") || "none"}`, position);
-        take(/^\)/, 'Expected ")" to close r/ (');
-        relations.push({ negate: Boolean(relation[1]), clause: inner });
-        continue;
-      }
-      break;
-    }
-    return { entity, filters, relations };
+    return { entity, expr: parseExpr(entity) };
   }
 
   const clauses = [{ join: null, clause: parseClause() }];
-  while (peek(/^(and|or)\b/i)) {
+  while (peek(CLAUSE_JOIN)) {
     const join = take(/^(and|or)\b/i, "")[1].toLowerCase();
     clauses.push({ join, clause: parseClause() });
   }
@@ -253,6 +326,15 @@ export function parseQuery(source) {
   if (position < input.length) throw new QueryError(`Unexpected text "${input.slice(position, position + 20)}"`, position);
   if (clauses.some(({ clause }) => clause.entity !== "Device")) throw new QueryError('Top-level queries must start with "e/ Device"', 0);
   return clauses;
+}
+
+// Parses a clause for a non-device entity, e.g. a software rule's detection
+// "e/ Software ( f/ Name contains \"Forcepoint Agent\" f/ Version starts_with 30. )".
+export function parseEntityClause(source, expectedEntity) {
+  const wrapped = parseQuery(`e/ Device r/ ( ${source} )`);
+  const clause = wrapped[0].clause.expr?.clause;
+  if (!clause || (expectedEntity && clause.entity !== expectedEntity)) throw new QueryError(`Expected a condition on ${expectedEntity}`);
+  return clause;
 }
 
 // ---------------- evaluator ----------------
@@ -265,6 +347,16 @@ const norm = (value) => String(value ?? "").toLowerCase();
 const PLATFORM_ALIASES = { win: "windows", windows: "windows", mac: "macos", macos: "macos", osx: "macos", "mac os": "macos" };
 
 function compare(type, actual, op, expected, now) {
+  // Multi-valued fields (e.g. DiscoveredBy): "=" means any value matches, "!=" none does.
+  if (type === "list") {
+    const items = Array.isArray(actual) ? actual : [];
+    if (op === "exists") return items.length > 0;
+    if (op === "not_exists") return items.length === 0;
+    const negative = op === "!=" || op === "not_in" || op === "not_contains";
+    const positiveOp = { "!=": "=", not_in: "in", not_contains: "contains" }[op] ?? op;
+    const hit = items.some((item) => compare("string", item, positiveOp, expected, now));
+    return negative ? !hit : hit;
+  }
   if (op === "exists") return actual !== null && actual !== undefined && actual !== "";
   if (op === "not_exists") return actual === null || actual === undefined || actual === "";
   const values = Array.isArray(expected) ? expected : [expected];
@@ -311,18 +403,24 @@ function compare(type, actual, op, expected, now) {
   return { "=": left === right, "!=": left !== right, "<": left < right, "<=": left <= right, ">": left > right, ">=": left >= right }[op];
 }
 
-function matchesClause(record, clause, now) {
-  const definition = ENTITIES[clause.entity];
-  for (const filter of clause.filters) {
-    const [type, getter] = definition.fields[filter.field];
-    if (!compare(type, getter(record), filter.op, filter.value, now)) return false;
+function matchesExpr(record, entity, node, now) {
+  if (!node) return true;
+  if (node.type === "and") return node.items.every((item) => matchesExpr(record, entity, item, now));
+  if (node.type === "or") return node.items.some((item) => matchesExpr(record, entity, item, now));
+  if (node.type === "filter") {
+    const [type, getter] = ENTITIES[entity].fields[node.field];
+    return compare(type, getter(record), node.op, node.value, now);
   }
-  for (const relation of clause.relations) {
-    const related = definition.relations[relation.clause.entity](record);
-    const found = related.some((item) => matchesClause(item, relation.clause, now));
-    if (found === relation.negate) return false;
+  if (node.type === "relation") {
+    const related = ENTITIES[entity].relations[node.clause.entity](record);
+    const found = related.some((item) => matchesClause(item, node.clause, now));
+    return found !== node.negate;
   }
-  return true;
+  return false;
+}
+
+export function matchesClause(record, clause, now = Date.now()) {
+  return matchesExpr(record, clause.entity, clause.expr, now);
 }
 
 export function runQuery(source, devices, { now = Date.now() } = {}) {
@@ -350,10 +448,147 @@ export function groupValue(device, field) {
   return value === null || value === undefined || value === "" ? "Unknown" : String(value);
 }
 
+const OPS_BY_TYPE = {
+  string: ["=", "!=", "contains", "not_contains", "starts_with", "in", "exists", "not_exists"],
+  version: ["=", "!=", "<", "<=", ">", ">=", "starts_with"],
+  number: ["=", "!=", "<", "<=", ">", ">="],
+  date: ["<", ">"],
+  bool: ["="],
+  list: ["=", "!=", "contains", "in"]
+};
+const SUGGESTIONS = {
+  "Device.Platform": ["windows", "macos"], "Device.RiskLevel": ["critical", "high", "medium", "low", "healthy"],
+  "Device.OSStatus": ["current", "update_available", "older_release", "below_minimum", "unsupported", "unknown"],
+  "Device.Compliance": ["compliant", "noncompliant", "ingraceperiod"], "Device.Ownership": ["company", "personal"],
+  "Device.DiscoveredBy": ["Intune", "Jamf", "CrowdStrike Falcon", "PatchOps Agent"], "Device.CrowdStrikeHostType": ["Workstation", "Server", "Domain Controller"],
+  "Device.Architecture": ["arm64", "x86_64"], "Device.OSRelease": ["11", "10", "27", "26", "15"],
+  "Vulnerability.Severity": ["critical", "high", "medium", "low"], "Vulnerability.ExploitStatus": ["Actively used", "Easily accessible", "Available", "Unproven"],
+  "Vulnerability.Source": ["apple", "microsoft", "crowdstrike"], "MissingPatch.Method": ["build", "spotlight"], "SoftwareRule.Status": ["installed", "missing", "unknown"],
+  "Issue.Severity": ["critical", "high", "medium", "low"]
+};
+const DATE_SUGGESTIONS = ["1d", "7d", "14d", "30d", "90d"];
+
 export function queryReference() {
   return Object.fromEntries(Object.entries(ENTITIES).map(([name, entity]) => [name, {
+    label: ENTITY_WORDS[name] ?? (name === "Device" ? "device" : name),
     description: entity.description,
-    fields: Object.entries(entity.fields).map(([field, [type, , description]]) => ({ field, type, description })),
+    fields: Object.entries(entity.fields).map(([field, [type, , description]]) => ({
+      field, type, description, label: FIELD_WORDS[field] ?? field.replace(/([a-z])([A-Z])/g, "$1 $2").toLowerCase(),
+      ops: OPS_BY_TYPE[type] ?? OPS_BY_TYPE.string,
+      suggestions: SUGGESTIONS[`${name}.${field}`] ?? (type === "date" ? DATE_SUGGESTIONS : type === "bool" ? ["true", "false"] : [])
+    })),
     relations: Object.keys(entity.relations ?? {})
   }]));
+}
+
+// ---------------- plain-English descriptions ----------------
+// Turns a query into a sentence anyone can read, e.g.
+// "Windows workstations seen in the last 7 days that have software whose name contains
+//  "Forcepoint Agent" and whose version starts with "30.", excluding users in group "GRP-…"".
+
+const FIELD_WORDS = {
+  Hostname: "name", SerialNumber: "serial number", OSName: "operating system", OSVersion: "OS version", OSRelease: "OS release", OSBuild: "Windows build",
+  OSRevision: "Windows update revision", OSStatus: "OS status", User: "user", Email: "user email", LastSeenAt: "last seen", Encrypted: "disk encrypted",
+  Compliance: "Intune compliance", RiskLevel: "risk level", RiskScore: "risk score", InIntune: "in Intune", InJamf: "in Jamf", HasAgent: "PatchOps agent installed",
+  InCrowdStrike: "in CrowdStrike", CrowdStrikeReporting: "Falcon sensor reporting", CrowdStrikeLastSeenAt: "Falcon last seen", CrowdStrikeSensorVersion: "Falcon sensor version",
+  CrowdStrikeHostType: "host type", CrowdStrikeRFM: "Falcon reduced functionality", DiscoveredBy: "seen by", IntuneLastSeenAt: "last Intune sync", JamfLastSeenAt: "last Jamf check-in",
+  Ownership: "ownership", Architecture: "architecture", OpenCVEs: "open CVEs", CriticalCVEs: "critical CVEs", ExploitedCVEs: "exploited CVEs", HighestCVSS: "highest CVSS",
+  Name: "name", Version: "version", Publisher: "publisher", BundleId: "bundle ID", UniquePatchId: "KB", CVE: "CVE", Severity: "severity", Status: "status", Value: "value"
+};
+const ENTITY_WORDS = { App: "software", SecurityPatch: "installed update", MissingPatch: "missing update", SoftwareRule: "software rule result", Vulnerability: "open vulnerability", Issue: "issue", ExtensionAttribute: "Jamf extension attribute", User: "user", Group: "group" };
+const OP_WORDS = { "=": "is", "!=": "is not", "<": "is below", "<=": "is at most", ">": "is above", ">=": "is at least", contains: "contains", "~": "contains", not_contains: "does not contain", contains_any: "contains any of", contains_all: "contains all of", in: "is one of", not_in: "is none of", starts_with: "starts with", ends_with: "ends with", exists: "is set", not_exists: "is not set" };
+const PLATFORM_WORDS = { windows: "Windows", macos: "macOS", mac: "macOS", win: "Windows" };
+
+const quoteValue = (value) => (Array.isArray(value) ? value.map((item) => `“${item}”`).join(", ") : `“${value}”`);
+
+function describeFilter(entity, node) {
+  const { field, op, value } = node;
+  const type = ENTITIES[entity].fields[field]?.[0];
+  if (entity === "Device") {
+    if (field === "Platform" && op === "=") return { adjective: PLATFORM_WORDS[String(value).toLowerCase()] ?? value };
+    if (field === "CrowdStrikeHostType" && op === "=") return { noun: `${String(value).toLowerCase()}s` };
+    if (field === "OSRelease" && op === "=") return { phrase: `on release ${value}` };
+    if (type === "date" && /^\d/.test(String(value))) {
+      const what = field === "LastSeenAt" ? "seen" : `${FIELD_WORDS[field] ?? field}`;
+      const duration = String(value).replace(/(\d+)\s*d$/i, "$1 days").replace(/(\d+)\s*h$/i, "$1 hours").replace(/(\d+)\s*w$/i, "$1 weeks").replace(/(\d+)\s*m$/i, "$1 minutes").replace(/(\d+)\s*mo$/i, "$1 months");
+      if (op === "<" || op === "<=") return { phrase: field === "LastSeenAt" ? `seen in the last ${duration}` : `with ${what} in the last ${duration}` };
+      if (op === ">" || op === ">=") return { phrase: field === "LastSeenAt" ? `not seen for more than ${duration}` : `with ${what} more than ${duration} ago` };
+    }
+    if (type === "bool") return { phrase: `${/^(true|yes|1)$/i.test(String(value)) === (op === "=") ? "" : "not "}${FIELD_WORDS[field] ?? field}`.replace(/^not in /, "not in ") };
+    if (field === "DiscoveredBy") return { phrase: `${op === "!=" || op === "not_in" ? "not " : ""}seen by ${Array.isArray(value) ? value.join(" or ") : value}` };
+  }
+  if (op === "exists" || op === "not_exists") return { phrase: `whose ${FIELD_WORDS[field] ?? field} ${OP_WORDS[op]}` };
+  return { phrase: `whose ${FIELD_WORDS[field] ?? field} ${OP_WORDS[op] ?? op} ${quoteValue(value)}` };
+}
+
+function describeExpr(entity, node) {
+  if (!node) return [];
+  if (node.type === "and") return node.items.flatMap((item) => describeExpr(entity, item));
+  if (node.type === "or") return [{ phrase: `(${node.items.map((item) => describeExpr(entity, item).map((part) => part.phrase ?? part.adjective ?? part.noun).join(" and ")).join(" or ")})` }];
+  if (node.type === "filter") return [describeFilter(entity, node)];
+  if (node.type === "relation") {
+    const inner = node.clause;
+    if (entity === "Device" && inner.entity === "User") {
+      const groups = describeExpr("User", inner.expr).map((part) => part.phrase).join(" and ");
+      return [{ phrase: `${node.negate ? "excluding devices whose user is" : "whose user is"} ${groups}` }];
+    }
+    if (entity === "User" && inner.entity === "Group") {
+      const names = describeExpr("Group", inner.expr).map((part) => (/^whose name is “/.test(part.phrase) ? `group ${part.phrase.replace(/^whose name is /, "")}` : `a group ${part.phrase}`)).join(" and ");
+      return [{ phrase: `${node.negate ? "not " : ""}in ${names}` }];
+    }
+    if (inner.entity === "SoftwareRule") {
+      const filters = [];
+      const collect = (item) => { if (!item) return; if (item.type === "filter") filters.push(item); else if (item.type === "and") item.items.forEach(collect); };
+      collect(inner.expr);
+      const name = filters.find((item) => item.field === "Name")?.value;
+      const status = filters.find((item) => item.field === "Status")?.value;
+      if (name) {
+        const state = status ? ({ installed: "installed", missing: "missing", unknown: "without app data" }[String(status).toLowerCase()] ?? status) : "evaluated";
+        return [{ phrase: node.negate ? `where ${name} is not ${state}` : `where ${name} is ${state}` }];
+      }
+    }
+    const details = describeExpr(inner.entity, inner.expr).map((part) => part.phrase ?? part.adjective).join(" and ");
+    const noun = ENTITY_WORDS[inner.entity] ?? inner.entity;
+    return [{ phrase: `${node.negate ? "without" : "with"} ${noun === "software" ? "software" : `an ${noun}`.replace(/^an ([^aeiou])/, "a $1")}${details ? ` ${details}` : ""}` }];
+  }
+  return [];
+}
+
+export function describeClause(clause) {
+  const parts = describeExpr(clause.entity, clause.expr);
+  const adjectives = parts.filter((part) => part.adjective).map((part) => part.adjective);
+  const nouns = parts.filter((part) => part.noun).map((part) => part.noun);
+  const phrases = parts.filter((part) => part.phrase).map((part) => part.phrase);
+  const subject = `${adjectives.join(" ")} ${nouns[0] ?? (clause.entity === "Device" ? "devices" : ENTITY_WORDS[clause.entity] ?? clause.entity)}`.trim();
+  const text = [subject, ...phrases].join(", ");
+  return /^macOS/.test(text) ? text : text.charAt(0).toUpperCase() + text.slice(1);
+}
+
+export function describeQuery(source) {
+  try {
+    const clauses = typeof source === "string" ? parseQuery(source) : source;
+    return clauses.map(({ join, clause }, index) => `${index ? (join === "and" ? " and also " : " or ") : ""}${index ? describeClause(clause).charAt(0).toLowerCase() + describeClause(clause).slice(1) : describeClause(clause)}`).join("") + ".";
+  } catch {
+    return null;
+  }
+}
+
+// Group names that queries filter on, so only those groups' members are fetched from Entra ID.
+export function referencedGroups(sources) {
+  const wanted = new Map();
+  const visit = (entity, node) => {
+    if (!node) return;
+    if (node.type === "and" || node.type === "or") return node.items.forEach((item) => visit(entity, item));
+    if (node.type === "relation") return visit(node.clause.entity, node.clause.expr);
+    if (node.type === "filter" && entity === "Group" && node.field === "Name") {
+      const op = ["contains", "contains_any", "~"].includes(node.op) ? "contains" : node.op === "starts_with" ? "starts_with" : ["=", "in"].includes(node.op) ? "=" : null;
+      if (!op) return;
+      for (const value of [node.value].flat()) if (String(value).trim()) wanted.set(`${op}|${String(value).toLowerCase()}`, { op, value: String(value) });
+    }
+  };
+  for (const source of sources) {
+    if (!source || !/group/i.test(source)) continue;
+    try { for (const { clause } of parseQuery(source)) visit(clause.entity, clause.expr); } catch { /* invalid queries are reported elsewhere */ }
+  }
+  return [...wanted.values()].sort((a, b) => `${a.op}${a.value}`.localeCompare(`${b.op}${b.value}`));
 }

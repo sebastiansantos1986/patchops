@@ -1,0 +1,235 @@
+{
+ "UpdateHash": "f67c2b2414aa6dd1a2f9076ba2ca72b698190ad3fc2a13d7188a28ed5bcdee53",
+ "OSVersions": [
+  {
+   "OSVersion": "Golden Gate 27",
+   "Latest": {
+    "ProductVersion": "27.2.1",
+    "ReleaseDate": "2026-11-09T00:00:00Z"
+   },
+   "SecurityReleases": [
+    {
+     "UpdateName": "macOS Golden Gate 27.2.1",
+     "ProductName": "macOS",
+     "ProductVersion": "27.2.1",
+     "ReleaseDate": "2026-11-09T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149718",
+     "ActivelyExploitedCVEs": [
+      "CVE-2026-111497"
+     ],
+     "UniqueCVEsCount": 8,
+     "CVEs": {
+      "CVE-2026-111497": true,
+      "CVE-2026-113960": false,
+      "CVE-2026-113961": false,
+      "CVE-2026-113964": false,
+      "CVE-2026-113965": false,
+      "CVE-2026-113968": false
+     }
+    },
+    {
+     "UpdateName": "macOS Golden Gate 27.2",
+     "ProductName": "macOS",
+     "ProductVersion": "27.2",
+     "ReleaseDate": "2026-10-26T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149521",
+     "ActivelyExploitedCVEs": [],
+     "UniqueCVEsCount": 263,
+     "CVEs": {
+      "CVE-2022-26704": false,
+      "CVE-2026-112410": false,
+      "CVE-2026-112413": false,
+      "CVE-2026-112414": false,
+      "CVE-2026-112415": false,
+      "CVE-2026-112416": false
+     }
+    },
+    {
+     "UpdateName": "macOS Golden Gate 27.0.1",
+     "ProductName": "macOS",
+     "ProductVersion": "27.0.1",
+     "ReleaseDate": "2026-09-28T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/100100",
+     "ActivelyExploitedCVEs": [],
+     "UniqueCVEsCount": 0,
+     "CVEs": {}
+    },
+    {
+     "UpdateName": "macOS Golden Gate 27",
+     "ProductName": "macOS",
+     "ProductVersion": "27.0",
+     "ReleaseDate": "2026-09-14T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149035",
+     "ActivelyExploitedCVEs": [
+      "CVE-2026-65400"
+     ],
+     "UniqueCVEsCount": 276,
+     "CVEs": {
+      "CVE-2019-5598": false,
+      "CVE-2022-3437": false,
+      "CVE-2026-112446": false,
+      "CVE-2026-112608": false,
+      "CVE-2026-20683": false,
+      "CVE-2026-28854": false,
+      "CVE-2026-65400": true
+     }
+    }
+   ]
+  },
+  {
+   "OSVersion": "Tahoe 26",
+   "Latest": {
+    "ProductVersion": "26.7.3",
+    "ReleaseDate": "2026-11-09T00:00:00Z"
+   },
+   "SecurityReleases": [
+    {
+     "UpdateName": "macOS Tahoe 26.7.3",
+     "ProductName": "macOS",
+     "ProductVersion": "26.7.3",
+     "ReleaseDate": "2026-11-09T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149719",
+     "ActivelyExploitedCVEs": [
+      "CVE-2026-111497"
+     ],
+     "UniqueCVEsCount": 8,
+     "CVEs": {
+      "CVE-2026-111497": true,
+      "CVE-2026-113960": false,
+      "CVE-2026-113961": false,
+      "CVE-2026-113964": false,
+      "CVE-2026-113965": false,
+      "CVE-2026-113968": false
+     }
+    },
+    {
+     "UpdateName": "macOS Tahoe 26.7.2",
+     "ProductName": "macOS",
+     "ProductVersion": "26.7.2",
+     "ReleaseDate": "2026-10-26T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149522",
+     "ActivelyExploitedCVEs": [],
+     "UniqueCVEsCount": 213,
+     "CVEs": {
+      "CVE-2026-112410": false,
+      "CVE-2026-112413": false,
+      "CVE-2026-112414": false,
+      "CVE-2026-112415": false,
+      "CVE-2026-112416": false,
+      "CVE-2026-112421": false
+     }
+    },
+    {
+     "UpdateName": "macOS Tahoe 26.7.1",
+     "ProductName": "macOS",
+     "ProductVersion": "26.7.1",
+     "ReleaseDate": "2026-09-28T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149228",
+     "ActivelyExploitedCVEs": [
+      "CVE-2026-86950"
+     ],
+     "UniqueCVEsCount": 1,
+     "CVEs": {
+      "CVE-2026-86950": true
+     }
+    },
+    {
+     "UpdateName": "macOS Tahoe 26.7",
+     "ProductName": "macOS",
+     "ProductVersion": "26.7",
+     "ReleaseDate": "2026-09-14T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149042",
+     "ActivelyExploitedCVEs": [
+      "CVE-2026-65400"
+     ],
+     "UniqueCVEsCount": 178,
+     "CVEs": {
+      "CVE-2019-5598": false,
+      "CVE-2022-3437": false,
+      "CVE-2026-112446": false,
+      "CVE-2026-20683": false,
+      "CVE-2026-28853": false,
+      "CVE-2026-28899": false,
+      "CVE-2026-65400": true
+     }
+    }
+   ]
+  },
+  {
+   "OSVersion": "Sequoia 15",
+   "Latest": {
+    "ProductVersion": "15.8.3",
+    "ReleaseDate": "2026-11-09T00:00:00Z"
+   },
+   "SecurityReleases": [
+    {
+     "UpdateName": "macOS Sequoia 15.8.3",
+     "ProductName": "macOS",
+     "ProductVersion": "15.8.3",
+     "ReleaseDate": "2026-11-09T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149720",
+     "ActivelyExploitedCVEs": [
+      "CVE-2026-111497"
+     ],
+     "UniqueCVEsCount": 8,
+     "CVEs": {
+      "CVE-2026-111497": true,
+      "CVE-2026-113960": false,
+      "CVE-2026-113961": false,
+      "CVE-2026-113964": false,
+      "CVE-2026-113965": false,
+      "CVE-2026-113968": false
+     }
+    },
+    {
+     "UpdateName": "macOS Sequoia 15.8.2",
+     "ProductName": "macOS",
+     "ProductVersion": "15.8.2",
+     "ReleaseDate": "2026-10-26T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149523",
+     "ActivelyExploitedCVEs": [],
+     "UniqueCVEsCount": 197,
+     "CVEs": {
+      "CVE-2026-112410": false,
+      "CVE-2026-112413": false,
+      "CVE-2026-112414": false,
+      "CVE-2026-112415": false,
+      "CVE-2026-112416": false,
+      "CVE-2026-112421": false
+     }
+    },
+    {
+     "UpdateName": "macOS Sequoia 15.8.1",
+     "ProductName": "macOS",
+     "ProductVersion": "15.8.1",
+     "ReleaseDate": "2026-09-28T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149229",
+     "ActivelyExploitedCVEs": [
+      "CVE-2026-86950"
+     ],
+     "UniqueCVEsCount": 1,
+     "CVEs": {
+      "CVE-2026-86950": true
+     }
+    },
+    {
+     "UpdateName": "macOS Sequoia 15.8",
+     "ProductName": "macOS",
+     "ProductVersion": "15.8",
+     "ReleaseDate": "2026-09-14T00:00:00Z",
+     "SecurityInfo": "https://support.apple.com/en-us/149043",
+     "ActivelyExploitedCVEs": [],
+     "UniqueCVEsCount": 180,
+     "CVEs": {
+      "CVE-2019-5598": false,
+      "CVE-2022-3437": false,
+      "CVE-2026-112446": false,
+      "CVE-2026-20683": false,
+      "CVE-2026-28850": false,
+      "CVE-2026-28853": false
+     }
+    }
+   ]
+  }
+ ]
+}

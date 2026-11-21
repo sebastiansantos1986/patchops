@@ -3,6 +3,7 @@
 // dashboard can't store malformed rules.
 
 import { randomUUID } from "node:crypto";
+import { QueryError, describeQuery, matchesClause, parseEntityClause, parseQuery, runQuery } from "./fleet-query.mjs";
 
 const text = (value, max = 160) => String(value ?? "").trim().slice(0, max);
 const list = (value, max = 12) => (Array.isArray(value) ? value : String(value ?? "").split(","))
@@ -12,35 +13,137 @@ const SEVERITIES = ["critical", "high", "medium", "low"];
 // ---- Required / prohibited software -------------------------------------------------
 
 export const DEFAULT_SOFTWARE_RULES = [
-  { id: "rule_crowdstrike", name: "CrowdStrike Falcon", mode: "required", severity: "critical", macos: ["Falcon"], windows: ["CrowdStrike Windows Sensor", "CrowdStrike Falcon"] },
+  { id: "rule_crowdstrike", name: "CrowdStrike Falcon", mode: "required", severity: "critical", detect_source: "crowdstrike", macos: ["Falcon"], windows: ["CrowdStrike Windows Sensor", "CrowdStrike Falcon"] },
   { id: "rule_beyondtrust", name: "BeyondTrust EPM", mode: "required", severity: "high", macos: ["PrivilegeManagement", "Privilege Management", "BeyondTrust"], windows: ["BeyondTrust Privilege Management", "Privilege Management for Windows", "Avecto"] },
   { id: "rule_okta_verify", name: "Okta Verify", mode: "required", severity: "high", macos: ["Okta Verify"], windows: ["Okta Verify"] },
   { id: "rule_tenable", name: "Tenable Nessus Agent", mode: "prohibited", severity: "medium", macos: ["Nessus Agent", "Tenable"], windows: ["Nessus Agent", "Tenable"] },
   { id: "rule_cyberark", name: "CyberArk EPM", mode: "prohibited", severity: "medium", macos: ["CyberArk"], windows: ["CyberArk"] }
-];
+].map((rule) => sanitizeSoftwareRule(rule));
+
+function escapeQuoted(value) { return String(value).replace(/["\u201c\u201d]/g, "").trim(); }
+
+// Older rules stored plain name patterns; they become an equivalent condition
+// ("name contains A" OR "bundle ID contains A" OR "name contains B" …).
+export function patternsToCondition(patterns) {
+  const list = (patterns ?? []).map(escapeQuoted).filter(Boolean);
+  if (!list.length) return null;
+  // Bundle IDs (com.vendor.app) are matched on the bundle ID, anything else on the app name.
+  const term = (pattern) => (/^[a-z0-9-]+(\.[a-z0-9-]+){2,}$/i.test(pattern) && !/\s/.test(pattern) ? `f/ BundleId contains "${pattern}"` : `f/ Name contains "${pattern}"`);
+  return list.length === 1 ? `e/ Software ${term(list[0])}` : `e/ Software ${list.map((pattern) => `( ${term(pattern)} )`).join(" OR ")}`;
+}
+
+function validCondition(source, entity, label) {
+  const text = text_(source);
+  if (!text) return null;
+  try {
+    if (entity === "Device") {
+      const parsed = parseQuery(text);
+      if (/SoftwareRule/i.test(text)) throw new QueryError("can't refer to software rules");
+      return parsed && text;
+    }
+    parseEntityClause(text, entity);
+    return text;
+  } catch (error) {
+    throw new QueryError(`${label}: ${error.message}`);
+  }
+}
+function text_(value) { return String(value ?? "").trim().slice(0, 4000); }
 
 export function sanitizeSoftwareRule(input) {
   const name = text(input?.name, 80);
-  const macos = list(input?.macos);
-  const windows = list(input?.windows);
-  if (!name || (!macos.length && !windows.length)) return null;
+  if (!name) return null;
+  if (input?.kind === "os") {
+    // OS rules: each platform has a device condition (e.g. OSBuild >= 26100); matching devices are compliant.
+    const detect = {
+      macos: input?.detect?.macos ? validCondition(input.detect.macos, "Device", "Mac requirement") : null,
+      windows: input?.detect?.windows ? validCondition(input.detect.windows, "Device", "Windows requirement") : null
+    };
+    if (!detect.macos && !detect.windows) return null;
+    return {
+      id: /^rule_[\w-]{3,60}$/.test(input?.id ?? "") ? input.id : `rule_${randomUUID().slice(0, 12)}`,
+      kind: "os", name, mode: "required",
+      severity: SEVERITIES.includes(input?.severity) ? input.severity : "high",
+      scope: input?.scope ? validCondition(input.scope, "Device", "Applies to") : null,
+      detect, detect_source: null,
+      platforms: { macos: Boolean(detect.macos), windows: Boolean(detect.windows) }
+    };
+  }
+  const legacy = { macos: list(input?.macos), windows: list(input?.windows) };
+  const detect = {
+    macos: input?.detect?.macos !== undefined ? validCondition(input.detect.macos, "App", "Mac detection") : patternsToCondition(legacy.macos),
+    windows: input?.detect?.windows !== undefined ? validCondition(input.detect.windows, "App", "Windows detection") : patternsToCondition(legacy.windows)
+  };
+  // Rules about CrowdStrike are satisfied by a reporting Falcon sensor (from the CrowdStrike API),
+  // which is more reliable than app names.
+  const detectSource = input?.detect_source === undefined ? (/crowdstrike|falcon/i.test(name) && (input?.mode ?? "required") === "required" ? "crowdstrike" : null) : input.detect_source === "crowdstrike" ? "crowdstrike" : null;
+  if (!detect.macos && !detect.windows && !detectSource) return null;
   return {
     id: /^rule_[\w-]{3,60}$/.test(input?.id ?? "") ? input.id : `rule_${randomUUID().slice(0, 12)}`,
+    kind: "software",
     name,
     mode: input?.mode === "prohibited" ? "prohibited" : "required",
     severity: SEVERITIES.includes(input?.severity) ? input.severity : input?.mode === "prohibited" ? "medium" : "high",
-    macos,
-    windows
+    scope: input?.scope ? validCondition(input.scope, "Device", "Applies to") : null,
+    detect,
+    detect_source: detectSource,
+    platforms: { macos: Boolean(detect.macos || detectSource), windows: Boolean(detect.windows || detectSource) }
   };
 }
 
-// Returns installed / missing / unknown (no app inventory) / not_applicable.
-export function evaluateSoftwareRule(rule, device) {
-  const patterns = (rule[device.platform] ?? []).map((pattern) => pattern.toLowerCase());
-  if (!patterns.length) return { status: "not_applicable", match: null };
-  if (!device.apps_source) return { status: "unknown", match: null };
-  const match = (device.apps ?? []).find((app) => patterns.some((pattern) => String(app.name ?? "").toLowerCase().includes(pattern) || String(app.bundle_id ?? "").toLowerCase().includes(pattern)));
-  return { status: match ? "installed" : "missing", match: match ? { name: match.name, version: match.version } : null };
+// Plain-English text for the rules table, e.g. "software whose name contains “Okta Verify”".
+export function describeRule(rule) {
+  const detect = (condition) => {
+    if (!condition) return null;
+    if (rule.kind === "os") return (describeQuery(condition) ?? condition).replace(/^Devices, /, "").replace(/^(Windows|macOS) devices, /, "").replace(/\.$/, "");
+    const text = describeQuery(`e/ Device r/ ( ${condition} )`);
+    if (!text) return condition;
+    return text.replace(/^Devices, with /, "").replace(/\.$/, "")
+      .replace(/whose name contains (“[^”]+”) or whose bundle ID contains \1/g, "named like $1")
+      .replace(/^software \(named like (“[^”]+”(?: or named like “[^”]+”)*)\)$/, (_, list) => `software named like ${list.replace(/ or named like /g, " or ")}`);
+  };
+  return {
+    scope_text: rule.scope ? (describeQuery(rule.scope) ?? rule.scope).replace(/\.$/, "") : null,
+    detect_text: { macos: detect(rule.detect?.macos), windows: detect(rule.detect?.windows) }
+  };
+}
+
+const compiled = new Map();
+function compileRule(rule) {
+  const key = JSON.stringify([rule.kind, rule.scope, rule.detect, rule.detect_source, rule.macos, rule.windows]);
+  if (compiled.has(key)) return compiled.get(key);
+  const detect = rule.detect ?? { macos: patternsToCondition(rule.macos), windows: patternsToCondition(rule.windows) };
+  const result = {
+    scope: rule.scope ? parseQuery(rule.scope) : null,
+    detect: rule.kind === "os"
+      ? { macos: detect.macos ? parseQuery(detect.macos) : null, windows: detect.windows ? parseQuery(detect.windows) : null }
+      : { macos: detect.macos ? parseEntityClause(detect.macos, "App") : null, windows: detect.windows ? parseEntityClause(detect.windows, "App") : null }
+  };
+  if (compiled.size > 500) compiled.clear();
+  compiled.set(key, result);
+  return result;
+}
+
+// Returns installed / missing / unknown (no data to decide) / not_applicable.
+export function evaluateSoftwareRule(rule, device, now = Date.now()) {
+  const { scope, detect } = compileRule(rule);
+  if (scope && !runQuery(scope, [device], { now }).length) return { status: "not_applicable", match: null };
+  const condition = detect[device.platform];
+  if (rule.kind === "os") {
+    if (!condition) return { status: "not_applicable", match: null };
+    if (!device.os?.version) return { status: "unknown", match: null };
+    const match = { name: device.os.name ?? (device.platform === "macos" ? "macOS" : "Windows"), version: device.os.version };
+    return { status: runQuery(condition, [device], { now }).length ? "installed" : "missing", match };
+  }
+  const sensor = rule.detect_source === "crowdstrike";
+  if (!condition && !sensor) return { status: "not_applicable", match: null };
+  if (sensor && device.crowdstrike_reporting) return { status: "installed", match: { name: "Falcon sensor (reporting to CrowdStrike)", version: device.crowdstrike?.version ?? "" } };
+  if (condition && device.apps_source) {
+    const match = (device.apps ?? []).find((app) => matchesClause(app, condition, now));
+    if (match) return { status: "installed", match: { name: match.name, version: match.version } };
+    return { status: "missing", match: null };
+  }
+  if (sensor && device.crowdstrike_connected) return { status: "missing", match: null };
+  return { status: "unknown", match: null };
 }
 
 // ---- Tracked Windows updates ------------------------------------------------------------
@@ -111,13 +214,15 @@ export function coverageWidget(rule) {
       series: [{ label: `Devices with ${rule.name}`, tone: "bad", query: `e/ Device f/ LastSeenAt < 30d r/ ( e/ SoftwareRule f/ Name = ${quote(rule.name)} f/ Status = installed )` }]
     };
   }
-  const platforms = [["windows", "Windows", rule.windows?.length], ["macos", "MacOS", rule.macos?.length]].filter(([, , has]) => has);
+  const has = (key) => (rule.platforms ? rule.platforms[key] : rule[key]?.length);
+  const platforms = [["windows", "Windows"], ["macos", "macOS"]].filter(([key]) => has(key));
   return {
-    title: `${rule.name} Deployment`,
+    title: rule.kind === "os" ? `${rule.name} Compliance` : `${rule.name} Deployment`,
     type: "donut",
     series: [
-      ...platforms.map(([key, label]) => ({ label: `${label} - Installed`, tone: "good", query: `${base(key)} f/ Status = installed )` })),
-      ...platforms.map(([key, label]) => ({ label: `${label} - Missing`, tone: "bad", query: `${base(key)} f/ Status = missing )` }))
+      ...platforms.map(([key, label]) => ({ label: `${label} - ${rule.kind === "os" ? "Compliant" : "Installed"}`, tone: "good", query: `${base(key)} f/ Status = installed )` })),
+      ...platforms.map(([key, label]) => ({ label: `${label} - ${rule.kind === "os" ? "Not compliant" : "Missing"}`, tone: "bad", query: `${base(key)} f/ Status = missing )` })),
+      ...platforms.map(([key, label]) => ({ label: `${label} - No data`, tone: "neutral", query: `${base(key)} f/ Status = unknown )` }))
     ]
   };
 }

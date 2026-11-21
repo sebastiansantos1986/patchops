@@ -9,6 +9,8 @@
 
 import { ConnectorError, fetchJSON } from "./http.mjs";
 import { Capability } from "./inspect.mjs";
+const fmt = (value) => Number(value).toLocaleString("en-US");
+
 
 const CLOUDS = {
   "us-1": "https://api.crowdstrike.com",
@@ -34,7 +36,9 @@ export function crowdstrikeConfig(env = process.env) {
     collectVulnerabilities: !/^(0|false|no)$/i.test(env.CROWDSTRIKE_VULNERABILITIES ?? "true"),
     maxVulnerabilities: Math.max(1000, Number(env.CROWDSTRIKE_MAX_VULNERABILITIES) || 250000),
     maxApps: Math.max(1000, Number(env.CROWDSTRIKE_MAX_APPS) || 500000),
-    pageSize: Math.max(100, Math.min(Number(env.CROWDSTRIKE_PAGE_SIZE) || 5000, 10000))
+    fullSyncHours: Math.max(1, Number(env.CROWDSTRIKE_FULL_SYNC_HOURS) || 24),
+    // Full host records are large (200+ fields), so pages are kept moderate.
+    pageSize: Math.max(100, Math.min(Number(env.CROWDSTRIKE_PAGE_SIZE) || 1000, 10000))
   };
   config.configured = Boolean(config.clientId && config.clientSecret);
   return config;
@@ -50,6 +54,9 @@ export function crowdstrikePlatform(platformName) {
 
 // Windows: prefer a full 10.0.build.revision string; macOS: major.minor when Falcon provides it.
 // Versions that are only partial are flagged so a more precise source (Intune, Jamf) wins.
+// Darwin 20 = macOS 11 … Darwin 24 = macOS 15; Apple then jumped to macOS 26 for Darwin 25.
+export const darwinToMacMajor = (darwin) => (darwin >= 25 ? darwin + 1 : darwin - 9);
+
 export function crowdstrikeOsVersion(host) {
   const platform = crowdstrikePlatform(host.platform_name);
   if (platform === "windows") {
@@ -61,13 +68,29 @@ export function crowdstrikeOsVersion(host) {
     return { version: "", approximate: true };
   }
   if (platform === "macos") {
-    const major = String(host.major_version ?? "").trim();
-    const minor = String(host.minor_version ?? "").trim();
-    if (/^\d+$/.test(major)) return { version: /^\d+$/.test(minor) ? `${major}.${minor}` : major, approximate: true };
-    const fromName = /\((\d+(?:\.\d+)*)\)/.exec(String(host.os_version ?? ""));
-    return { version: fromName?.[1] ?? "", approximate: true };
+    // Falcon's major/minor_version and kernel_version on Macs are Darwin numbers
+    // (Darwin 25.x = macOS 26.x, Darwin 24.x = macOS 15.x), not macOS versions.
+    const fromName = /\((\d+(?:\.\d+)*)\)/.exec(String(host.os_version ?? ""))?.[1];
+    const darwin = [host.major_version, host.minor_version].every((part) => /^\d+$/.test(String(part ?? "").trim()))
+      ? [Number(host.major_version), Number(host.minor_version)]
+      : /^(\d+)\.(\d+)/.exec(String(host.kernel_version ?? ""))?.slice(1).map(Number) ?? null;
+    if (darwin && darwin[0] >= 20) {
+      const macMajor = darwinToMacMajor(darwin[0]);
+      if (!fromName || Number(fromName.split(".")[0]) === macMajor) return { version: `${macMajor}.${darwin[1]}`, approximate: true };
+    } else if (darwin && darwin[0] >= 11 && !fromName) {
+      return { version: `${darwin[0]}.${darwin[1]}`, approximate: true }; // already a macOS version
+    }
+    return { version: fromName ?? "", approximate: true };
   }
   return { version: "", approximate: true };
+}
+
+// Falcon's asset inventory also lists code libraries (npm, PyPI…), developer packages and
+// browser extensions. Only installed applications are kept.
+export function crowdstrikeAppKind(app) {
+  if (app.browser_extension || /extension/i.test(String(app.software_type ?? ""))) return "browser_extension";
+  if (app.dev_package || /software package|librar|package/i.test(String(app.category ?? "")) || /package|librar/i.test(String(app.software_type ?? ""))) return "package";
+  return "application";
 }
 
 export function normalizeCrowdStrikeApp(app) {
@@ -75,7 +98,7 @@ export function normalizeCrowdStrikeApp(app) {
     aid: app.host?.aid ?? app.host?.id ?? app.host?.device_id ?? app.aid ?? null,
     hostname: app.host?.hostname ?? null,
     app: { name: String(app.name ?? "").replace(/\.app$/i, ""), version: app.version ?? "", publisher: app.vendor ?? "", bundle_id: "" },
-    type: String(app.software_type ?? "application").toLowerCase()
+    type: crowdstrikeAppKind(app)
   };
 }
 
@@ -87,6 +110,7 @@ export function normalizeCrowdStrikeVulnerability(vuln) {
   const app = vuln.apps?.[0] ?? vuln.app ?? {};
   const remediations = (vuln.remediation?.entities ?? []).map((entry) => entry.title || entry.action || entry.reference).filter(Boolean);
   return {
+    source: "crowdstrike",
     aid: vuln.aid ?? vuln.host_info?.aid ?? null,
     hostname: vuln.host_info?.hostname ?? null,
     cve: String(cve.id ?? vuln.cve_id ?? vuln.vulnerability_id ?? "").toUpperCase(),
@@ -112,7 +136,7 @@ export function normalizeCrowdStrikeHost(host) {
     source: "crowdstrike",
     source_id: host.device_id ?? "",
     hostname: host.hostname ?? "",
-    serial_number: host.serial_number ?? "",
+    serial_number: host.serial_number ?? host.system_serial_number ?? "",
     platform,
     model: host.system_product_name ?? "",
     manufacturer: host.system_manufacturer ?? "",
@@ -154,14 +178,20 @@ export class CrowdStrikeConnector {
   }
 
   async requestToken(baseUrl) {
-    const response = await this.fetchImpl(`${baseUrl}/oauth2/token`, {
-      method: "POST",
-      headers: { accept: "application/json", "content-type": "application/x-www-form-urlencoded" },
-      body: new URLSearchParams({ client_id: this.config.clientId, client_secret: this.config.clientSecret }),
-      redirect: "manual",
-      signal: AbortSignal.timeout(30_000)
-    });
-    return response;
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        return await this.fetchImpl(`${baseUrl}/oauth2/token`, {
+          method: "POST",
+          headers: { accept: "application/json", "content-type": "application/x-www-form-urlencoded" },
+          body: new URLSearchParams({ client_id: this.config.clientId, client_secret: this.config.clientSecret }),
+          redirect: "manual",
+          signal: AbortSignal.timeout(60_000)
+        });
+      } catch (error) {
+        if (attempt >= 3) throw new ConnectorError(`CrowdStrike sign-in: no response from ${new URL(baseUrl).host} (${error.message})`, { source: "crowdstrike" });
+        await new Promise((resolve) => setTimeout(resolve, 2000 * attempt));
+      }
+    }
   }
 
   async accessToken() {
@@ -181,6 +211,12 @@ export class CrowdStrikeConnector {
     return this.token.value;
   }
 
+  // Live progress for the dashboard and Terminal ("Hosts 2,000 of 4,512 · …").
+  report(part, text) {
+    this.progressParts = { ...(this.progressParts ?? {}), [part]: text };
+    this.onProgress?.(Object.values(this.progressParts).filter(Boolean).join(" · "));
+  }
+
   async listHosts() {
     const hosts = [];
     const filter = "platform_name:['Windows','Mac']";
@@ -197,6 +233,7 @@ export class CrowdStrikeConnector {
       });
       const resources = page?.resources ?? [];
       hosts.push(...resources);
+      this.report("hosts", `Hosts ${fmt(hosts.length)}${page?.meta?.pagination?.total ? ` of ${fmt(page.meta.pagination.total)}` : ""}`);
       const pagination = page?.meta?.pagination ?? {};
       const next = pagination.next ?? (typeof pagination.offset === "string" ? pagination.offset : null);
       const total = Number(pagination.total ?? 0);
@@ -233,76 +270,210 @@ export class CrowdStrikeConnector {
     return capability.finish("error", error.message);
   }
 
-  async collectApplications() {
+  // ---- Incremental state: apps and vulnerabilities are kept between syncs and only
+  // records changed since the last sync are fetched. A full refresh runs daily so
+  // removed apps and deleted records are caught too.
+  exportState() {
+    return { apps: [...(this.appIndex ?? new Map()).entries()], vulns: [...(this.vulnIndex ?? new Map()).entries()], sync: this.syncState ?? {} };
+  }
+
+  importState(state) {
+    this.appIndex = new Map(state?.apps ?? []);
+    this.vulnIndex = new Map(state?.vulns ?? []);
+    this.syncState = state?.sync ?? {};
+  }
+
+  incrementalSince(kind, full) {
+    const state = this.syncState ?? {};
+    const lastFull = Date.parse(state[`${kind}_full_at`] ?? "");
+    const last = Date.parse(state[`${kind}_at`] ?? "");
+    if (full || !Number.isFinite(lastFull) || !Number.isFinite(last) || Date.now() - lastFull > this.config.fullSyncHours * 3_600_000) return null;
+    return new Date(last - 15 * 60_000).toISOString().replace(/\.\d{3}Z$/, "Z"); // 15 min overlap for clock skew
+  }
+
+  markSynced(kind, startedAt, wasFull) {
+    this.syncState = { ...(this.syncState ?? {}), [`${kind}_at`]: startedAt, ...(wasFull ? { [`${kind}_full_at`]: startedAt } : {}) };
+  }
+
+  // One tiny probe request decides the lightest query this tenant supports.
+  async planApplicationsQuery() {
+    const probe = async (params) => {
+      const query = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) for (const item of [value].flat()) query.append(key, item);
+      return fetchJSON(`${this.config.baseUrl}/discover/combined/applications/v1?${query}`, { headers: { authorization: `Bearer ${await this.accessToken()}` }, source: "CrowdStrike", fetchImpl: this.fetchImpl });
+    };
+    let excludePackages = true;
+    let sample;
+    try {
+      sample = await probe({ limit: "5", filter: "category:!'Software Packages'" });
+    } catch (error) {
+      if (error.status !== 400) throw error;
+      excludePackages = false;
+      sample = await probe({ limit: "5" });
+    }
+    const hasHostId = (sample?.resources ?? []).some((raw) => normalizeCrowdStrikeApp(raw).aid);
+    return { excludePackages, facet: !hasHostId && (sample?.resources ?? []).length > 0 };
+  }
+
+  async collectApplications({ full = false } = {}) {
     const capability = this.capabilities.applications;
     if (!this.config.collectApps) return new Map();
-    capability.begin();
-    const byHost = new Map();
-    try {
-      for await (const resources of this.pages("/discover/combined/applications/v1", { limit: "1000", facet: ["host_info"] }, { maxRecords: this.config.maxApps })) {
+    this.appIndex ??= new Map();
+    const startedAt = new Date().toISOString();
+    const since = this.incrementalSince("apps", full);
+    let byHostName = new Map([...this.appIndex].map(([key, value]) => [`${value.aid}|${value.app.name}`, key]));
+    let skipped = 0;
+    // Download size: each record can carry a full copy of the computer's details
+    // (facet=host_info). It is only requested if records don't already include the host id.
+    let plan = this.syncState?.apps_plan ?? null;
+    const run = async (filter) => {
+      const combined = [filter, plan.excludePackages ? "category:!'Software Packages'" : null].filter(Boolean).join("+");
+      const params = { limit: "1000", ...(plan.facet ? { facet: ["host_info"] } : {}), ...(combined ? { filter: combined } : {}) };
+      let seen = 0;
+      for await (const resources of this.pages("/discover/combined/applications/v1", params, { maxRecords: this.config.maxApps })) {
+        seen += resources.length;
+        this.report("apps", `Installed apps ${fmt(seen)} records${filter ? " changed" : ""}`);
         for (const raw of resources) {
           capability.observe(raw);
           const entry = normalizeCrowdStrikeApp(raw);
-          if (!entry.aid || !entry.app.name || entry.type.includes("extension")) continue;
-          if (!byHost.has(entry.aid)) byHost.set(entry.aid, []);
-          byHost.get(entry.aid).push(entry.app);
+          if (!entry.aid || !entry.app.name || entry.type !== "application") { skipped += 1; continue; }
+          const key = String(raw.id ?? `${entry.aid}|${entry.app.name}|${entry.app.version}`);
+          // An upgraded app replaces its older record on the same host.
+          const hostName = `${entry.aid}|${entry.app.name}`;
+          const previousKey = byHostName.get(hostName);
+          if (previousKey && previousKey !== key) this.appIndex.delete(previousKey);
+          byHostName.set(hostName, key);
+          this.appIndex.set(key, { aid: entry.aid, app: entry.app });
         }
       }
+    };
+    try {
+      capability.begin();
+      if (!plan) {
+        plan = await this.planApplicationsQuery();
+        this.syncState = { ...(this.syncState ?? {}), apps_plan: plan };
+      }
+      if (since) {
+        try {
+          await run(`last_updated_timestamp:>'${since}'`);
+          capability.sync_mode = "incremental";
+        } catch (error) {
+          if (error.status !== 400) throw error;
+          capability.begin();
+          this.appIndex = new Map();
+          byHostName = new Map();
+          await run(null);
+          capability.sync_mode = "full (incremental filter not supported)";
+        }
+      } else {
+        this.appIndex = new Map();
+        byHostName = new Map();
+        await run(null);
+        capability.sync_mode = "full";
+      }
+      this.markSynced("apps", startedAt, !capability.sync_mode.startsWith("incremental"));
+      capability.count = this.appIndex.size;
+      capability.sync_mode = `${capability.sync_mode}; ${skipped.toLocaleString("en-US")} libraries/extensions skipped${plan.excludePackages ? ", software packages filtered out by CrowdStrike" : ""}${plan.facet ? "" : ", compact records"}`;
       capability.finish("ok");
     } catch (error) {
+      if (error.status === 400 && plan?.excludePackages) {
+        // The package filter isn't accepted by this tenant: plan again without it.
+        this.syncState = { ...(this.syncState ?? {}), apps_plan: { ...plan, excludePackages: false } };
+        return this.collectApplications({ full: true });
+      }
       this.capabilityError(capability, error);
+    }
+    const byHost = new Map();
+    for (const { aid, app } of this.appIndex.values()) {
+      if (!byHost.has(aid)) byHost.set(aid, []);
+      byHost.get(aid).push(app);
     }
     return byHost;
   }
 
-  async collectVulnerabilities() {
+  async collectVulnerabilities({ full = false } = {}) {
     const capability = this.capabilities.vulnerabilities;
     if (!this.config.collectVulnerabilities) return new Map();
-    capability.begin();
-    const byHost = new Map();
-    const run = async ({ filter, facet }) => {
-      for await (const resources of this.pages("/spotlight/combined/vulnerabilities/v1", { limit: "5000", filter, facet }, { maxRecords: this.config.maxVulnerabilities })) {
+    this.vulnIndex ??= new Map();
+    const startedAt = new Date().toISOString();
+    const keyFor = (raw, entry) => String(raw.id ?? `${entry.aid}|${entry.cve}`);
+    const run = async ({ filter, facet }, { incremental }) => {
+      let seen = 0;
+      for await (const resources of this.pages("/spotlight/combined/vulnerabilities/v1", { limit: "1000", filter, facet }, { maxRecords: this.config.maxVulnerabilities })) {
+        seen += resources.length;
+        this.report("vulns", `Vulnerabilities ${fmt(seen)} records${incremental ? " changed" : ""}`);
         for (const raw of resources) {
           capability.observe(raw);
           const entry = normalizeCrowdStrikeVulnerability(raw);
           if (!entry.aid || !entry.cve) continue;
-          if (!byHost.has(entry.aid)) byHost.set(entry.aid, []);
-          byHost.get(entry.aid).push(entry);
+          const key = keyFor(raw, entry);
+          // In incremental mode closed / expired findings are removed.
+          if (incremental && !["open", "reopen"].includes(entry.status)) this.vulnIndex.delete(key);
+          else this.vulnIndex.set(key, entry);
         }
       }
     };
-    // Falcon tenants differ slightly in which filters/facets they accept, so fall back
-    // step by step on "400 Bad Request" and keep the most detailed query that works.
-    const attempts = [
-      { filter: "status:['open','reopen']", facet: ["cve", "remediation", "host_info"] },
-      { filter: "status:'open'", facet: ["cve", "remediation", "host_info"] },
-      { filter: "status:'open'", facet: ["cve", "remediation"] },
-      { filter: "status:'open'", facet: ["cve"] }
-    ];
-    try {
+    const fullRun = async () => {
+      // Falcon tenants differ slightly in which filters/facets they accept, so fall back
+      // step by step on "400 Bad Request" and keep the most detailed query that works.
+      const attempts = [
+        // host_info is left out: records already carry the host id (aid) and it would
+        // repeat the full computer details in every vulnerability record.
+        { filter: "status:['open','reopen']", facet: ["cve", "remediation"] },
+        { filter: "status:'open'", facet: ["cve", "remediation"] },
+        { filter: "status:'open'", facet: ["cve"] }
+      ];
       let lastError = null;
       for (const attempt of attempts) {
         capability.begin();
-        byHost.clear();
+        this.vulnIndex = new Map();
         try {
-          await run(attempt);
-          lastError = null;
+          await run(attempt, { incremental: false });
           capability.query = attempt;
-          break;
+          this.syncState = { ...(this.syncState ?? {}), vuln_facets: attempt.facet };
+          return;
         } catch (error) {
           if (error.status !== 400) throw error;
           lastError = error;
         }
       }
-      if (lastError) throw lastError;
+      throw lastError;
+    };
+    try {
+      const since = this.incrementalSince("vulns", full);
+      let mode = "full";
+      if (since) {
+        capability.begin();
+        try {
+          const facet = (this.syncState?.vuln_facets ?? ["cve", "remediation"]).filter((item) => item !== "host_info");
+          await run({ filter: `updated_timestamp:>'${since}'`, facet }, { incremental: true });
+          capability.query = { filter: `updated_timestamp:>'${since}'`, facet };
+          mode = "incremental";
+        } catch (error) {
+          if (error.status !== 400) throw error;
+          await fullRun();
+          mode = "full (incremental filter not supported)";
+        }
+      } else {
+        await fullRun();
+      }
+      capability.sync_mode = mode;
+      this.markSynced("vulns", startedAt, mode !== "incremental");
+      capability.count = this.vulnIndex.size;
       capability.finish("ok");
     } catch (error) {
       this.capabilityError(capability, error);
     }
+    const byHost = new Map();
+    for (const entry of this.vulnIndex.values()) {
+      if (!byHost.has(entry.aid)) byHost.set(entry.aid, []);
+      byHost.get(entry.aid).push(entry);
+    }
     return byHost;
   }
 
-  async collect() {
+  async collect({ full = false } = {}) {
+    this.progressParts = {};
     const hosts = this.capabilities.hosts;
     hosts.begin();
     const records = [];
@@ -315,7 +486,7 @@ export class CrowdStrikeConnector {
       records.push(record);
     }
     hosts.finish("ok");
-    const [apps, vulnerabilities] = await Promise.all([this.collectApplications(), this.collectVulnerabilities()]);
+    const [apps, vulnerabilities] = await Promise.all([this.collectApplications({ full }), this.collectVulnerabilities({ full })]);
     for (const record of records) {
       // No Discover rows for a host means "unknown", not "nothing installed".
       if (apps.has(record.source_id)) record.apps = apps.get(record.source_id);

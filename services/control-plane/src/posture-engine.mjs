@@ -30,7 +30,18 @@ export function deviceKey(record) {
   return host ? `host:${host}` : `src:${record.source}:${record.source_id}`;
 }
 
+const appKeyCache = new Map();
 export function appKey(name) {
+  const text = String(name ?? "");
+  const cached = appKeyCache.get(text);
+  if (cached !== undefined) return cached;
+  const key = appKeyUncached(text);
+  if (appKeyCache.size > 200_000) appKeyCache.clear();
+  appKeyCache.set(text, key);
+  return key;
+}
+
+function appKeyUncached(name) {
   return String(name ?? "")
     .toLowerCase()
     .replace(/\.app$/, "")
@@ -76,6 +87,8 @@ export function mergeRecords(records) {
     const first = (pick) => ordered.map(pick).find((value) => value !== undefined && value !== null && value !== "");
     // Freshest precise OS version wins; partial versions (e.g. CrowdStrike "15.6" for macOS) only fill gaps.
     const osSource = [freshest, ...ordered].find((record) => record.os?.version && !record.os_approximate) ?? [freshest, ...ordered].find((record) => record.os?.version) ?? ordered[0];
+    // "26.5.0" and "26.5" are the same macOS release; show one form.
+    const osVersion = platform === "macos" ? String(osSource.os?.version ?? "").replace(/^(\d+\.\d+)\.0$/, "$1") : osSource.os?.version ?? "";
     const sources = {};
     for (const record of group) {
       sources[record.source] = { id: record.source_id, last_check_in: record.last_check_in, managed: record.managed, compliance: record.compliance, os_version: record.os?.version ?? "", ...(record.sensor ? { sensor: record.sensor } : {}) };
@@ -89,7 +102,7 @@ export function mergeRecords(records) {
       platform,
       model: first((record) => record.model) ?? "",
       manufacturer: first((record) => record.manufacturer) ?? "",
-      os: { name: osSource.os?.name ?? "", version: osSource.os?.version ?? "", build: osSource.os?.build ?? "" },
+      os: { name: osSource.os?.name ?? "", version: osVersion, build: osSource.os?.build ?? "" },
       user: { name: first((record) => record.user?.name) ?? "", email: first((record) => record.user?.email) ?? "" },
       last_check_in: freshest.last_check_in ?? null,
       ownership: first((record) => record.ownership) ?? "",
@@ -103,6 +116,8 @@ export function mergeRecords(records) {
       },
       jamf_managed: group.find((record) => record.source === "jamf")?.managed ?? null,
       crowdstrike: group.find((record) => record.source === "crowdstrike")?.sensor ?? null,
+      architecture: first((record) => record.architecture) ?? "",
+      extension_attributes: group.flatMap((record) => record.extension_attributes ?? []),
       sources,
       apps: appSource ? appSource.apps : [],
       vulnerabilities: vulnerabilitySource ? vulnerabilitySource.vulnerabilities : null,
@@ -118,7 +133,8 @@ export function mergeRecords(records) {
 export function osBaselines(devices, settings = {}) {
   const macVersions = devices.filter((device) => device.platform === "macos").map((device) => device.os.version);
   const winVersions = devices.filter((device) => device.platform === "windows").map((device) => device.os.version);
-  const latestMac = settings.latestMacos || newest(macVersions) || null;
+  const publishedMac = Object.values(settings.macLatestByMajor ?? {});
+  const latestMac = settings.latestMacos || newest(publishedMac) || newest(macVersions) || null;
   const latestWin = newest(winVersions);
   const latestWinBuild = Number(settings.latestWindowsBuild) || windowsBuild(latestWin);
   const latestUbrByBuild = {};
@@ -126,14 +142,18 @@ export function osBaselines(devices, settings = {}) {
     const build = windowsBuild(version);
     latestUbrByBuild[build] = Math.max(latestUbrByBuild[build] ?? 0, windowsUbr(version));
   }
+  // Microsoft's own latest fixed revision per build wins over "newest seen in the fleet".
+  for (const [build, ubr] of Object.entries(settings.winLatestUbrByBuild ?? {})) latestUbrByBuild[build] = Math.max(latestUbrByBuild[build] ?? 0, ubr);
   const latestMacByMajor = {};
   for (const version of macVersions) {
     const major = majorOf(version);
     if (!latestMacByMajor[major] || compareVersions(version, latestMacByMajor[major]) > 0) latestMacByMajor[major] = version;
   }
+  // Apple's published latest release per major (from the SOFA feed) wins when known.
+  for (const [major, version] of Object.entries(settings.macLatestByMajor ?? {})) latestMacByMajor[major] = version;
   return {
-    macos: { latest: latestMac, latest_major: majorOf(latestMac), supported_majors: 3, minimum: settings.minMacos || null, latest_by_major: latestMacByMajor },
-    windows: { latest: latestWin, latest_build: latestWinBuild, minimum_build: Number(settings.minWindowsBuild) || 22000, latest_ubr_by_build: latestUbrByBuild }
+    macos: { latest: latestMac, latest_major: majorOf(latestMac), supported_majors: 3, minimum: settings.minMacos || null, latest_by_major: latestMacByMajor, published: publishedMac.length > 0 },
+    windows: { latest: latestWin, latest_build: latestWinBuild, minimum_build: Number(settings.minWindowsBuild) || 22000, latest_ubr_by_build: latestUbrByBuild, published: Object.keys(settings.winLatestUbrByBuild ?? {}).length > 0 }
   };
 }
 
@@ -146,7 +166,7 @@ function osStatus(device, baselines) {
     if (base.minimum && compareVersions(version, base.minimum) < 0) return { status: "below_minimum", issue: { id: "os_below_minimum", severity: "high", title: "macOS below required minimum", detail: `Running ${version}; your minimum is ${base.minimum}.` } };
     if (base.latest_major && macReleaseIndex(base.latest_major) - macReleaseIndex(major) >= base.supported_majors) return { status: "unsupported", issue: { id: "os_unsupported", severity: "critical", title: "macOS no longer receiving security updates", detail: `macOS ${major} is ${macReleaseIndex(base.latest_major) - macReleaseIndex(major)} releases behind macOS ${base.latest_major}. Apple generally ships security fixes only for the current and two previous releases.` } };
     const latestForMajor = base.latest_by_major[major];
-    if (latestForMajor && compareVersions(version, latestForMajor) < 0) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "macOS security update pending", detail: `Running ${version}; ${latestForMajor} is already deployed elsewhere in the fleet.` } };
+    if (latestForMajor && compareVersions(version, latestForMajor) < 0) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "macOS security update pending", detail: `Running ${version}; ${latestForMajor} is ${base.published ? "the latest Apple release for macOS " + major : "already deployed elsewhere in the fleet"}.` } };
     if (major < base.latest_major) return { status: "older_release", issue: { id: "os_older_release", severity: "low", title: "Older macOS release", detail: `Running macOS ${major}; macOS ${base.latest_major} is available.` } };
     return { status: "current", issue: null };
   }
@@ -156,7 +176,7 @@ function osStatus(device, baselines) {
     if (build && build < 22000) return { status: "unsupported", issue: { id: "os_unsupported", severity: "critical", title: "Windows 10 is out of support", detail: `Build ${build}. Windows 10 stopped receiving free security updates on October 14, 2025 unless enrolled in Extended Security Updates.` } };
     if (build && build < base.minimum_build) return { status: "below_minimum", issue: { id: "os_below_minimum", severity: "high", title: "Windows below required build", detail: `Build ${build}; your minimum is ${base.minimum_build}.` } };
     const latestUbr = base.latest_ubr_by_build[build] ?? 0;
-    if (windowsUbr(version) < latestUbr) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "Windows cumulative update pending", detail: `Running ${version}; 10.0.${build}.${latestUbr} is already deployed elsewhere in the fleet.` } };
+    if (windowsUbr(version) < latestUbr) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "Windows cumulative update pending", detail: `Running ${version}; 10.0.${build}.${latestUbr} is ${base.published ? "Microsoft's latest security build for this release" : "already deployed elsewhere in the fleet"}.` } };
     if (build < base.latest_build) return { status: "older_release", issue: { id: "os_older_release", severity: "low", title: "Older Windows feature release", detail: `Build ${build}; build ${base.latest_build} is in use in the fleet.` } };
     return { status: "current", issue: null };
   }
@@ -195,8 +215,9 @@ export function appBaselines(devices, catalog = []) {
 function appFindings(device, baselines) {
   const behind = [];
   for (const app of device.apps ?? []) {
+    if (!app.version) continue;
     const baseline = baselines.get(`${device.platform}:${appKey(app.name)}`);
-    if (!baseline || !app.version || compareVersions(app.version, baseline.target_version) >= 0) continue;
+    if (!baseline || app.version === baseline.target_version || compareVersions(app.version, baseline.target_version) >= 0) continue;
     const majorGap = majorOf(app.version) < majorOf(baseline.target_version);
     const severity = baseline.catalog_severity ?? (baseline.watchlisted ? (majorGap ? "high" : "medium") : "low");
     behind.push({ name: app.name, version: app.version, target_version: baseline.target_version, target_source: baseline.target_source, severity });
@@ -204,7 +225,30 @@ function appFindings(device, baselines) {
   return behind.sort((left, right) => SEVERITY_WEIGHT[right.severity] - SEVERITY_WEIGHT[left.severity] || left.name.localeCompare(right.name));
 }
 
-export function evaluateDevice(device, { baselines, apps, now = Date.now(), staleDays = 14, connected = {}, softwareRules = [], trackedPatches = [] }) {
+export function mergeVulnerabilities(device, cveFeeds) {
+  const fromVendor = Array.isArray(device.vulnerabilities) ? device.vulnerabilities : null;
+  const fromFeeds = cveFeeds?.osCves?.(device) ?? null;
+  if (!fromVendor && !fromFeeds) return null;
+  const merged = new Map();
+  for (const vuln of fromVendor ?? []) {
+    const kev = cveFeeds?.kevFor?.(vuln.cve);
+    merged.set(vuln.cve, { ...vuln, kev: vuln.kev || Boolean(kev), exploit: kev && !vuln.exploit ? "Actively used" : vuln.exploit, sources: [vuln.source ?? "crowdstrike"] });
+  }
+  for (const vuln of fromFeeds ?? []) {
+    const existing = merged.get(vuln.cve);
+    if (existing) {
+      existing.sources.push(vuln.source);
+      existing.fixed_in = existing.fixed_in ?? vuln.fixed_in;
+      if (vuln.kev) existing.kev = true;
+    } else {
+      merged.set(vuln.cve, { ...vuln, sources: [vuln.source] });
+    }
+  }
+  return [...merged.values()];
+}
+
+export function evaluateDevice(device, { baselines, apps, now = Date.now(), staleDays = 14, connected = {}, softwareRules = [], trackedPatches = [], cveFeeds = null }) {
+  device = { ...device, vulnerabilities: mergeVulnerabilities(device, cveFeeds) };
   const issues = [];
   const add = (issue) => issues.push(issue);
   const ageDays = device.last_check_in ? (now - Date.parse(device.last_check_in)) / DAY : null;
@@ -237,10 +281,13 @@ export function evaluateDevice(device, { baselines, apps, now = Date.now(), stal
     add({ id: "apps_outdated", severity, title: `${behindApps.length} app${behindApps.length === 1 ? "" : "s"} behind`, detail: behindApps.slice(0, 4).map((app) => `${app.name} ${app.version} → ${app.target_version}`).join(", ") + (behindApps.length > 4 ? `, +${behindApps.length - 4} more` : "") });
   }
 
-  const software = softwareRules.map((rule) => ({ rule_id: rule.id, name: rule.name, mode: rule.mode, severity: rule.severity, ...evaluateSoftwareRule(rule, device) }))
+  device.crowdstrike_connected = Boolean(connected.crowdstrike);
+  const software = softwareRules.map((rule) => ({ rule_id: rule.id, name: rule.name, kind: rule.kind ?? "software", mode: rule.mode, severity: rule.severity, detect_source: rule.detect_source ?? null, ...evaluateSoftwareRule(rule, device, now) }))
     .filter((entry) => entry.status !== "not_applicable");
   for (const entry of software) {
-    if (entry.mode === "required" && entry.status === "missing") add({ id: "software_missing", severity: entry.severity, title: `${entry.name} missing`, detail: `${entry.name} is required on every ${device.platform === "macos" ? "Mac" : "Windows PC"} but was not found in the installed applications.` });
+    if (entry.kind === "os" && entry.status === "missing") { add({ id: "os_rule", severity: entry.severity, title: `${entry.name}: OS doesn't meet the rule`, detail: `This device runs ${entry.match?.name ?? ""} ${entry.match?.version ?? ""}${device.os?.build ? ` (build ${device.os.build})` : ""}, which doesn't meet the “${entry.name}” OS rule.`.replace(/\s+/g, " ") }); continue; }
+    if (entry.kind === "os") continue;
+    if (entry.mode === "required" && entry.status === "missing") add({ id: "software_missing", severity: entry.severity, title: `${entry.name} missing`, detail: entry.detect_source === "crowdstrike" && !device.apps_source ? `${entry.name} is required but no Falcon sensor has reported for this device in the last 7 days.` : `${entry.name} is required on every ${device.platform === "macos" ? "Mac" : "Windows PC"} in scope but was not found in the installed applications${entry.detect_source === "crowdstrike" ? " and no Falcon sensor is reporting" : ""}.` });
     if (entry.mode === "prohibited" && entry.status === "installed") add({ id: "software_prohibited", severity: entry.severity, title: `${entry.name} still installed`, detail: `${entry.name} is scheduled for removal but is still installed (${entry.match?.name ?? ""} ${entry.match?.version ?? ""}).`.trim() });
   }
   const patches = trackedPatches.map((patch) => ({ kb: patch.kb, title: patch.title, severity: patch.severity, ...evaluateTrackedPatch(patch, device) }))
@@ -294,11 +341,15 @@ export function evaluateDevice(device, { baselines, apps, now = Date.now(), stal
   };
 }
 
-export function computePosture(records, { catalog = [], now = Date.now(), staleDays = 14, osSettings = {}, connected = {}, softwareRules = [], trackedPatches = [] } = {}) {
+export function computePosture(records, { userGroups = {}, catalog = [], now = Date.now(), staleDays = 14, osSettings = {}, connected = {}, softwareRules = [], trackedPatches = [], cveFeeds = null } = {}) {
   const merged = mergeRecords(records).filter((device) => device.platform === "macos" || device.platform === "windows");
+  for (const device of merged) {
+    const email = String(device.user?.email ?? "").toLowerCase();
+    device.user_groups = email ? (typeof userGroups === "function" ? userGroups(email) : userGroups[email] ?? []) : [];
+  }
   const baselines = osBaselines(merged, osSettings);
   const apps = appBaselines(merged, catalog);
-  const devices = merged.map((device) => evaluateDevice(device, { baselines, apps, now, staleDays, connected, softwareRules, trackedPatches }))
+  const devices = merged.map((device) => evaluateDevice(device, { baselines, apps, now, staleDays, connected, softwareRules, trackedPatches, cveFeeds }))
     .sort((left, right) => right.risk_score - left.risk_score || left.hostname.localeCompare(right.hostname));
 
   const total = devices.length;
@@ -416,7 +467,10 @@ export function aggregateVulnerabilities(devices) {
     if (!Array.isArray(device.vulnerabilities)) continue;
     reporting += 1;
     for (const vuln of device.vulnerabilities) {
-      const entry = byCve.get(vuln.cve) ?? { cve: vuln.cve, severity: vuln.severity, score: vuln.score, exprt: vuln.exprt, exploit: vuln.exploit, kev: vuln.kev, description: vuln.description, products: new Set(), remediation: new Set(), kbs: new Set(), devices: 0, platforms: { macos: 0, windows: 0 }, first_seen: vuln.first_seen };
+      const entry = byCve.get(vuln.cve) ?? { cve: vuln.cve, severity: vuln.severity, score: vuln.score, exprt: vuln.exprt, exploit: vuln.exploit, kev: vuln.kev, description: vuln.description, url: vuln.url ?? null, products: new Set(), remediation: new Set(), kbs: new Set(), sources: new Set(), devices: 0, platforms: { macos: 0, windows: 0 }, first_seen: vuln.first_seen };
+      for (const source of vuln.sources ?? [vuln.source ?? "crowdstrike"]) entry.sources.add(source);
+      if (!entry.exploit && vuln.exploit) entry.exploit = vuln.exploit;
+      if (!entry.description && vuln.description) entry.description = vuln.description;
       entry.devices += 1;
       entry.platforms[device.platform] = (entry.platforms[device.platform] ?? 0) + 1;
       if (vuln.product) entry.products.add(vuln.product);
@@ -429,12 +483,21 @@ export function aggregateVulnerabilities(devices) {
       byCve.set(vuln.cve, entry);
     }
   }
-  const list = [...byCve.values()].map((entry) => ({ ...entry, products: [...entry.products].slice(0, 6), remediation: [...entry.remediation].slice(0, 3), kbs: [...entry.kbs] }))
+  const list = [...byCve.values()].map((entry) => ({ ...entry, products: [...entry.products].slice(0, 6), remediation: [...entry.remediation].slice(0, 3), kbs: [...entry.kbs], sources: [...entry.sources] }))
     .sort((left, right) => Number(right.kev || right.exploit === "Actively used") - Number(left.kev || left.exploit === "Actively used") || SEVERITY_WEIGHT[right.severity] - SEVERITY_WEIGHT[left.severity] || right.devices - left.devices || (right.score ?? 0) - (left.score ?? 0));
   return { devices_reporting: reporting, unique: list.length, total: list.reduce((sum, entry) => sum + entry.devices, 0), list };
 }
 
+// What the device list needs: full app, CVE and raw details are only sent when a
+// single device is opened, which keeps the list small for large fleets.
 export function deviceListItem(device) {
-  const { apps: _apps, raw: _raw, vulnerabilities: _vulnerabilities, ...rest } = device;
-  return { ...rest, app_count: device.apps?.length ?? 0 };
+  const { apps: _apps, raw: _raw, vulnerabilities: _vulnerabilities, apps_behind: appsBehind, extension_attributes: _attributes, patches, ...rest } = device;
+  return {
+    ...rest,
+    issues: (device.issues ?? []).map(({ id, key, title, severity }) => ({ id, key, title, severity })),
+    app_count: device.apps?.length ?? 0,
+    apps_behind_count: appsBehind?.length ?? 0,
+    apps_behind_names: [...new Set((appsBehind ?? []).map((app) => app.name))],
+    patches_missing: (patches ?? []).filter((patch) => patch.status === "missing").length
+  };
 }

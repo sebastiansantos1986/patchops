@@ -13,7 +13,26 @@ export class PostgresStore {
     this.ready = this.initialize();
   }
 
+  // Keeps retrying until the database answers, instead of crashing the whole service in a loop.
+  // /api/health reports the database state meanwhile.
   async initialize() {
+    this.pool.on("error", (error) => console.error(`[db] connection error: ${error.code ?? error.message}`));
+    for (let attempt = 1; ; attempt += 1) {
+      try {
+        await this.createTables();
+        this.status = "ok";
+        if (attempt > 1) console.log("[db] connected");
+        return;
+      } catch (error) {
+        const wait = Math.min(30, 2 ** attempt);
+        this.status = error.code === "ENOTFOUND" ? "host_not_found" : error.code ?? "unreachable";
+        console.error(`[db] can't reach the database (${error.code ?? error.message}${error.hostname ? ` for host ${error.hostname}` : ""}). Check DATABASE_URL: use the database's Internal URL from the same Render region and environment. Retrying in ${wait}s.`);
+        await new Promise((resolve) => setTimeout(resolve, wait * 1000));
+      }
+    }
+  }
+
+  async createTables() {
     await this.pool.query(`
       CREATE TABLE IF NOT EXISTS patchops_devices (id TEXT PRIMARY KEY, serial_number TEXT UNIQUE NOT NULL, agent_token_hash TEXT NOT NULL, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_campaigns (id TEXT PRIMARY KEY, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());

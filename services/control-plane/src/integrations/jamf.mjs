@@ -7,8 +7,32 @@
 
 import { ConnectorError, fetchJSON } from "./http.mjs";
 import { Capability } from "./inspect.mjs";
+const fmt = (value) => Number(value).toLocaleString("en-US");
 
-const SECTIONS = ["GENERAL", "HARDWARE", "OPERATING_SYSTEM", "DISK_ENCRYPTION", "SECURITY", "USER_AND_LOCATION", "APPLICATIONS"];
+
+const SECTIONS = ["GENERAL", "HARDWARE", "OPERATING_SYSTEM", "DISK_ENCRYPTION", "SECURITY", "USER_AND_LOCATION", "APPLICATIONS", "EXTENSION_ATTRIBUTES"];
+
+// Extension attributes can appear at the top level and inside sections; collect them all.
+export function jamfExtensionAttributes(computer) {
+  const found = [];
+  const visit = (value, depth) => {
+    if (!value || typeof value !== "object" || depth > 2) return;
+    for (const [key, child] of Object.entries(value)) {
+      if (key === "extensionAttributes" && Array.isArray(child)) {
+        for (const attribute of child) if (attribute?.name) found.push({ name: String(attribute.name), value: (attribute.values ?? [attribute.value]).filter((item) => item !== null && item !== undefined && item !== "").join(", ") });
+      } else if (!Array.isArray(child)) visit(child, depth + 1);
+    }
+  };
+  visit(computer, 0);
+  return [...new Map(found.map((attribute) => [attribute.name.toLowerCase(), attribute])).values()];
+}
+
+export const normalizeArchitecture = (value) => {
+  const text = String(value ?? "").toLowerCase();
+  if (/arm64|aarch64|apple/.test(text)) return "arm64";
+  if (/x86_64|x64|amd64|i386|intel/.test(text)) return "x86_64";
+  return "";
+};
 
 export function jamfConfig(env = process.env) {
   const config = {
@@ -68,6 +92,8 @@ export function normalizeJamfComputer(computer) {
       firewall: typeof security.firewallEnabled === "boolean" ? security.firewallEnabled : null
     },
     ownership: "",
+    architecture: normalizeArchitecture(hardware.processorArchitecture ?? hardware.processorType),
+    extension_attributes: jamfExtensionAttributes(computer),
     apps: Array.isArray(computer.applications)
       ? computer.applications.map((app) => ({ name: String(app.name ?? "").replace(/\.app$/i, ""), version: app.version ?? "", publisher: "", bundle_id: app.bundleId ?? "" })).filter((app) => app.name)
       : null
@@ -112,6 +138,13 @@ export class JamfConnector {
     return token;
   }
 
+
+  // Live progress for the dashboard and Terminal ("Hosts 2,000 of 4,512 · …").
+  report(part, text) {
+    this.progressParts = { ...(this.progressParts ?? {}), [part]: text };
+    this.onProgress?.(Object.values(this.progressParts).filter(Boolean).join(" · "));
+  }
+
   async listComputers() {
     const computers = [];
     const sections = SECTIONS.map((section) => `section=${section}`).join("&");
@@ -123,12 +156,14 @@ export class JamfConnector {
       });
       const results = result?.results ?? [];
       computers.push(...results);
+      this.report("computers", `Computers ${fmt(computers.length)} of ${fmt(result?.totalCount ?? computers.length)}`);
       if (!results.length || computers.length >= Number(result?.totalCount ?? 0)) break;
     }
     return computers;
   }
 
   async collect() {
+    this.progressParts = {};
     const capability = this.capabilities.computers;
     capability.begin();
     try {
