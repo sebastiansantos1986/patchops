@@ -45,6 +45,7 @@ export class PostgresStore {
       CREATE TABLE IF NOT EXISTS patchops_console_users (id TEXT PRIMARY KEY, username TEXT UNIQUE NOT NULL, password_hash TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_patch_catalog (id TEXT PRIMARY KEY, identity TEXT UNIQUE NOT NULL, data JSONB NOT NULL, updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
       CREATE TABLE IF NOT EXISTS patchops_remediations (id TEXT PRIMARY KEY, device_id TEXT NOT NULL, data JSONB NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
+      CREATE TABLE IF NOT EXISTS patchops_relay_snapshots (source TEXT PRIMARY KEY, data BYTEA NOT NULL, received_at TIMESTAMPTZ NOT NULL DEFAULT NOW());
     `);
   }
 
@@ -199,6 +200,20 @@ export class PostgresStore {
     };
     await this.pool.query("INSERT INTO patchops_settings (key, data) VALUES ('notifications', $1) ON CONFLICT (key) DO UPDATE SET data = EXCLUDED.data, updated_at = NOW()", [settings]);
     return settings;
+  }
+
+  // Relayed source data is stored gzip-compressed as one blob per source: a few MB instead of a
+  // huge JSONB value, which a small Postgres instance can't parse in memory.
+  async getRelaySnapshot(source) {
+    await this.ready;
+    const result = await this.pool.query("SELECT data FROM patchops_relay_snapshots WHERE source = $1", [source]);
+    return result.rowCount ? result.rows[0].data : null;
+  }
+
+  async saveRelaySnapshot(source, compressed) {
+    await this.ready;
+    await this.pool.query("INSERT INTO patchops_relay_snapshots (source, data) VALUES ($1, $2) ON CONFLICT (source) DO UPDATE SET data = EXCLUDED.data, received_at = NOW()", [source, compressed]);
+    await this.pool.query("DELETE FROM patchops_settings WHERE key = $1", [`config:relay:${source}`]); // older format
   }
 
   async getConfig(key) {

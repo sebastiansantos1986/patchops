@@ -8,6 +8,7 @@ import { SAMPLE_TRACKED_PATCHES, sampleFleet } from "./integrations/sample-fleet
 import { DEFAULT_SOFTWARE_RULES, coverageWidget, defaultDashboards, describeRule, evaluateSoftwareRule, sanitizeDashboard, sanitizeSoftwareRule, sanitizeTrackedPatch } from "./fleet-config.mjs";
 import { RELAY_SOURCES, buildRelaySnapshot, relayConfig, sendRelaySnapshot } from "./relay.mjs";
 import { hostname } from "node:os";
+import { gunzipSync, gzipSync } from "node:zlib";
 import { QueryError, describeQuery, groupValue, parseQuery, queryReference, referencedGroups, runQuery } from "./fleet-query.mjs";
 
 // Demo data: every sample user is in one country group, and some are in Engineering.
@@ -148,8 +149,11 @@ export class PostureService {
     this.initialized = (async () => {
       if (this.relayToken) {
         for (const source of RELAY_SOURCES) {
-          const snapshot = await this.store.getConfig(`relay:${source}`);
-          if (snapshot?.records) this.relayed[source] = snapshot;
+          try {
+            const compressed = await this.store.getRelaySnapshot?.(source);
+            const snapshot = compressed ? JSON.parse(gunzipSync(compressed)) : await this.store.getConfig(`relay:${source}`);
+            if (snapshot?.records) this.relayed[source] = snapshot;
+          } catch (error) { this.log(`[relay] couldn't load the saved ${source} data: ${error.message}`); }
         }
       }
       if (!this.diskCache?.enabled) return;
@@ -267,7 +271,7 @@ export class PostureService {
         // A sleeping free Render service can take a minute to wake: try once more.
         if (attempt === 1 && !error.status) { await new Promise((resolve) => setTimeout(resolve, 20_000)); continue; }
         this.relayStatus[source] = { ...this.relayStatus[source], state: "error", error: error.message, attempted_at: new Date(this.now()).toISOString() };
-        this.log(`[relay] ${label}: upload failed: ${error.message}`);
+        this.log(`[relay] ${label}: upload failed (${snapshot.records.length.toLocaleString("en-US")} devices): ${error.message}`);
         return this.relayStatus[source];
       }
     }
@@ -279,7 +283,9 @@ export class PostureService {
     if (!this.relayToken) throw Object.assign(new Error("relay is not enabled"), { status: 404 });
     if (this.connectors[snapshot.source]) throw Object.assign(new Error(`${snapshot.source} is synced directly here; relay not needed`), { status: 409 });
     const entry = { ...snapshot, received_at: new Date(this.now()).toISOString() };
-    await this.store.saveConfig(`relay:${snapshot.source}`, entry);
+    const compressed = gzipSync(JSON.stringify(entry), { level: 6 });
+    if (this.store.saveRelaySnapshot) await this.store.saveRelaySnapshot(snapshot.source, compressed);
+    else await this.store.saveConfig(`relay:${snapshot.source}`, entry);
     this.relayed[snapshot.source] = entry;
     this.computed = null;
     this.log(`[relay] ${SOURCE_LABELS[snapshot.source] ?? snapshot.source}: received ${entry.records.length.toLocaleString("en-US")} devices from ${entry.sender || "a PatchOps relay"}`);

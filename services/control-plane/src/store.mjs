@@ -157,6 +157,10 @@ export class Store {
 
   saveConfig(key, value) { this.config = { ...this.config, [key]: structuredClone(value) }; return value; }
 
+  getRelaySnapshot(source) { return this.relaySnapshots?.[source] ?? null; }
+
+  saveRelaySnapshot(source, compressed) { this.relaySnapshots = { ...this.relaySnapshots, [source]: compressed }; }
+
   getPostureHistory() { return this.postureHistory ?? []; }
 
   savePostureHistory(history) { this.postureHistory = history; return history; }
