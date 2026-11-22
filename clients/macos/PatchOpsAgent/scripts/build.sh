@@ -36,6 +36,18 @@ xcrun lipo -create \
 rm -f "$BUILD_DIRECTORY/PatchOpsAgent-arm64" "$BUILD_DIRECTORY/PatchOpsAgent-x86_64"
 
 cp "$PROJECT_DIRECTORY/Info.plist" "$TEMP_APP_DIRECTORY/Contents/Info.plist"
+
+# App icon from the PatchOps brand artwork (assets/brand/patchops-icon-1024.png).
+ICON_SOURCE="$PROJECT_DIRECTORY/../../../assets/brand/patchops-icon-1024.png"
+if [ -f "$ICON_SOURCE" ]; then
+  ICONSET="$(dirname "$TEMP_APP_DIRECTORY")/AppIcon.iconset"
+  mkdir -p "$ICONSET"
+  for SIZE in 16 32 128 256 512; do
+    sips -z "$SIZE" "$SIZE" "$ICON_SOURCE" --out "$ICONSET/icon_${SIZE}x${SIZE}.png" >/dev/null
+    sips -z "$((SIZE * 2))" "$((SIZE * 2))" "$ICON_SOURCE" --out "$ICONSET/icon_${SIZE}x${SIZE}@2x.png" >/dev/null
+  done
+  iconutil -c icns "$ICONSET" -o "$TEMP_APP_DIRECTORY/Contents/Resources/AppIcon.icns"
+fi
 codesign --force --deep --sign - "$TEMP_APP_DIRECTORY"
 
 if [ -e "$APP_DIRECTORY" ]; then
