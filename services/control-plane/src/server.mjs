@@ -172,7 +172,7 @@ export function createApp(store, options = {}) {
       if (request.method === "GET" && request.url === "/api/posture/export.csv") {
         if (!dashboardAuthorized()) return send(401, { error: "unauthorized" });
         response.setHeader("content-type", "text/csv; charset=utf-8");
-        response.setHeader("content-disposition", `attachment; filename="fleet-posture-${new Date().toISOString().slice(0, 10)}.csv"`);
+        response.setHeader("content-disposition", `attachment; filename="posture-${new Date().toISOString().slice(0, 10)}.csv"`);
         return response.writeHead(200).end(await posture.csv());
       }
       if (request.method === "GET" && request.url.startsWith("/api/posture/devices/")) {

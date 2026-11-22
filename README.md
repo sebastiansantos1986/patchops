@@ -36,9 +36,9 @@ npm run simulate
 
 Run API tests with `npm run check` and agent tests with `npm run check:agent`. Run one safe agent lifecycle cycle with `go run ./agents/cmd/patchops-agent --once`.
 
-## Fleet Posture: Intune + Jamf dashboard
+## Posture: Intune + Jamf dashboard
 
-The console opens on **Fleet Posture**, a read-only risk dashboard. It correlates Microsoft Intune, Jamf Pro and the PatchOps agent by serial number and shows device health, OS currency, outdated apps and an executive posture score with CSV export. **Dashboards**, **Explore** (Cyclops-style `e/ f/ r/` queries) and **Fleet Rules** (required agents and tracked Windows KBs) build reporting views on the same data. Everything runs on a labelled sample fleet until you add API credentials:
+The console opens on **Posture**, a read-only risk dashboard. It correlates Microsoft Intune, Jamf Pro and the PatchOps agent by serial number and shows device health, OS currency, outdated apps and an executive posture score with CSV export. **Dashboards**, **Explore** (Cyclops-style `e/ f/ r/` queries) and **Device rules** (required agents and tracked Windows KBs) build reporting views on the same data. Everything runs on a labelled sample fleet until you add API credentials:
 
 ```bash
 cp .env.example .env   # add Intune and/or Jamf read-only API credentials
@@ -107,7 +107,7 @@ The POC scaffold under `poc-scaffold/` describes how to build the first working 
 
 ## Key Documents
 
-- [Fleet Posture (Intune + Jamf)](docs/fleet-posture.md)
+- [Posture (Intune + Jamf)](docs/fleet-posture.md)
 - [MVP Technical Spec](docs/mvp-technical-spec.md)
 - [Product Architecture](docs/architecture.md)
 - [Security Model](docs/security-model.md)

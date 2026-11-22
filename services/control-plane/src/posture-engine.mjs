@@ -142,7 +142,7 @@ export function osBaselines(devices, settings = {}) {
     const build = windowsBuild(version);
     latestUbrByBuild[build] = Math.max(latestUbrByBuild[build] ?? 0, windowsUbr(version));
   }
-  // Microsoft's own latest fixed revision per build wins over "newest seen in the fleet".
+  // Microsoft's own latest fixed revision per build wins over "newest seen on your devices".
   for (const [build, ubr] of Object.entries(settings.winLatestUbrByBuild ?? {})) latestUbrByBuild[build] = Math.max(latestUbrByBuild[build] ?? 0, ubr);
   const latestMacByMajor = {};
   for (const version of macVersions) {
@@ -166,7 +166,7 @@ function osStatus(device, baselines) {
     if (base.minimum && compareVersions(version, base.minimum) < 0) return { status: "below_minimum", issue: { id: "os_below_minimum", severity: "high", title: "macOS below required minimum", detail: `Running ${version}; your minimum is ${base.minimum}.` } };
     if (base.latest_major && macReleaseIndex(base.latest_major) - macReleaseIndex(major) >= base.supported_majors) return { status: "unsupported", issue: { id: "os_unsupported", severity: "critical", title: "macOS no longer receiving security updates", detail: `macOS ${major} is ${macReleaseIndex(base.latest_major) - macReleaseIndex(major)} releases behind macOS ${base.latest_major}. Apple generally ships security fixes only for the current and two previous releases.` } };
     const latestForMajor = base.latest_by_major[major];
-    if (latestForMajor && compareVersions(version, latestForMajor) < 0) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "macOS security update pending", detail: `Running ${version}; ${latestForMajor} is ${base.published ? "the latest Apple release for macOS " + major : "already deployed elsewhere in the fleet"}.` } };
+    if (latestForMajor && compareVersions(version, latestForMajor) < 0) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "macOS security update pending", detail: `Running ${version}; ${latestForMajor} is ${base.published ? "the latest Apple release for macOS " + major : "already deployed on other devices"}.` } };
     if (major < base.latest_major) return { status: "older_release", issue: { id: "os_older_release", severity: "low", title: "Older macOS release", detail: `Running macOS ${major}; macOS ${base.latest_major} is available.` } };
     return { status: "current", issue: null };
   }
@@ -176,8 +176,8 @@ function osStatus(device, baselines) {
     if (build && build < 22000) return { status: "unsupported", issue: { id: "os_unsupported", severity: "critical", title: "Windows 10 is out of support", detail: `Build ${build}. Windows 10 stopped receiving free security updates on October 14, 2025 unless enrolled in Extended Security Updates.` } };
     if (build && build < base.minimum_build) return { status: "below_minimum", issue: { id: "os_below_minimum", severity: "high", title: "Windows below required build", detail: `Build ${build}; your minimum is ${base.minimum_build}.` } };
     const latestUbr = base.latest_ubr_by_build[build] ?? 0;
-    if (windowsUbr(version) < latestUbr) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "Windows cumulative update pending", detail: `Running ${version}; 10.0.${build}.${latestUbr} is ${base.published ? "Microsoft's latest security build for this release" : "already deployed elsewhere in the fleet"}.` } };
-    if (build < base.latest_build) return { status: "older_release", issue: { id: "os_older_release", severity: "low", title: "Older Windows feature release", detail: `Build ${build}; build ${base.latest_build} is in use in the fleet.` } };
+    if (windowsUbr(version) < latestUbr) return { status: "update_available", issue: { id: "os_update_available", severity: "medium", title: "Windows cumulative update pending", detail: `Running ${version}; 10.0.${build}.${latestUbr} is ${base.published ? "Microsoft's latest security build for this release" : "already deployed on other devices"}.` } };
+    if (build < base.latest_build) return { status: "older_release", issue: { id: "os_older_release", severity: "low", title: "Older Windows feature release", detail: `Build ${build}; build ${base.latest_build} is in use on other devices.` } };
     return { status: "current", issue: null };
   }
   return { status: "unknown", issue: null };

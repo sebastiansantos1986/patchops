@@ -1,6 +1,6 @@
 # Vendor logos
 
-PatchOps shows a vendor's logo on Integrations, Fleet posture and Data sources when a file with the
+PatchOps shows a vendor's logo on Integrations, Posture and Data sources when a file with the
 right name is in this folder. Without one it shows a monogram (IN, JF, CS…).
 
 | File name (`.svg` preferred, `.png` also works) | Vendor |

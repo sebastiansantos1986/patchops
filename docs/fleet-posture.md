@@ -1,6 +1,6 @@
-# Fleet Posture: Intune + Jamf dashboard
+# Posture: Intune + Jamf dashboard
 
-**Fleet Posture** is the first page you see after signing in. It pulls device data from Microsoft Intune and Jamf Pro. It matches each computer across both systems by serial number and adds the installed-app inventory collected by the PatchOps agent. The page then answers four questions:
+**Posture** is the first page you see after signing in. It pulls device data from Microsoft Intune and Jamf Pro. It matches each computer across both systems by serial number and adds the installed-app inventory collected by the PatchOps agent. The page then answers four questions:
 
 - **Device health:** is the disk encrypted, does Intune consider the device compliant, has it checked in recently, and is it enrolled in the right MDM?
 - **OS currency:** which Macs and PCs are behind on updates, or on releases that no longer get security fixes?
@@ -26,7 +26,7 @@ The connectors only **read** data. PatchOps never changes anything in Intune or 
 No write permissions and no delegated permissions are needed. Granting admin consent requires the Global Administrator or Privileged Role Administrator role in Microsoft Entra ID; creating the app registration can be done by an Application Administrator.
 
 1. Open the [Microsoft Entra admin center](https://entra.microsoft.com) and go to **Identity → Applications → App registrations → New registration**.
-2. Name it `PatchOps Fleet Posture`, choose **Accounts in this organizational directory only**, leave the Redirect URI empty, and click **Register**.
+2. Name it `PatchOps Posture`, choose **Accounts in this organizational directory only**, leave the Redirect URI empty, and click **Register**.
 3. On the app's **Overview** page, copy the **Application (client) ID** and the **Directory (tenant) ID**.
 4. Go to **API permissions → Add a permission → Microsoft Graph → Application permissions**. Add **`DeviceManagementManagedDevices.Read.All`**, then click **Grant admin consent for <your organization>**.
 5. Go to **Certificates & secrets → Client secrets → New client secret**. Choose an expiry and copy the secret **Value** immediately; it is shown only once.
@@ -35,14 +35,14 @@ No write permissions and no delegated permissions are needed. Granting admin con
 
 1. In Jamf Pro, go to **Settings → System → API roles and clients**.
 2. On the **API Roles** tab, click **New**, name it `PatchOps read-only`, and add the privilege **Read Computers**. Save.
-3. On the **API Clients** tab, click **New**, name it `PatchOps Fleet Posture`, assign the `PatchOps read-only` role, toggle **Enable API client**, and save.
+3. On the **API Clients** tab, click **New**, name it `PatchOps Posture`, assign the `PatchOps read-only` role, toggle **Enable API client**, and save.
 4. Click **Generate client secret** and copy both the **Client ID** and the **Client Secret**.
 5. Your Jamf URL is the address you sign in to, for example `https://yourcompany.jamfcloud.com`.
 
 ## 2b. Connect CrowdStrike Falcon (optional, about 3 minutes)
 
 1. In the Falcon console, go to **Support and resources → API clients and keys → Create API client**.
-2. Name it `PatchOps Fleet Posture` and tick only **Read** permissions:
+2. Name it `PatchOps Posture` and tick only **Read** permissions:
    - **Hosts → Read** (required): devices and sensor health.
    - **Assets → Read** (optional): installed applications, from Falcon Discover / Exposure Management.
    - **Vulnerabilities → Read** (optional): open CVEs with remediation, from Falcon Spotlight.
@@ -101,7 +101,7 @@ JAMF_CLIENT_ID=paste-the-client-id
 JAMF_CLIENT_SECRET=paste-the-client-secret
 ```
 
-Stop `npm run dev` (Ctrl+C) and start it again. The first sync runs when you open **Fleet Posture**, and then again every 30 minutes. **Sync now** forces an immediate sync. The source cards at the top show what each system returned, or the exact error if a credential or permission is wrong.
+Stop `npm run dev` (Ctrl+C) and start it again. The first sync runs when you open **Posture**, and then again every 30 minutes. **Sync now** forces an immediate sync. The source cards at the top show what each system returned, or the exact error if a credential or permission is wrong.
 
 `.env` is listed in `.gitignore`. Never commit it.
 
@@ -113,13 +113,13 @@ Add the same variables under the API service's **Environment** settings instead 
 
 ---
 
-## Dashboards, Explore and Fleet Rules
+## Dashboards, Explore and Device rules
 
 Three more pages in the sidebar turn the merged fleet into reports, in the same style as Cyclops:
 
 - **Dashboards:** saved reporting views. Out of the box you get *IT - Security Agents Status* (one installed/missing donut per required agent, plus removal-progress trends for software being uninstalled), *Windows Patch Rollout* and *Device Health*. **Add widget** builds donuts, trends, numbers, breakdowns or device tables from queries. **Download PDF** prints the dashboard. Clicking any segment, bar or number opens the matching devices in Explore.
 - **Explore:** ask which devices match. The **Builder** tab lets anyone add conditions without learning the syntax: pick a field, an operator in plain words ("within the last", "is at least") and a value, then use **+ Has / doesn't have…** for related records (software, updates, CVEs, the user and their groups) and **+ Either/or group** for OR. **Query text** accepts pasted Cyclops queries, and switching back turns them into blocks. The match count and a plain-English summary update as you type.
-- **Fleet Rules:** the required/prohibited software list and the Windows updates (KBs) you track.
+- **Device rules:** the required/prohibited software list and the Windows updates (KBs) you track.
 
 Every dashboard widget uses the same builder for its categories. Coverage donuts show a headline percentage per platform with the change since last week, and **What counts** spells out each category in plain English.
 
@@ -159,11 +159,11 @@ Each rule has three parts, all edited with the builder:
 - Required: CrowdStrike Falcon, BeyondTrust EPM and Okta Verify.
 - Being removed: Tenable Nessus Agent and CyberArk EPM.
 
-Adjust the conditions to the exact names your inventory reports: open a device in Fleet Posture and filter its apps to see them. Devices with no app inventory show as "No data" (grey) rather than missing. Violations also feed the posture score.
+Adjust the conditions to the exact names your inventory reports: open a device in Posture and filter its apps to see them. Devices with no app inventory show as "No data" (grey) rather than missing. Violations also feed the posture score.
 
 ### Operating system rules
 
-Choose **Add rule → Operating system requirement** to set the OS versions you allow, per platform, with the same builder. For example `OSBuild >= 26100` (Windows 11 24H2 or later) and `OSVersion >= 15.7` for Macs. Devices that match are *compliant*; others get an issue on Fleet posture, and the rule can be added to a dashboard as a compliance donut.
+Choose **Add rule → Operating system requirement** to set the OS versions you allow, per platform, with the same builder. For example `OSBuild >= 26100` (Windows 11 24H2 or later) and `OSVersion >= 15.7` for Macs. Devices that match are *compliant*; others get an issue on Posture, and the rule can be added to a dashboard as a compliance donut.
 
 When you pick **Name** in a software condition, the value box lists every app name reported in your fleet (most common first), so you can choose the exact name instead of guessing.
 
@@ -177,7 +177,7 @@ Queries can include or exclude users by group: `!r/ ( e/ User r/ ( e/ Group f/ E
 
 ### Tracking Windows updates (KBs)
 
-**Build-number inference (no setup).** Monthly Windows updates are cumulative, and each KB moves Windows to a known build. In **Fleet Rules → Track an update**, enter the KB and the build(s) it produces. Microsoft's *Windows 11 update history* page lists them as "KB50xxxxx (OS Build 26100.xxxx)". One KB often covers several releases, for example `26100.7171, 26200.7171`. Any PC on that feature build with an equal or higher revision counts as patched, using the build Intune already reports. This matches how cumulative updates work: a newer one includes the older fixes.
+**Build-number inference (no setup).** Monthly Windows updates are cumulative, and each KB moves Windows to a known build. In **Device rules → Track an update**, enter the KB and the build(s) it produces. Microsoft's *Windows 11 update history* page lists them as "KB50xxxxx (OS Build 26100.xxxx)". One KB often covers several releases, for example `26100.7171, 26200.7171`. Any PC on that feature build with an equal or higher revision counts as patched, using the build Intune already reports. This matches how cumulative updates work: a newer one includes the older fixes.
 
 **Exact KB lists (optional: Intune Remediations).** Use this for updates that don't change the build, such as .NET, or to see every installed KB:
 
@@ -189,7 +189,7 @@ Queries can include or exclude users by group: `!r/ ( e/ User r/ ( e/ Group f/ E
 6. In your Entra app registration, add the Graph **application** permission **`DeviceManagementConfiguration.Read.All`** and grant admin consent.
 7. Add `INTUNE_KB_SCRIPT_ID=<that GUID>` to `.env` and restart.
 
-The script only reads the update list; it changes nothing on the PC. Fleet Rules shows how many devices are reporting. Remediations requires the Windows licensing Microsoft lists for that feature (normally Windows Enterprise E3/E5 or equivalent). PatchOps reads the results through the Microsoft Graph **beta** endpoint, which Microsoft may change.
+The script only reads the update list; it changes nothing on the PC. Device rules shows how many devices are reporting. Remediations requires the Windows licensing Microsoft lists for that feature (normally Windows Enterprise E3/E5 or equivalent). PatchOps reads the results through the Microsoft Graph **beta** endpoint, which Microsoft may change.
 
 ## Independent vulnerability data (Apple, Microsoft, CISA)
 
