@@ -275,7 +275,7 @@ Manages:
 
 Produces:
 
-- Fleet compliance
+- Overall compliance
 - Device-level patch state
 - Software inventory
 - Vulnerable software reports
@@ -554,7 +554,7 @@ The current prototype should evolve into these first screens:
 
 1. Overview Dashboard
 
-- Fleet compliance
+- Overall compliance
 - Critical exposure
 - Installing now
 - Pending reboots

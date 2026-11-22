@@ -689,7 +689,7 @@ export class PostureService {
         if (!names.has(name.toLowerCase())) missing.add(name);
       }
     }
-    return missing.size ? `No software rule named ${[...missing].map((name) => `"${name}"`).join(", ")}. Create it in Fleet Rules (same spelling) or fix the name in this widget's queries.` : null;
+    return missing.size ? `No software rule named ${[...missing].map((name) => `"${name}"`).join(", ")}. Create it in Device rules (same spelling) or fix the name in this widget's queries.` : null;
   }
 
   async dashboardData(id) {

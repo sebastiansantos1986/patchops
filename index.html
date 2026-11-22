@@ -2795,7 +2795,7 @@
       <form class="auth-card" id="auth-form">
         <div class="auth-brand"><svg class="pm" width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><rect x="11" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="53" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="74" y="11" width="17" height="17" rx="4" class="pm-off"/><rect x="11" y="32" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="32" width="17" height="17" rx="4" class="pm-off"/><rect x="53" y="32" width="17" height="17" rx="4" class="pm-off"/><rect x="74" y="32" width="17" height="17" rx="4" class="pm-accent"/><rect x="11" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="53" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="74" y="53" width="17" height="17" rx="4" class="pm-off"/><rect x="11" y="74" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="74" width="17" height="17" rx="4" class="pm-off"/><rect x="53" y="74" width="17" height="17" rx="4" class="pm-off"/><rect x="74" y="74" width="17" height="17" rx="4" class="pm-off"/></svg><span>PatchOps</span></div>
         <h1 id="auth-title">Sign in</h1>
-        <p>Fleet posture, vulnerabilities and update progress across Intune, Jamf, CrowdStrike and the PatchOps agent.</p>
+        <p>Device posture, vulnerabilities and update progress across Intune, Jamf, CrowdStrike and the PatchOps agent.</p>
         <label>Username<input id="auth-username" type="text" value="admin" autocomplete="username" required autofocus /></label>
         <label>Password<input id="auth-password" type="password" autocomplete="current-password" required /></label>
         <button class="primary-btn" type="submit">Sign in</button>
@@ -2812,11 +2812,11 @@
           </div>
         </div>
 
-        <nav class="nav-group" aria-label="Fleet">
-          <div class="nav-title">Fleet</div>
-          <button class="nav-btn active" data-view="posture" title="Fleet Posture">
+        <nav class="nav-group" aria-label="Monitor">
+          <div class="nav-title">Monitor</div>
+          <button class="nav-btn active" data-view="posture" title="Posture">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M8 12h2l1.5-3 2 6 1.5-3h1"/></svg>
-            <span>Fleet posture</span>
+            <span>Posture</span>
           </button>
           <button class="nav-btn" data-view="fleet-dashboards" title="Dashboards">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7.5" cy="7.5" r="4.5"/><path d="M7.5 3v4.5H12"/><rect x="14" y="3" width="7" height="8" rx="1.5"/><path d="M3 21v-5"/><path d="M8 21v-3"/><path d="M13 21v-7"/><path d="M18 21v-4"/></svg>
@@ -2838,9 +2838,9 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
             <span>Update plans</span>
           </button>
-          <button class="nav-btn" data-view="fleet-rules" title="Fleet Rules">
+          <button class="nav-btn" data-view="fleet-rules" title="Device rules">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
-            <span>Fleet rules</span>
+            <span>Device rules</span>
           </button>
           <button class="nav-btn" data-view="notifications" title="Notifications">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
@@ -2910,7 +2910,7 @@
         </nav>
 
         <div class="sidebar-footer">
-          <strong>Fleet heartbeat</strong>
+          <strong>Device heartbeat</strong>
           <span>7,842 online · 318 installing · 58 reboot pending</span>
         </div>
       </aside>
@@ -2918,7 +2918,7 @@
       <main class="main">
         <header class="topbar">
           <div class="title-block">
-            <h1 id="page-title">Fleet posture</h1>
+            <h1 id="page-title">Posture</h1>
             <p id="page-subtitle">Device health, OS currency and outdated apps across every source</p>
           </div>
           <div class="gs-wrap">
@@ -2969,11 +2969,11 @@
 
             <section class="fm-hero" aria-labelledby="fm-headline">
               <div class="fm-intro">
-                <h2 class="fm-headline" id="fm-headline">Reading your fleet…</h2>
+                <h2 class="fm-headline" id="fm-headline">Reading your devices…</h2>
                 <p class="fm-sub" id="fm-sub">Every square is one device. Problems glow; healthy devices stay quiet.</p>
                 <div class="fm-score">
                   <span class="fm-score-value" id="pst-score">—</span>
-                  <span class="fm-score-label">Posture score <span class="badge" id="pst-score-badge"></span><button type="button" class="fm-how" data-tip="100 means no open issues. Each device loses 40 points per critical, 20 per high, 8 per medium and 3 per low issue; the fleet score is the average.">How it's scored</button></span>
+                  <span class="fm-score-label">Posture score <span class="badge" id="pst-score-badge"></span><button type="button" class="fm-how" data-tip="100 means no open issues. Each device loses 40 points per critical, 20 per high, 8 per medium and 3 per low issue; the overall score is the average.">How it's scored</button></span>
                 </div>
                 <svg class="pst-trend fm-trend" id="pst-trend" role="img" aria-label="Posture score trend"></svg>
                 <div class="fm-legend" id="pst-risk-legend"></div>
@@ -3002,7 +3002,7 @@
                 <div id="pst-os"></div>
               </article>
               <article class="panel">
-                <div class="pst-panel-head"><div><h2>Outdated applications</h2><p>Compared with your approved baseline, or the newest version already deployed in the fleet.</p></div><button class="ghost-btn" type="button" id="pst-apps-toggle">Show all</button></div>
+                <div class="pst-panel-head"><div><h2>Outdated applications</h2><p>Compared with your approved baseline, or the newest version already deployed on your devices.</p></div><button class="ghost-btn" type="button" id="pst-apps-toggle">Show all</button></div>
                 <div class="table-panel" style="box-shadow:none">
                   <table>
                     <thead><tr><th>Application</th><th class="pst-hide-sm">Installs</th><th>Behind</th><th class="pst-hide-sm">Target</th><th>Severity</th><th class="pst-hide-sm"></th></tr></thead>
@@ -3022,7 +3022,7 @@
               </div>
               <table>
                 <thead><tr><th>Device</th><th>OS</th><th>Sources</th><th class="pst-hide-sm">Last check-in</th><th class="pst-hide-sm">Encrypted</th><th>Risk</th><th class="pst-hide-sm">Top issue</th></tr></thead>
-                <tbody id="pst-devices"><tr><td colspan="7" class="pst-empty">Loading fleet posture…</td></tr></tbody>
+                <tbody id="pst-devices"><tr><td colspan="7" class="pst-empty">Loading devices…</td></tr></tbody>
               </table>
               <div class="pst-table-foot"><span id="pst-device-count"></span><button class="ghost-btn" type="button" id="pst-more" hidden>Show more</button></div>
             </div>
@@ -3125,7 +3125,7 @@
 
           <div class="view" id="fleet-sources">
             <div class="fd-toolbar"><span class="pst-updated">Data is saved on this computer so restarts are instant; syncs only fetch what changed, with a full refresh once a day.</span><button class="ghost-btn" type="button" id="ds-full">Full resync now</button></div>
-            <p class="fr-help">Everything each connected system sent on its last sync: what your API permissions allow, how often each field is filled, and a few raw sample records (secrets redacted). Open any device in Fleet Posture to see its complete raw record from every source.</p>
+            <p class="fr-help">Everything each connected system sent on its last sync: what your API permissions allow, how often each field is filled, and a few raw sample records (secrets redacted). Open any device in Posture to see its complete raw record from every source.</p>
             <div id="ds-list"></div>
           </div>
 
@@ -3192,7 +3192,7 @@
             <div class="kpi-grid">
               <article class="metric">
                 <div class="metric-top">
-                  <span class="metric-label">Fleet compliance</span>
+                  <span class="metric-label">Overall compliance</span>
                   <span class="metric-icon" style="color: var(--green)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 6 9 17l-5-5"/></svg></span>
                 </div>
                 <div class="metric-value">87%</div>
@@ -4092,13 +4092,13 @@
     <script src="config.js"></script>
     <script>
       const labels = {
-        posture: ["Fleet posture", "Device health, OS currency and outdated apps across every source"],
-        "fleet-dashboards": ["Dashboards", "Saved views of your fleet for reporting"],
+        posture: ["Posture", "Device health, OS currency and outdated apps across every source"],
+        "fleet-dashboards": ["Dashboards", "Saved views of your devices for reporting"],
         "fleet-explore": ["Explore", "Ask a question about every device"],
         "fleet-vulns": ["Vulnerabilities", "Open CVEs ranked by exploitation and severity"],
         "fleet-sources": ["Data sources", "What each connection sends, field by field"],
         "fleet-updates": ["Update plans", "Roll out software in rings and track every device"],
-        "fleet-rules": ["Fleet rules", "What every device must have, and what it must not"],
+        "fleet-rules": ["Device rules", "What every device must have, and what it must not"],
         overview: ["Overview", "Live vulnerability exposure, patch posture, and compliance reporting."],
         findings: ["Findings", "Prioritized CVEs, unsupported software, SLAs, and remediation actions."],
         "finding-detail": ["Finding Detail", "Affected devices, fixed versions, remediation status, and compliance evidence."],
@@ -4591,7 +4591,7 @@
           if (sync) showToast("Sync complete", `${nf(pstState.data.summary.devices)} devices evaluated across your sources.`);
         } catch (error) {
           if (error.message !== "unauthorized") {
-            document.getElementById("pst-banner").innerHTML = `<div class="pst-banner error"><div><strong>Fleet posture is unavailable</strong>${escapeHtml(error.message)}. Check that the API is running (npm run dev).</div></div>`;
+            document.getElementById("pst-banner").innerHTML = `<div class="pst-banner error"><div><strong>Posture is unavailable</strong>${escapeHtml(error.message)}. Check that the API is running (npm run dev).</div></div>`;
           }
         } finally {
           pstState.loading = false;
@@ -4631,13 +4631,13 @@
           if (problems.some((source) => source.state === "stale")) notes.push("Showing the last successful sync until the next attempt.");
         }
         if (active.length || data.feeds_progress) {
-          if (tone === "ok") { tone = "busy"; headline = data.summary.devices ? "Refreshing your fleet data" : "Downloading your fleet for the first time"; }
+          if (tone === "ok") { tone = "busy"; headline = data.summary.devices ? "Refreshing your device data" : "Downloading your devices for the first time"; }
           notes.push(...active.map((source) => `<strong>${escapeHtml(source.label)}:</strong> ${escapeHtml(source.progress || "starting…")}`));
           if (data.feeds_progress) notes.push(escapeHtml(data.feeds_progress));
           notes.push(`The page updates by itself every few seconds${data.summary.devices ? "; what you see now is the last saved data" : ""}.`);
         }
         if (data.mode === "sample") {
-          if (tone === "ok") { tone = "info"; headline = "Sample fleet: Intune, Jamf and CrowdStrike aren't connected yet"; }
+          if (tone === "ok") { tone = "info"; headline = "Sample data: Intune, Jamf and CrowdStrike aren't connected yet"; }
           notes.push("This view shows realistic made-up devices. Add your read-only API credentials to a <code>.env</code> file and restart <code>npm run dev</code>; <code>docs/fleet-posture.md</code> has the five-minute setup. Real PatchOps agent check-ins are included either way.");
         }
         const element = document.getElementById("pst-banner");
@@ -4720,7 +4720,7 @@
         const kpis = [
           ["Disk encrypted", s.encrypted_pct, `${nf(count((d) => d.encrypted === false))} unencrypted`, "FileVault on Macs, BitLocker on PCs"],
           ["Intune compliant", s.compliant_pct, `${nf(count((d) => ["noncompliant", "conflict", "error"].includes(d.compliance)))} non-compliant`, "Of devices that report an Intune compliance state"],
-          ["OS current", s.os_current_pct, `${nf(count((d) => d.os_status === "unsupported"))} unsupported`, "Running the newest OS build seen in the fleet"],
+          ["OS current", s.os_current_pct, `${nf(count((d) => d.os_status === "unsupported"))} unsupported`, "Running the newest OS build seen on your devices"],
           ["Checked in ≤ 7 days", s.checked_in_7d_pct, `${nf(count((d) => d.check_in_age_days > data.settings.stale_days))} overdue (>${data.settings.stale_days}d)`, "Most recent check-in across all sources"],
           ["Apps current", s.apps_current_pct, `${nf(data.apps.reduce((sum, app) => sum + app.behind, 0))} outdated installs`, "Devices with no application behind its target version"]
         ];
@@ -4749,7 +4749,7 @@
           : `All ${fmtN(s.devices)} devices are in good shape`;
         document.getElementById("fm-sub").textContent = s.devices
           ? `${fmtN(s.windows)} Windows and ${fmtN(s.macos)} Macs. Every square is one device; problems glow, healthy devices stay quiet. Click a square to open it.`
-          : "Connect Intune, Jamf or CrowdStrike to see your fleet here.";
+          : "Connect Intune, Jamf or CrowdStrike to see your devices here.";
         document.getElementById("pst-risk-legend").innerHTML = FM_ORDER.map((level) => `<button type="button" data-pst-risk="${level}" title="Show ${PST_SEVERITY[level].label.toLowerCase()} devices in the list below"><i style="background:${FM_COLORS[level]}"></i><span>${PST_SEVERITY[level].label}</span><strong>${fmtN(s.by_risk[level])}</strong></button>`).join("");
         fmDraw(data);
       }
@@ -4885,7 +4885,7 @@
 
       function renderPostureOs(data) {
         const base = data.baselines;
-        document.getElementById("pst-os-note").textContent = `Latest: macOS ${base.macos.latest ?? "—"} · Windows build ${base.windows.latest ?? "—"}${base.macos.published || base.windows.published ? " (from Apple / Microsoft)" : " (newest seen in your fleet)"}. Click a slice or version to see those computers.`;
+        document.getElementById("pst-os-note").textContent = `Latest: macOS ${base.macos.latest ?? "—"} · Windows build ${base.windows.latest ?? "—"}${base.macos.published || base.windows.published ? " (from Apple / Microsoft)" : " (newest seen on your devices)"}. Click a slice or version to see those computers.`;
         const order = ["current", "update_available", "older_release", "below_minimum", "unsupported", "unknown"];
         const platforms = [["macos", "macOS"], ["windows", "Windows"]].filter(([key]) => data.os[key]?.length);
         document.getElementById("pst-os").innerHTML = platforms.length ? `<div class="pst-os-platforms">${platforms.map(([key, title]) => {
@@ -4921,7 +4921,7 @@
             <td><strong>${escapeHtml(app.name)}</strong><div class="item-sub">${app.platform === "macos" ? "macOS" : "Windows"}${app.watchlisted ? " · high-exposure app" : ""}</div></td>
             <td class="pst-hide-sm num">${nf(app.installs)}</td>
             <td class="num"><strong>${nf(app.behind)}</strong> <span class="item-sub">(${Math.round((app.behind / app.installs) * 100)}%)</span></td>
-            <td class="pst-hide-sm">${escapeHtml(app.target_version)}<div class="item-sub">${app.target_source === "approved_baseline" ? "approved baseline" : "newest in fleet"}</div></td>
+            <td class="pst-hide-sm">${escapeHtml(app.target_version)}<div class="item-sub">${app.target_source === "approved_baseline" ? "approved baseline" : "newest on your devices"}</div></td>
             <td>${pstSevTag(app.severity)}</td>
             <td class="pst-hide-sm"><button class="fd-icon-btn" type="button" data-plan-app="${escapeHtml(app.name)}" data-plan-platform="${app.platform}" data-plan-target="${escapeHtml(app.target_version)}" title="Plan the rollout of ${escapeHtml(app.name)} ${escapeHtml(app.target_version)}">Plan update</button></td>
           </tr>`).join("") : `<tr><td colspan="6" class="pst-empty">Every inventoried app is on its target version.</td></tr>`;
@@ -5100,7 +5100,7 @@
           const blob = await (await pstFetch("/posture/export.csv")).blob();
           const link = document.createElement("a");
           link.href = URL.createObjectURL(blob);
-          link.download = `fleet-posture-${new Date().toISOString().slice(0, 10)}.csv`;
+          link.download = `posture-${new Date().toISOString().slice(0, 10)}.csv`;
           link.click();
           setTimeout(() => URL.revokeObjectURL(link.href), 2000);
         } catch (error) {
@@ -5171,7 +5171,7 @@
           select.innerHTML = config.dashboards.map((dashboard) => `<option value="${escapeHtml(dashboard.id)}">${escapeHtml(dashboard.name)}</option>`).join("") || `<option value="">No dashboards yet</option>`;
           select.value = fdState.dashboardId ?? "";
           ["fd-new", "fd-rename", "fd-delete", "fd-add"].forEach((id) => { document.getElementById(id).disabled = !canWrite(); });
-          document.getElementById("fd-banner").innerHTML = config.mode === "sample" ? `<div class="pst-banner"><div><strong>Sample fleet</strong>These dashboards run on the sample devices until Intune or Jamf is connected. Trends on sample data are illustrative; real trends build one point per day.</div></div>` : "";
+          document.getElementById("fd-banner").innerHTML = config.mode === "sample" ? `<div class="pst-banner"><div><strong>Sample data</strong>These dashboards run on the sample devices until Intune or Jamf is connected. Trends on sample data are illustrative; real trends build one point per day.</div></div>` : "";
           await renderDashboard();
         } catch (error) {
           if (error.message !== "unauthorized") document.getElementById("fd-grid").innerHTML = `<div class="fd-empty-dash">Dashboards are unavailable: ${escapeHtml(error.message)}</div>`;
@@ -5822,7 +5822,7 @@
         try { config = await loadFleetConfig(); } catch (error) { if (error.message !== "unauthorized") document.getElementById("fr-rules").innerHTML = `<tr><td colspan="7" class="fd-error">${escapeHtml(error.message)}</td></tr>`; return; }
         const write = canWrite();
         ["fr-add-rule", "fr-add-patch"].forEach((id) => { document.getElementById(id).disabled = !write; });
-        document.getElementById("fr-banner").innerHTML = config.mode === "sample" ? `<div class="pst-banner"><div><strong>Sample fleet</strong>Coverage numbers below come from sample devices until Intune or Jamf is connected. Your rules are saved and apply to real data as soon as it arrives.</div></div>` : "";
+        document.getElementById("fr-banner").innerHTML = config.mode === "sample" ? `<div class="pst-banner"><div><strong>Sample data</strong>Coverage numbers below come from sample devices until Intune or Jamf is connected. Your rules are saved and apply to real data as soon as it arrives.</div></div>` : "";
         const coverage = (tally) => {
           const known = tally.installed + tally.missing;
           if (!known && !tally.unknown) return `<span class="item-sub">No devices</span>`;
@@ -5905,7 +5905,7 @@
           <label class="fr-check" data-r-sensor-row><input type="checkbox" data-r-sensor ${rule.detect_source === "crowdstrike" ? "checked" : ""} /> Also count a CrowdStrike Falcon sensor that reported in the last 7 days as installed <span class="item-sub">(best for CrowdStrike itself: app lists often miss the sensor)</span></label>
           <div class="fr-preview" data-r-preview></div>`, {
           saveLabel: existing ? "Save rule" : "Add rule",
-          extraFoot: `<button class="ghost-btn" type="button" data-r-try>Preview on my fleet</button>`,
+          extraFoot: `<button class="ghost-btn" type="button" data-r-try>Preview on my devices</button>`,
           onSave: async (root, close) => {
             const next = collect(root);
             const rules = fdState.config.software_rules.map(frRuleFields);
@@ -5922,7 +5922,7 @@
           modal.querySelector("[data-r-detect-title]").textContent = os ? "Which OS versions are allowed?" : "How do we know it's installed?";
           modal.querySelector("[data-r-detect-help]").innerHTML = os
             ? "A device is <strong>compliant</strong> when it matches. Windows: use <em>Windows build</em> (26100 = 24H2, 26200 = 25H2) or <em>OS version</em> for a full build like 10.0.26100.7171. Mac: <em>OS version is at least</em> 15.7."
-            : "A device counts as <strong>installed</strong> when one of its apps matches. Pick the app name from the list of every app in your fleet, use <em>version is at least</em> for a minimum version, and an <em>either/or group</em> for different names.";
+            : "A device counts as <strong>installed</strong> when one of its apps matches. Pick the app name from the list of every app on your devices, use <em>version is at least</em> for a minimum version, and an <em>either/or group</em> for different names.";
           modal.querySelector("[data-r-name-label]").textContent = os ? "Rule name" : "Software name";
           modal.querySelector("[data-r-name]").placeholder = os ? "e.g. Supported OS versions" : "e.g. Forcepoint DLP";
           modal.querySelector("[data-r-sensor-row]").hidden = os;
@@ -6141,9 +6141,9 @@
         const data = vxState.data;
         const source = data.source;
         const banner = data.mode === "sample"
-          ? `<div class="pst-banner"><div><strong>Sample fleet</strong>CVEs marked CrowdStrike (CVE-2099-…) are made up to show the layout. Apple and Microsoft CVEs are real, matched against the sample devices' OS versions.</div></div>`
+          ? `<div class="pst-banner"><div><strong>Sample data</strong>CVEs marked CrowdStrike (CVE-2099-…) are made up to show the layout. Apple and Microsoft CVEs are real, matched against the sample devices' OS versions.</div></div>`
           : source.state === "ok" ? ""
-          : `<div class="pst-banner error"><div><strong>No vulnerability data yet</strong>${escapeHtml(source.error || (source.state === "not_configured" ? "CrowdStrike is not connected." : source.state === "disabled" ? "Vulnerability collection is turned off (CROWDSTRIKE_VULNERABILITIES=false)." : "Waiting for the first sync."))}${source.state === "no_permission" ? "<br>In Falcon: Support and resources → API clients and keys → edit the PatchOps client → tick <strong>Vulnerabilities: Read</strong>, save, then click Sync now on Fleet Posture." : ""}</div></div>`;
+          : `<div class="pst-banner error"><div><strong>No vulnerability data yet</strong>${escapeHtml(source.error || (source.state === "not_configured" ? "CrowdStrike is not connected." : source.state === "disabled" ? "Vulnerability collection is turned off (CROWDSTRIKE_VULNERABILITIES=false)." : "Waiting for the first sync."))}${source.state === "no_permission" ? "<br>In Falcon: Support and resources → API clients and keys → edit the PatchOps client → tick <strong>Vulnerabilities: Read</strong>, save, then click Sync now on Posture." : ""}</div></div>`;
         const feedStates = Object.values(data.feeds ?? {});
         const feedLine = feedStates.length ? `<div class="pst-banner" style="${feedStates.some((feed) => feed.state === "error") ? "border-color:var(--bad-line);background:var(--bad-soft);color:var(--bad-ink)" : ""}"><div><strong>Independent OS vulnerability data</strong>${feedStates.map((feed) => `${escapeHtml(feed.label)}: ${feed.state === "ok" ? `loaded ${pstAgo(feed.synced_at)}` : feed.state === "disabled" ? "off" : feed.state === "error" ? escapeHtml(feed.error || "unavailable") : data.feeds_loading ? "loading… (the Microsoft data takes a minute the first time)" : "waiting"}`).join("<br>")}</div></div>` : "";
         document.getElementById("vx-banner").innerHTML = banner.replace("No vulnerability data yet", "No CrowdStrike vulnerability data yet") + feedLine;
@@ -6224,7 +6224,7 @@
                   ${capability.fields.length ? `<div class="table-panel" style="box-shadow:none;margin-top:8px;max-height:360px;overflow:auto"><table><thead><tr><th>Field</th><th>Filled</th><th>Example</th></tr></thead><tbody>${capability.fields.map((field) => `<tr><td><code>${escapeHtml(field.field)}</code></td><td><span class="fr-cov"><span>${field.pct}%</span><span class="pst-meter"><span style="width:${field.pct}%;background:#2563eb"></span></span></span></td><td class="pst-issue-text">${escapeHtml(field.example ?? "")}</td></tr>`).join("")}</tbody></table></div>` : ""}
                   ${capability.samples.length ? `<div class="ds-sample-head"><strong>Raw sample records</strong><button class="fd-icon-btn" type="button" data-ds-copy>Copy JSON</button></div><pre class="ds-json">${escapeHtml(JSON.stringify(capability.samples, null, 2))}</pre>` : ""}
                 </details>`;
-              }).join("") : source.relay?.direction === "received" ? "" : source.configured ? `<p class="fr-help" style="margin:0">No records captured yet. Click <strong>Sync now</strong> on Fleet Posture.</p>` : ""}
+              }).join("") : source.relay?.direction === "received" ? "" : source.configured ? `<p class="fr-help" style="margin:0">No records captured yet. Click <strong>Sync now</strong> on Posture.</p>` : ""}
             </article>`;
           }).join("");
         } catch (error) {
@@ -6649,7 +6649,7 @@
         { key: "intune", name: "Microsoft Intune", what: "Windows devices, compliance, installed apps and updates (KBs), Entra groups", live: true },
         { key: "jamf", name: "Jamf Pro", what: "Macs, macOS versions, installed apps and extension attributes", live: true },
         { key: "crowdstrike", name: "CrowdStrike Falcon", what: "Sensor health, installed apps and Spotlight vulnerabilities", live: true },
-        { key: "kandji", name: "Kandji", what: "Mac fleet, Blueprints and assigned users" },
+        { key: "kandji", name: "Kandji", what: "Macs, Blueprints and assigned users" },
         { key: "workspace-one", name: "Workspace ONE", what: "UEM device inventory and assignment groups" },
         { key: "mosyle", name: "Mosyle", what: "Apple devices for business and education" },
         { key: "addigy", name: "Addigy", what: "Apple MSP fleets and policies" }
@@ -6840,7 +6840,7 @@
           <label class="fd-field">Notes<textarea data-p-notes rows="2" placeholder="e.g. Intune app assignment 'Chrome - Broad'">${escapeHtml(plan.notes ?? "")}</textarea></label>
           <div class="fr-preview" data-p-preview></div>`, {
           saveLabel: existing ? "Save plan" : "Create plan",
-          extraFoot: `<button class="ghost-btn" type="button" data-p-try>Preview on my fleet</button>`,
+          extraFoot: `<button class="ghost-btn" type="button" data-p-try>Preview on my devices</button>`,
           onSave: async (root, close) => {
             await fleetApi("/fleet/update-plans", { method: "POST", body: JSON.stringify({ plan: collect(root) }) });
             close();

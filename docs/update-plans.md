@@ -7,7 +7,7 @@ anything: you deploy with Intune, Jamf or your usual tool, and each device moves
 ## Create a plan
 
 - **Update plans → New plan**, or click an outdated app under *Start from an outdated app*, or
-  **Plan update** next to an app in Fleet posture → Outdated applications. The app and the newest version
+  **Plan update** next to an app in Posture → Outdated applications. The app and the newest version
   in your fleet are filled in.
 - **Which software?** A software condition, e.g. name is "Google Chrome".
 - **Updated means version:** this version or newer.
