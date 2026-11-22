@@ -15,7 +15,11 @@
     </script>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>PatchOps Console Prototype</title>
+    <title>PatchOps</title>
+    <link rel="icon" type="image/svg+xml" href="assets/brand/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/brand/favicon-32.png" />
+    <link rel="apple-touch-icon" href="assets/brand/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0E2233" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -2642,24 +2646,50 @@
       .up-ed-ring { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; gap: 8px; margin-bottom: 8px; }
       .up-ed-ring-head { display: grid; grid-template-columns: minmax(120px, 1.2fr) 150px 150px auto; gap: 8px; align-items: end; }
       @media (max-width: 900px) { .up-body { grid-template-columns: 1fr; } .up-ring { grid-template-columns: 100px minmax(0, 1fr) 80px; } .up-axis { margin-left: 110px; margin-right: 90px; } .up-ed-ring-head { grid-template-columns: 1fr 1fr; } }
+
+      /* ---- Brand mark (the "fleet tile" P) and sign-in ---- */
+      .pm { display: block; }
+      .pm .pm-on { fill: #EEF3F6; }
+      .pm .pm-off { fill: #EEF3F6; fill-opacity: .16; }
+      .pm .pm-accent { fill: #7CC4E4; }
+      .logo, .auth-brand .logo { background: none !important; box-shadow: none; width: 34px; height: 34px; border-radius: 0; color: inherit; }
+      .auth-gate {
+        background-color: #0E2233;
+        background-image: radial-gradient(circle at 1px 1px, rgba(238, 243, 246, .07) 1.2px, transparent 1.6px);
+        background-size: 22px 22px;
+      }
+      .auth-card { background: #FFFFFF; color: #13202B; border: 0; border-radius: 16px; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); backdrop-filter: none; padding: 36px 36px 32px; }
+      .auth-brand { gap: 12px; margin-bottom: 28px; }
+      .auth-brand .pm .pm-on { fill: #0E2233; }
+      .auth-brand .pm .pm-off { fill: #0E2233; fill-opacity: .12; }
+      .auth-brand .pm .pm-accent { fill: #0B6E99; }
+      .auth-brand span { font-size: 22px; font-weight: 600; letter-spacing: -0.025em; }
+      .auth-card h1 { font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: #13202B; }
+      .auth-card > p { color: #5A6B7A; font-size: 14px; }
+      .auth-card label { color: #13202B; font-size: 13px; font-weight: 600; margin-top: 12px; }
+      .auth-gate .auth-card input { color: #13202B; background: #FFFFFF; border: 1px solid #BFCDD8; border-radius: 8px; }
+      .auth-gate .auth-card input:focus { border-color: #0B6E99; box-shadow: 0 0 0 3px rgba(11, 110, 153, .16); }
+      .auth-gate .auth-card button.primary-btn { margin-top: 22px; min-height: 42px; font-size: 14px; color: #FFFFFF; background: #0B6E99; border-color: #0B6E99; }
+      .auth-gate .auth-card button.primary-btn:hover { background: #085678; }
+      .auth-error { color: #B42318; }
     </style>
   </head>
   <body>
     <section class="auth-gate" id="auth-gate" aria-labelledby="auth-title">
       <form class="auth-card" id="auth-form">
-        <div class="auth-brand"><div class="logo">P</div><strong>PatchOps Console</strong></div>
-        <h1 id="auth-title">Welcome back</h1>
-        <p>Sign in to view enrolled devices, software inventory, findings, and patch activity.</p>
+        <div class="auth-brand"><svg class="pm" width="40" height="40" viewBox="0 0 100 100" aria-hidden="true"><rect x="11" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="53" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="74" y="11" width="17" height="17" rx="4" class="pm-off"/><rect x="11" y="32" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="32" width="17" height="17" rx="4" class="pm-off"/><rect x="53" y="32" width="17" height="17" rx="4" class="pm-off"/><rect x="74" y="32" width="17" height="17" rx="4" class="pm-accent"/><rect x="11" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="53" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="74" y="53" width="17" height="17" rx="4" class="pm-off"/><rect x="11" y="74" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="74" width="17" height="17" rx="4" class="pm-off"/><rect x="53" y="74" width="17" height="17" rx="4" class="pm-off"/><rect x="74" y="74" width="17" height="17" rx="4" class="pm-off"/></svg><span>PatchOps</span></div>
+        <h1 id="auth-title">Sign in</h1>
+        <p>Fleet posture, vulnerabilities and update progress across Intune, Jamf, CrowdStrike and the PatchOps agent.</p>
         <label>Username<input id="auth-username" type="text" value="admin" autocomplete="username" required autofocus /></label>
-        <label>Console password<input id="auth-password" type="password" autocomplete="current-password" required /></label>
-        <button class="primary-btn" type="submit">Sign in securely</button>
+        <label>Password<input id="auth-password" type="password" autocomplete="current-password" required /></label>
+        <button class="primary-btn" type="submit">Sign in</button>
         <div class="auth-error" id="auth-error" role="alert"></div>
       </form>
     </section>
     <div class="app">
       <aside class="sidebar">
         <div class="brand">
-          <div class="logo">P</div>
+          <div class="logo"><svg class="pm" width="34" height="34" viewBox="0 0 100 100" aria-hidden="true"><rect x="11" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="53" y="11" width="17" height="17" rx="4" class="pm-on"/><rect x="74" y="11" width="17" height="17" rx="4" class="pm-off"/><rect x="11" y="32" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="32" width="17" height="17" rx="4" class="pm-off"/><rect x="53" y="32" width="17" height="17" rx="4" class="pm-off"/><rect x="74" y="32" width="17" height="17" rx="4" class="pm-accent"/><rect x="11" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="53" y="53" width="17" height="17" rx="4" class="pm-on"/><rect x="74" y="53" width="17" height="17" rx="4" class="pm-off"/><rect x="11" y="74" width="17" height="17" rx="4" class="pm-on"/><rect x="32" y="74" width="17" height="17" rx="4" class="pm-off"/><rect x="53" y="74" width="17" height="17" rx="4" class="pm-off"/><rect x="74" y="74" width="17" height="17" rx="4" class="pm-off"/></svg></div>
           <div>
             <strong>PatchOps</strong>
             <span>Exposure and patch compliance</span>
