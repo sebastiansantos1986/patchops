@@ -2672,6 +2672,122 @@
       .auth-gate .auth-card button.primary-btn { margin-top: 22px; min-height: 42px; font-size: 14px; color: #FFFFFF; background: #0B6E99; border-color: #0B6E99; }
       .auth-gate .auth-card button.primary-btn:hover { background: #085678; }
       .auth-error { color: #B42318; }
+
+      /* ---- Professional polish: top bar, sidebar, drawer, status line, tables ---- */
+      .topbar { height: 64px; gap: 12px; padding: 0 24px; }
+      .title-block { min-width: 0; flex: 0 1 auto; max-width: 36%; }
+      .topbar h1, #page-title { font-size: 20px; white-space: nowrap; }
+      #page-subtitle { margin-top: 2px; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .gs-wrap { position: relative; flex: 1 1 320px; max-width: 560px; min-width: 220px; margin-left: auto; }
+      .gs-wrap .search { width: 100%; height: 36px; background: var(--panel-2, var(--bg)); border-color: var(--line); transition: border-color .12s, box-shadow .12s; }
+      .gs-wrap .search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); background: var(--panel); }
+      .gs-wrap .search input, .gs-wrap .search input:focus { font-size: 13.5px; background: transparent; border: 0; box-shadow: none; padding: 0; height: auto; min-height: 0; outline: 0; }
+      .gs-kbd { font-size: 11px; font-weight: 600; line-height: 1; color: var(--muted); border: 1px solid var(--line); border-radius: 5px; padding: 3px 5px; white-space: nowrap; }
+      .search:focus-within .gs-kbd { display: none; }
+      .gs-results { position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 70; max-height: min(460px, 70vh); overflow: auto; padding: 6px; border-radius: 12px; background: var(--panel); border: 1px solid var(--line); box-shadow: 0 16px 40px rgba(0, 0, 0, .18); }
+      .gs-group { padding: 8px 10px 4px; font-size: 11.5px; font-weight: 600; color: var(--muted); }
+      .gs-item { display: flex; align-items: baseline; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; font-size: 13.5px; text-align: left; cursor: pointer; }
+      .gs-item strong { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .gs-item span { color: var(--muted); font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .gs-item.on, .gs-item:hover { background: var(--accent-soft); }
+      .api-status { padding: 0 10px; height: 30px; border: 1px solid var(--line); border-radius: 999px; font-size: 12.5px; font-variant-numeric: tabular-nums; }
+      .api-status.online::before { background: #1F9D63; box-shadow: 0 0 0 3px color-mix(in oklab, #1F9D63 22%, transparent); }
+      .topbar .icon-btn { width: 36px; height: 36px; border-color: transparent; background: none; color: var(--muted); position: relative; }
+      .topbar .icon-btn:hover, .topbar .icon-btn[aria-expanded="true"] { background: var(--accent-soft); color: var(--ink); }
+      .att-count { position: absolute; top: 3px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #D23F3A; color: #fff; font-size: 10.5px; font-weight: 700; line-height: 16px; text-align: center; box-shadow: 0 0 0 2px var(--panel); }
+      .acct-btn { width: 32px; height: 32px; border-radius: 50%; border: 0; background: var(--accent); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+      .acct-btn:hover, .acct-btn[aria-expanded="true"] { box-shadow: 0 0 0 3px var(--accent-soft); }
+      .acct-panel { width: 240px; }
+      .acct-who { display: grid; gap: 2px; }
+      .acct-who strong { font-size: 14px; }
+      .acct-who span { color: var(--muted); font-size: 12.5px; }
+      .att-panel { width: 360px; gap: 10px; }
+      .att-list { display: grid; gap: 4px; max-height: 360px; overflow: auto; }
+      .att-item { display: flex; gap: 10px; align-items: flex-start; padding: 9px 10px; border: 0; border-radius: 8px; background: none; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
+      .att-item:hover { background: var(--accent-soft); }
+      .att-item i { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; background: #E0A21B; }
+      .att-item.danger i { background: #D23F3A; }
+      .att-item strong { display: block; font-size: 13px; font-weight: 600; }
+      .att-item em { display: block; font-style: normal; font-size: 12.5px; color: var(--muted); }
+      .att-empty { margin: 0; color: var(--muted); font-size: 13px; }
+
+      /* Sidebar groups and the folded classic console */
+      .sidebar .nav-group { gap: 2px; }
+      .sidebar .nav-group + .nav-group { margin-top: 10px; }
+      .nav-btn { height: 34px; font-size: 13.5px; }
+      .nav-classic details > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; padding-right: 10px; border-radius: 6px; }
+      .nav-classic details > summary::-webkit-details-marker { display: none; }
+      .nav-classic details > summary::after { content: ""; width: 6px; height: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform .15s; margin-bottom: 2px; }
+      .nav-classic details[open] > summary::after { transform: rotate(45deg); }
+      .nav-classic details > summary:hover { color: #B8CBD9; }
+      .nav-classic details[open] { display: grid; gap: 2px; }
+      .nav-classic .nav-btn { height: 32px; color: #8FA6B8; }
+
+      /* Device drawer */
+      .pst-drawer { width: min(640px, 100vw); }
+      .dv-head { padding: 18px 22px 0; border-bottom: 1px solid var(--line); display: grid; gap: 14px; }
+      .dv-title { display: flex; align-items: center; gap: 12px; }
+      .dv-title > div { flex: 1; min-width: 0; }
+      .dv-title h2 { margin: 0; font-size: 19px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .dv-title p { margin: 2px 0 0; color: var(--muted); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .dv-os { flex: none; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; font-size: 12px; font-weight: 700; background: var(--accent-soft); color: var(--accent-ink, var(--accent)); }
+      .dv-close { border-color: transparent !important; background: none !important; }
+      .dv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+      .dv-stat { padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px; display: grid; gap: 2px; }
+      .dv-stat strong { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+      .dv-stat span { font-size: 12px; color: var(--muted); }
+      .dv-stat.bad strong { color: #C5372F; } .dv-stat.warn strong { color: #A86400; } .dv-stat.good strong { color: #17804F; }
+      html[data-theme="harbour"] .dv-stat.bad strong, html[data-theme="graphite"] .dv-stat.bad strong { color: #FF7A72; }
+      html[data-theme="harbour"] .dv-stat.warn strong, html[data-theme="graphite"] .dv-stat.warn strong { color: #F2BC3A; }
+      html[data-theme="harbour"] .dv-stat.good strong, html[data-theme="graphite"] .dv-stat.good strong { color: #4CC38A; }
+      .dv-sources { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 12.5px; }
+      .dv-src { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px; background: var(--panel-2, var(--bg)); border: 1px solid var(--line); }
+      .dv-src i { width: 6px; height: 6px; border-radius: 50%; background: #1F9D63; }
+      .dv-src.sample { color: var(--muted); }
+      .dv-seen { margin-left: auto; color: var(--muted); }
+      .dv-tabs { display: flex; gap: 4px; margin: 0 -4px; overflow-x: auto; }
+      .dv-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; padding: 10px 10px 12px; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+      .dv-tab span { font-size: 11.5px; font-weight: 600; padding: 1px 6px; border-radius: 999px; background: var(--panel-2, var(--bg)); border: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+      .dv-tab:hover { color: var(--ink); }
+      .dv-tab[aria-selected="true"] { color: var(--ink); }
+      .dv-tab[aria-selected="true"]::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: var(--accent); }
+      .dv-panel { display: grid; gap: 18px; align-content: start; }
+      .dv-panel[hidden] { display: none; }
+      .dv-panel h3 { margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--muted); }
+
+      /* Posture status line */
+      .pst-statusline { margin-bottom: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 13px; }
+      .pst-statusline summary { list-style: none; display: flex; align-items: center; gap: 8px; padding: 9px 14px; cursor: pointer; }
+      .pst-statusline summary::-webkit-details-marker { display: none; }
+      .pst-statusline summary i { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+      .pst-statusline.error summary i { background: #D23F3A; }
+      .pst-statusline.busy summary i { animation: pst-pulse 1.4s ease-in-out infinite; }
+      .pst-statusline summary strong { font-weight: 600; }
+      .pst-statusline summary span { color: var(--muted); }
+      .pst-statusline summary em { margin-left: auto; font-style: normal; color: var(--muted); font-size: 12.5px; }
+      .pst-statusline[open] summary em { color: var(--ink); }
+      .pst-statusline > div { padding: 0 14px 12px 30px; color: var(--muted); line-height: 1.5; }
+      .pst-statusline > div p { margin: 0 0 4px; }
+      .pst-statusline.error { border-color: var(--bad-line); }
+      @keyframes pst-pulse { 50% { opacity: .35; } }
+      @media (prefers-reduced-motion: reduce) { .pst-statusline.busy summary i { animation: none; } }
+
+      /* Tables: sticky headers, aligned figures, quiet hover */
+      .table-panel thead th, .pst-app-table thead th { position: sticky; top: 0; z-index: 1; background: var(--panel); box-shadow: inset 0 -1px 0 var(--line); }
+      td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+      .pst-app-table td.num { text-align: left; }
+      tbody tr { transition: background-color .08s; }
+      tbody tr:hover > td { background: color-mix(in oklab, var(--accent) 5%, transparent); }
+      .pst-kpi-value, .pst-cov strong, .pst-count, .fx-summary strong { font-variant-numeric: tabular-nums; }
+
+      @media (max-width: 1100px) {
+        .title-block p { display: none; }
+        .api-status { display: none; }
+      }
+      @media (max-width: 760px) {
+        .gs-kbd { display: none; }
+        .topbar { padding: 0 14px; }
+      }
     </style>
   </head>
   <body>
@@ -2696,8 +2812,8 @@
           </div>
         </div>
 
-        <nav class="nav-group" aria-label="Primary">
-          <div class="nav-title">Operate</div>
+        <nav class="nav-group" aria-label="Fleet">
+          <div class="nav-title">Fleet</div>
           <button class="nav-btn active" data-view="posture" title="Fleet Posture">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="M8 12h2l1.5-3 2 6 1.5-3h1"/></svg>
             <span>Fleet posture</span>
@@ -2710,6 +2826,14 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16"/><path d="M7 12h10"/><path d="M10 18h4"/></svg>
             <span>Explore</span>
           </button>
+          <button class="nav-btn" data-view="fleet-vulns" title="Vulnerabilities">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2l1.5 2.5"/><path d="M16 2l-1.5 2.5"/><path d="M9 7.5a3 3 0 0 1 6 0"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a6 6 0 0 1 12 0v3c0 3.3-2.7 6-6 6Z"/><path d="M12 20v-9"/><path d="M6 13H2"/><path d="M22 13h-4"/></svg>
+            <span>Vulnerabilities</span>
+          </button>
+        </nav>
+
+        <nav class="nav-group" aria-label="Act">
+          <div class="nav-title">Act</div>
           <button class="nav-btn" data-view="fleet-updates" title="Update plans">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/></svg>
             <span>Update plans</span>
@@ -2718,62 +2842,64 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l2 2 4-4"/><rect x="3" y="3" width="18" height="18" rx="3"/></svg>
             <span>Fleet rules</span>
           </button>
-          <button class="nav-btn" data-view="fleet-vulns" title="Vulnerabilities">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 2l1.5 2.5"/><path d="M16 2l-1.5 2.5"/><path d="M9 7.5a3 3 0 0 1 6 0"/><path d="M12 20c-3.3 0-6-2.7-6-6v-3a6 6 0 0 1 12 0v3c0 3.3-2.7 6-6 6Z"/><path d="M12 20v-9"/><path d="M6 13H2"/><path d="M22 13h-4"/></svg>
-            <span>Vulnerabilities</span>
-          </button>
-          <button class="nav-btn" data-view="fleet-sources" title="Data Sources">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
-            <span>Data sources</span>
-          </button>
-          <button class="nav-btn" data-view="overview" title="Overview">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3v10Z"/><path d="M13 21h8V11h-8v10Z"/><path d="M13 3v6h8V3h-8Z"/><path d="M3 21h8v-6H3v6Z"/></svg>
-            <span>Overview</span>
-          </button>
-          <button class="nav-btn" data-view="findings" title="Findings">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.4 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-            <span>Findings</span>
-          </button>
-          <button class="nav-btn" data-view="devices" title="Devices">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
-            <span>Devices</span>
-          </button>
-          <button class="nav-btn" data-view="software" title="Software">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
-            <span>Software</span>
-          </button>
-          <button class="nav-btn" data-view="campaigns" title="Patch Campaigns">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6"/><path d="M12 16v6"/><path d="M4.93 4.93l4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M2 12h6"/><path d="M16 12h6"/><path d="m4.93 19.07 4.24-4.24"/><path d="m14.83 9.17 4.24-4.24"/></svg>
-            <span>Campaigns</span>
-          </button>
-          <button class="nav-btn" data-view="agents" title="Agents">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/><path d="m15 5 3 3"/></svg>
-            <span>Agents</span>
-          </button>
           <button class="nav-btn" data-view="notifications" title="Notifications">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/><path d="M8 9h8"/><path d="M8 13h5"/></svg>
             <span>Notifications</span>
           </button>
         </nav>
 
-        <nav class="nav-group" aria-label="Govern">
-          <div class="nav-title">Govern</div>
-          <button class="nav-btn" data-view="reports" title="Reports">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15v2"/><path d="M12 9v8"/><path d="M17 5v12"/></svg>
-            <span>Reports</span>
+        <nav class="nav-group" aria-label="Set up">
+          <div class="nav-title">Set up</div>
+          <button class="nav-btn" data-view="fleet-sources" title="Data Sources">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>
+            <span>Data sources</span>
           </button>
           <button class="nav-btn" data-view="integrations" title="Integrations">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.1 0l2.8-2.8a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.8 2.8a5 5 0 0 0 7.1 7.1L13 19.1"/></svg>
             <span>Integrations</span>
           </button>
-          <button class="nav-btn" data-view="policies" title="Policies">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/></svg>
-            <span>Policies</span>
+          <button class="nav-btn" data-view="agents" title="Agents">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/><path d="m15 5 3 3"/></svg>
+            <span>Agents</span>
           </button>
-          <button class="nav-btn" data-view="audit" title="Audit">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
-            <span>Audit</span>
-          </button>
+        </nav>
+
+        <nav class="nav-group nav-classic" aria-label="Classic console">
+          <details id="nav-classic">
+            <summary class="nav-title">Classic console</summary>
+              <button class="nav-btn" data-view="overview" title="Overview">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13h8V3H3v10Z"/><path d="M13 21h8V11h-8v10Z"/><path d="M13 3v6h8V3h-8Z"/><path d="M3 21h8v-6H3v6Z"/></svg>
+                <span>Overview</span>
+              </button>
+              <button class="nav-btn" data-view="findings" title="Findings">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 3.4 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.4a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                <span>Findings</span>
+              </button>
+              <button class="nav-btn" data-view="devices" title="Devices">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8"/><path d="M12 16v4"/></svg>
+                <span>Devices</span>
+              </button>
+              <button class="nav-btn" data-view="software" title="Software">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></svg>
+                <span>Software</span>
+              </button>
+              <button class="nav-btn" data-view="campaigns" title="Patch Campaigns">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v6"/><path d="M12 16v6"/><path d="M4.93 4.93l4.24 4.24"/><path d="m14.83 14.83 4.24 4.24"/><path d="M2 12h6"/><path d="M16 12h6"/><path d="m4.93 19.07 4.24-4.24"/><path d="m14.83 9.17 4.24-4.24"/></svg>
+                <span>Campaigns</span>
+              </button>
+              <button class="nav-btn" data-view="reports" title="Reports">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15v2"/><path d="M12 9v8"/><path d="M17 5v12"/></svg>
+                <span>Reports</span>
+              </button>
+              <button class="nav-btn" data-view="policies" title="Policies">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-5"/></svg>
+                <span>Policies</span>
+              </button>
+              <button class="nav-btn" data-view="audit" title="Audit">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>
+                <span>Audit</span>
+              </button>
+          </details>
         </nav>
 
         <nav class="nav-group settings-dock" aria-label="Configuration">
@@ -2793,31 +2919,40 @@
         <header class="topbar">
           <div class="title-block">
             <h1 id="page-title">Fleet posture</h1>
-            <p id="page-subtitle">Device health, OS currency and outdated apps across Intune, Jamf and the PatchOps agent.</p>
+            <p id="page-subtitle">Device health, OS currency and outdated apps across every source</p>
           </div>
-          <label class="search">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input placeholder="Search devices, software, CVEs, findings" />
-          </label>
+          <div class="gs-wrap">
+            <label class="search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <input id="gs-input" placeholder="Search devices, apps, CVEs" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="gs-results" aria-autocomplete="list" />
+              <kbd class="gs-kbd" aria-hidden="true">⌘K</kbd>
+            </label>
+            <div class="gs-results" id="gs-results" role="listbox" hidden></div>
+          </div>
           <button class="icon-btn" title="Refresh metrics">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16"/><path d="M3 21v-5h5"/><path d="M3 12A9 9 0 0 1 18.5 5.8L21 8"/><path d="M21 3v5h-5"/></svg>
           </button>
           <span class="api-status" id="api-status">Connecting</span>
-          <span class="current-user" id="current-user"></span>
-          <button class="sign-out-btn" id="sign-out" type="button">Sign out</button>
           <div class="ap-wrap">
             <button class="icon-btn" type="button" id="ap-toggle" title="Appearance" aria-haspopup="true" aria-expanded="false" aria-label="Appearance">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22a10 10 0 1 1 10-10c0 2.8-2.2 4-4 4h-2a2 2 0 0 0-1.4 3.4A1.5 1.5 0 0 1 12 22Z"/><circle cx="7.5" cy="10.5" r="1"/><circle cx="12" cy="7.5" r="1"/><circle cx="16.5" cy="10.5" r="1"/></svg>
             </button>
             <div class="ap-panel" id="ap-panel" hidden role="dialog" aria-label="Appearance"></div>
           </div>
-          <button class="icon-btn" title="Alerts">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9"/></svg>
-          </button>
-          <button class="primary-btn" data-open-view="campaign-builder">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-            New Campaign
-          </button>
+          <div class="ap-wrap">
+            <button class="icon-btn" type="button" id="att-toggle" title="Needs attention" aria-label="Needs attention" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/><path d="M18 8A6 6 0 0 0 6 8c0 7-3 7-3 9h18c0-2-3-2-3-9"/></svg>
+              <span class="att-count" id="att-count" hidden></span>
+            </button>
+            <div class="ap-panel att-panel" id="att-panel" hidden role="dialog" aria-label="Needs attention"></div>
+          </div>
+          <div class="ap-wrap">
+            <button class="acct-btn" type="button" id="acct-toggle" aria-haspopup="true" aria-expanded="false" aria-label="Account"><span id="acct-avatar">·</span></button>
+            <div class="ap-panel acct-panel" id="acct-panel" hidden role="dialog" aria-label="Account">
+              <div class="acct-who"><strong id="current-user"></strong><span id="acct-role"></span></div>
+              <button class="ghost-btn" id="sign-out" type="button">Sign out</button>
+            </div>
+          </div>
         </header>
 
         <section class="content">
@@ -3957,13 +4092,13 @@
     <script src="config.js"></script>
     <script>
       const labels = {
-        posture: ["Fleet posture", "Device health, OS currency and outdated apps across Intune, Jamf, CrowdStrike and the PatchOps agent."],
-        "fleet-dashboards": ["Dashboards", "Saved views of your fleet for reporting: agent coverage, patch rollout and device health."],
-        "fleet-explore": ["Explore", "Ask questions about every device: build conditions visually, or paste a Cyclops-style query."],
-        "fleet-vulns": ["Vulnerabilities", "Open CVEs on your Macs and PCs from Apple, Microsoft, CISA and CrowdStrike, ranked by exploitation and severity."],
-        "fleet-sources": ["Data sources", "Exactly what Intune, Jamf and CrowdStrike send: permissions, fields and raw records."],
-        "fleet-updates": ["Update plans", "Plan a software update in rings and track every device until it's done."],
-        "fleet-rules": ["Fleet rules", "What every device must have, what must be removed, and the Windows updates you track."],
+        posture: ["Fleet posture", "Device health, OS currency and outdated apps across every source"],
+        "fleet-dashboards": ["Dashboards", "Saved views of your fleet for reporting"],
+        "fleet-explore": ["Explore", "Ask a question about every device"],
+        "fleet-vulns": ["Vulnerabilities", "Open CVEs ranked by exploitation and severity"],
+        "fleet-sources": ["Data sources", "What each connection sends, field by field"],
+        "fleet-updates": ["Update plans", "Roll out software in rings and track every device"],
+        "fleet-rules": ["Fleet rules", "What every device must have, and what it must not"],
         overview: ["Overview", "Live vulnerability exposure, patch posture, and compliance reporting."],
         findings: ["Findings", "Prioritized CVEs, unsupported software, SLAs, and remediation actions."],
         "finding-detail": ["Finding Detail", "Affected devices, fixed versions, remediation status, and compliance evidence."],
@@ -3976,7 +4111,7 @@
         notifications: ["Notifications", "User-facing popups, reboot prompts, deferrals, and stale uptime signals."],
         reports: ["Reports", "Compliance, exposure, patch history, and executive summaries."],
         "evidence-report": ["Evidence Report", "Audit-ready remediation proof, exceptions, notifications, and final state."],
-        integrations: ["Integrations", "The systems PatchOps reads from, and what each one provides."],
+        integrations: ["Integrations", "The systems PatchOps reads from"],
         policies: ["Policies", "Deployment rules, restart behavior, and application governance."],
         settings: ["Settings", "Notification design, security, approvals, API access, and organization defaults."],
         audit: ["Audit", "Immutable administrative and endpoint activity trail."]
@@ -4022,9 +4157,12 @@
 
       function showView(view) {
         document.querySelectorAll(".nav-btn").forEach((item) => item.classList.toggle("active", item.dataset.view === view));
+        const classic = document.getElementById("nav-classic");
+        if (classic?.querySelector(`[data-view="${view}"]`)) classic.open = true;
         document.querySelectorAll(".view").forEach((item) => item.classList.toggle("active", item.id === view));
         document.getElementById("page-title").textContent = labels[view][0];
         document.getElementById("page-subtitle").textContent = labels[view][1];
+        document.getElementById("page-subtitle").title = labels[view][1];
         window.scrollTo({ top: 0, behavior: "smooth" });
         if (view === "posture") requestAnimationFrame(() => { try { if (pstState.data) fmDraw(pstState.data); } catch { /* not loaded yet */ } });
       }
@@ -4084,7 +4222,9 @@
         authError.textContent = "";
         authGate.hidden = true;
         document.getElementById("auth-password").value = "";
-        document.getElementById("current-user").textContent = currentUser ? `${currentUser.username} · ${currentUser.role}` : "";
+        document.getElementById("current-user").textContent = currentUser?.username ?? "";
+        document.getElementById("acct-role").textContent = currentUser ? { owner: "Owner", admin: "Administrator", operator: "Operator", reviewer: "Reviewer (read-only)", viewer: "Viewer (read-only)" }[currentUser.role] ?? currentUser.role : "";
+        document.getElementById("acct-avatar").textContent = (currentUser?.username ?? "·").slice(0, 1).toUpperCase();
       }
 
       function canManageUsers() { return ["owner", "administrator"].includes(currentUser?.role); }
@@ -4343,7 +4483,7 @@
           if (!response.ok) throw new Error(`API returned ${response.status}`);
           const { devices = [] } = await response.json();
           status.className = "api-status online";
-          status.textContent = `Live · ${devices.length} device${devices.length === 1 ? "" : "s"}`;
+          status.textContent = topStatusText() ?? "Connected";
 
           const deviceSelect = document.getElementById("notification-device");
           const selectedDevice = deviceSelect.value;
@@ -4396,6 +4536,7 @@
         unsupported: ["Unsupported", "var(--sev-critical)"],
         unknown: ["Unknown", "#c3ccd6"]
       };
+      const nf = (value) => Number(value ?? 0).toLocaleString();
       const PST_SOURCES = { intune: ["I", "Intune"], jamf: ["J", "Jamf"], crowdstrike: ["C", "CrowdStrike"], agent: ["A", "PatchOps agent"] };
       const pstState = { data: null, filter: null, limit: 50, allApps: false, loading: false };
 
@@ -4440,10 +4581,14 @@
           const response = await pstFetch(sync ? "/posture/sync" : "/posture", sync ? { method: "POST" } : {});
           pstState.data = await response.json();
           renderPosture();
+          const topStatus = document.getElementById("api-status");
+          topStatus.className = "api-status online";
+          topStatus.textContent = topStatusText();
+          attRefresh();
           // While a sync or feed download runs, check back every few seconds.
           clearTimeout(pstState.poll);
           if ((pstState.data.syncing || pstState.data.feeds_progress) && !sync) pstState.poll = setTimeout(() => { if (document.getElementById("posture").classList.contains("active")) loadPosture(); }, 4000);
-          if (sync) showToast("Sync complete", `${pstState.data.summary.devices} devices evaluated across your sources.`);
+          if (sync) showToast("Sync complete", `${nf(pstState.data.summary.devices)} devices evaluated across your sources.`);
         } catch (error) {
           if (error.message !== "unauthorized") {
             document.getElementById("pst-banner").innerHTML = `<div class="pst-banner error"><div><strong>Fleet posture is unavailable</strong>${escapeHtml(error.message)}. Check that the API is running (npm run dev).</div></div>`;
@@ -4472,22 +4617,33 @@
         document.getElementById("pst-updated").textContent = `Updated ${new Date(data.generated_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`;
       }
 
+      // One quiet status line above the fleet view; the detail is one click away.
       function renderPostureBanner(data) {
         const problems = Object.values(data.sources).filter((source) => source.error);
-        const parts = [];
         const active = Object.values(data.sources).filter((source) => source.state === "syncing");
+        const notes = [];
+        let tone = "ok";
+        let headline = "";
+        if (problems.length) {
+          tone = "error";
+          headline = problems.length === 1 ? `${problems[0].label} needs attention` : `${problems.length} data sources need attention`;
+          notes.push(...problems.map((source) => `<strong>${escapeHtml(source.label)}:</strong> ${escapeHtml(source.error)}`));
+          if (problems.some((source) => source.state === "stale")) notes.push("Showing the last successful sync until the next attempt.");
+        }
         if (active.length || data.feeds_progress) {
-          const lines = active.map((source) => `<strong style="display:inline">${escapeHtml(source.label)}:</strong> ${escapeHtml(source.progress || "starting…")}`);
-          if (data.feeds_progress) lines.push(escapeHtml(data.feeds_progress));
-          parts.push(`<div class="pst-banner"><div><strong>Downloading${data.summary.devices ? " updates" : " your fleet for the first time"}…</strong>${lines.join("<br>")}<br><span style="opacity:.75">The page updates by itself every few seconds${data.summary.devices ? "; what you see now is the last saved data" : ""}.</span></div></div>`);
+          if (tone === "ok") { tone = "busy"; headline = data.summary.devices ? "Refreshing your fleet data" : "Downloading your fleet for the first time"; }
+          notes.push(...active.map((source) => `<strong>${escapeHtml(source.label)}:</strong> ${escapeHtml(source.progress || "starting…")}`));
+          if (data.feeds_progress) notes.push(escapeHtml(data.feeds_progress));
+          notes.push(`The page updates by itself every few seconds${data.summary.devices ? "; what you see now is the last saved data" : ""}.`);
         }
         if (data.mode === "sample") {
-          parts.push(`<div class="pst-banner"><div><strong>You're looking at a sample fleet</strong>Intune, Jamf and CrowdStrike aren't connected yet, so this view shows realistic made-up devices. Add your read-only API credentials to a <code>.env</code> file and restart <code>npm run dev</code>; see <code>docs/fleet-posture.md</code> for the five-minute setup. Real PatchOps agent check-ins are included either way.</div></div>`);
+          if (tone === "ok") { tone = "info"; headline = "Sample fleet: Intune, Jamf and CrowdStrike aren't connected yet"; }
+          notes.push("This view shows realistic made-up devices. Add your read-only API credentials to a <code>.env</code> file and restart <code>npm run dev</code>; <code>docs/fleet-posture.md</code> has the five-minute setup. Real PatchOps agent check-ins are included either way.");
         }
-        if (problems.length) {
-          parts.push(`<div class="pst-banner error"><div><strong>A data source needs attention</strong>${problems.map((source) => `${escapeHtml(source.label)}: ${escapeHtml(source.error)}`).join("<br>")}${problems.some((source) => source.state === "stale") ? "<br>Showing the last successful sync until the next attempt." : ""}</div></div>`);
-        }
-        document.getElementById("pst-banner").innerHTML = parts.join("");
+        const element = document.getElementById("pst-banner");
+        if (tone === "ok") { element.innerHTML = ""; return; }
+        const wasOpen = element.querySelector("details")?.open ?? false;
+        element.innerHTML = `<details class="pst-statusline ${tone}"${wasOpen ? " open" : ""}><summary><i aria-hidden="true"></i><strong>${escapeHtml(headline)}</strong>${active.length && tone === "error" ? `<span>· refresh in progress</span>` : ""}<em>Details</em></summary><div>${notes.map((note) => `<p>${note}</p>`).join("")}</div></details>`;
       }
 
       function renderPostureSources(data) {
@@ -4495,9 +4651,9 @@
         document.getElementById("pst-sources").innerHTML = ["intune", "jamf", "crowdstrike", "agent"].filter((key) => data.sources[key]).map((key) => {
           const source = data.sources[key];
           const text = {
-            sample: `Sample data · ${source.device_count} devices`,
-            ok: `${source.device_count} device${source.device_count === 1 ? "" : "s"} · synced ${pstAgo(source.synced_at)}${source.from_cache ? " (saved copy)" : ""}${source.relay ? (source.relay.state === "ok" ? ` · sent to hosted ${pstAgo(source.relay.sent_at)}` : source.relay.state === "error" ? " · upload to hosted failed" : " · uploading to hosted…") : ""}`,
-            relayed: `${source.device_count} device${source.device_count === 1 ? "" : "s"} · relayed from ${source.relay_sender || "your PatchOps"} ${pstAgo(source.received_at)}`,
+            sample: `Sample data · ${nf(source.device_count)} devices`,
+            ok: `${nf(source.device_count)} device${source.device_count === 1 ? "" : "s"} · synced ${pstAgo(source.synced_at)}${source.from_cache ? " (saved copy)" : ""}${source.relay ? (source.relay.state === "ok" ? ` · sent to hosted ${pstAgo(source.relay.sent_at)}` : source.relay.state === "error" ? " · upload to hosted failed" : " · uploading to hosted…") : ""}`,
+            relayed: `${nf(source.device_count)} device${source.device_count === 1 ? "" : "s"} · relayed from ${source.relay_sender || "your PatchOps"} ${pstAgo(source.received_at)}`,
             not_configured: "Not connected",
             pending: "Waiting for first sync",
             syncing: source.progress || (source.device_count ? `Updating… (showing ${source.device_count} devices)` : "Syncing…"),
@@ -4562,11 +4718,11 @@
         const s = data.summary;
         const count = (predicate) => data.devices.filter(predicate).length;
         const kpis = [
-          ["Disk encrypted", s.encrypted_pct, `${count((d) => d.encrypted === false)} unencrypted`, "FileVault on Macs, BitLocker on PCs"],
-          ["Intune compliant", s.compliant_pct, `${count((d) => ["noncompliant", "conflict", "error"].includes(d.compliance))} non-compliant`, "Of devices that report an Intune compliance state"],
-          ["OS current", s.os_current_pct, `${count((d) => d.os_status === "unsupported")} unsupported`, "Running the newest OS build seen in the fleet"],
-          ["Checked in ≤ 7 days", s.checked_in_7d_pct, `${count((d) => d.check_in_age_days > data.settings.stale_days)} overdue (>${data.settings.stale_days}d)`, "Most recent check-in across all sources"],
-          ["Apps current", s.apps_current_pct, `${data.apps.reduce((sum, app) => sum + app.behind, 0)} outdated installs`, "Devices with no application behind its target version"]
+          ["Disk encrypted", s.encrypted_pct, `${nf(count((d) => d.encrypted === false))} unencrypted`, "FileVault on Macs, BitLocker on PCs"],
+          ["Intune compliant", s.compliant_pct, `${nf(count((d) => ["noncompliant", "conflict", "error"].includes(d.compliance)))} non-compliant`, "Of devices that report an Intune compliance state"],
+          ["OS current", s.os_current_pct, `${nf(count((d) => d.os_status === "unsupported"))} unsupported`, "Running the newest OS build seen in the fleet"],
+          ["Checked in ≤ 7 days", s.checked_in_7d_pct, `${nf(count((d) => d.check_in_age_days > data.settings.stale_days))} overdue (>${data.settings.stale_days}d)`, "Most recent check-in across all sources"],
+          ["Apps current", s.apps_current_pct, `${nf(data.apps.reduce((sum, app) => sum + app.behind, 0))} outdated installs`, "Devices with no application behind its target version"]
         ];
         document.getElementById("pst-kpis").innerHTML = kpis.map(([label, value, sub, tip]) => {
           const color = value === null ? "#c3ccd6" : value >= 90 ? "var(--sev-healthy)" : value >= 75 ? "var(--sev-medium)" : "var(--sev-critical)";
@@ -4708,7 +4864,7 @@
             ${pstSevTag(risk.severity)}
             <span><strong>${escapeHtml(risk.title)}</strong><div class="item-sub">${[risk.platforms.macos ? `${risk.platforms.macos} Mac` : "", risk.platforms.windows ? `${risk.platforms.windows} Windows` : ""].filter(Boolean).join(" · ")}</div></span>
             <span class="pst-mini-bar"><span style="width:${(risk.count / max) * 100}%;background:${PST_SEVERITY[risk.severity].color}"></span></span>
-            <span class="pst-count">${risk.count}</span>
+            <span class="pst-count">${nf(risk.count)}</span>
           </button>`).join("") : `<div class="pst-empty">No open risks. Nice work.</div>`;
       }
 
@@ -4716,13 +4872,13 @@
         const c = data.coverage;
         const s = data.summary;
         const tiles = [
-          ["Macs in Jamf", `${c.in_jamf}`, `of ${s.macos} Macs`, false],
-          ["Devices in Intune", `${c.in_intune}`, `of ${s.devices} devices`, false],
-          ["Macs in both Jamf and Intune", `${c.jamf_and_intune}`, "compliance partnership", false],
-          ["In CrowdStrike", `${c.in_crowdstrike ?? 0}`, `${c.crowdstrike_reporting ?? 0} reported in the last 7 days`, false],
-          ["PatchOps agent installed", `${c.with_agent}`, `${c.without_agent} without`, false],
-          ["Macs missing from Jamf", `${c.macs_missing_jamf}`, "seen only by other sources", c.macs_missing_jamf > 0],
-          ["PCs missing from Intune", `${c.pcs_missing_intune}`, "seen only by other sources", c.pcs_missing_intune > 0]
+          ["Macs in Jamf", nf(c.in_jamf), `of ${nf(s.macos)} Macs`, false],
+          ["Devices in Intune", nf(c.in_intune), `of ${nf(s.devices)} devices`, false],
+          ["Macs in both Jamf and Intune", nf(c.jamf_and_intune), "compliance partnership", false],
+          ["In CrowdStrike", nf(c.in_crowdstrike ?? 0), `${nf(c.crowdstrike_reporting ?? 0)} reported in the last 7 days`, false],
+          ["PatchOps agent installed", nf(c.with_agent), `${nf(c.without_agent)} without`, false],
+          ["Macs missing from Jamf", nf(c.macs_missing_jamf), "seen only by other sources", c.macs_missing_jamf > 0],
+          ["PCs missing from Intune", nf(c.pcs_missing_intune), "seen only by other sources", c.pcs_missing_intune > 0]
         ];
         document.getElementById("pst-coverage").innerHTML = tiles.map(([label, value, sub, alert]) => `<div class="pst-cov ${alert ? "alert" : ""}"><span>${label}</span><strong>${value}</strong><em>${sub}</em></div>`).join("");
       }
@@ -4758,13 +4914,13 @@
       function renderPostureApps(data) {
         const behind = data.apps.filter((app) => app.behind > 0);
         const rows = pstState.allApps ? behind : behind.slice(0, 8);
-        document.getElementById("pst-apps-toggle").textContent = pstState.allApps ? "Show top 8" : `Show all (${behind.length})`;
+        document.getElementById("pst-apps-toggle").textContent = pstState.allApps ? "Show top 8" : `Show all (${nf(behind.length)})`;
         document.getElementById("pst-apps-toggle").hidden = behind.length <= 8;
         document.getElementById("pst-apps").innerHTML = rows.length ? rows.map((app) => `
           <tr data-pst-app="${escapeHtml(app.name)}" data-pst-app-platform="${app.platform}" title="Show devices running an older ${escapeHtml(app.name)}">
             <td><strong>${escapeHtml(app.name)}</strong><div class="item-sub">${app.platform === "macos" ? "macOS" : "Windows"}${app.watchlisted ? " · high-exposure app" : ""}</div></td>
-            <td class="pst-hide-sm">${app.installs}</td>
-            <td><strong>${app.behind}</strong> <span class="item-sub">(${Math.round((app.behind / app.installs) * 100)}%)</span></td>
+            <td class="pst-hide-sm num">${nf(app.installs)}</td>
+            <td class="num"><strong>${nf(app.behind)}</strong> <span class="item-sub">(${Math.round((app.behind / app.installs) * 100)}%)</span></td>
             <td class="pst-hide-sm">${escapeHtml(app.target_version)}<div class="item-sub">${app.target_source === "approved_baseline" ? "approved baseline" : "newest in fleet"}</div></td>
             <td>${pstSevTag(app.severity)}</td>
             <td class="pst-hide-sm"><button class="fd-icon-btn" type="button" data-plan-app="${escapeHtml(app.name)}" data-plan-platform="${app.platform}" data-plan-target="${escapeHtml(app.target_version)}" title="Plan the rollout of ${escapeHtml(app.name)} ${escapeHtml(app.target_version)}">Plan update</button></td>
@@ -4849,30 +5005,66 @@
         drawer.className = "pst-drawer";
         drawer.setAttribute("role", "dialog");
         drawer.setAttribute("aria-label", `${device.hostname} posture`);
+        const vulns = Array.isArray(device.vulnerabilities) ? device.vulnerabilities : null;
+        const exploited = (vulns ?? []).filter((vuln) => vuln.kev || vuln.exploit === "Actively used").length;
+        const seenBy = Object.entries(PST_SOURCES).filter(([key]) => device.sources[key]);
+        const riskTone = { critical: "bad", high: "bad", medium: "warn", low: "neutral", healthy: "good" }[device.risk_level] ?? "neutral";
+        const stat = (value, label, tone = "") => `<div class="dv-stat ${tone}"><strong>${typeof value === "number" ? value.toLocaleString() : escapeHtml(String(value))}</strong><span>${label}</span></div>`;
+        const tabs = [
+          ["overview", "Overview", null],
+          ["issues", "Issues", device.issues.length],
+          ...(vulns ? [["vulns", "Vulnerabilities", vulns.length]] : []),
+          ["apps", "Apps", device.apps.length],
+          ...(Object.keys(device.raw ?? {}).length || (device.extension_attributes ?? []).length ? [["raw", "Raw data", null]] : [])
+        ];
+        const issuesHtml = device.issues.length ? `<div style="display:grid;gap:8px">${device.issues.map((issue) => `<div class="pst-issue"><i style="background:${PST_SEVERITY[issue.severity].color}"></i><div><strong>${escapeHtml(issue.title)}</strong> ${pstSevTag(issue.severity)}<p>${escapeHtml(issue.detail)}</p></div></div>`).join("")}</div>` : `<div class="pst-empty">No open issues on this device.</div>`;
+        const vulnHtml = !vulns ? "" : vulns.length ? `<p class="item-sub" style="margin:0 0 8px">From Apple and Microsoft security data and CrowdStrike, most urgent first.</p><table class="pst-app-table"><thead><tr><th>CVE</th><th>Severity</th><th>Product</th><th>Fix</th></tr></thead><tbody>${[...vulns].sort((x, y) => Number(y.kev || y.exploit === "Actively used") - Number(x.kev || x.exploit === "Actively used") || (y.score ?? 0) - (x.score ?? 0)).slice(0, 100).map((vuln) => `<tr><td><strong>${escapeHtml(vuln.cve)}</strong>${vuln.kev || vuln.exploit === "Actively used" ? ` <span class="badge danger">Exploited</span>` : ""}<div>${(vuln.sources ?? [vuln.source ?? "crowdstrike"]).map((source) => `<span class="vx-src ${escapeHtml(source)}">${escapeHtml({ crowdstrike: "CrowdStrike", apple: "Apple", microsoft: "Microsoft" }[source] ?? source)}</span>`).join("")}</div></td><td>${pstSevTag(vuln.severity)} <span class="item-sub">${vuln.score ?? ""}</span></td><td>${escapeHtml(vuln.product || "—")}</td><td>${escapeHtml([...(vuln.kbs ?? []), ...(vuln.remediation ?? [])].slice(0, 1).join("") || "—")}</td></tr>`).join("")}</tbody></table>${vulns.length > 100 ? `<p class="item-sub">Showing 100 of ${vulns.length.toLocaleString()}. See all on the Vulnerabilities page.</p>` : ""}` : `<div class="pst-empty">No open vulnerabilities.</div>`;
+        const appsHtml = device.apps.length ? `<p class="item-sub" style="margin:0 0 8px">${device.apps_source ? `Inventory from ${escapeHtml(PST_SOURCES[device.apps_source]?.[1] ?? device.apps_source)}. ` : ""}Outdated apps are listed first.</p><input type="search" class="select" style="width:100%;margin-bottom:8px" placeholder="Filter applications" data-pst-app-filter />
+              <table class="pst-app-table"><thead><tr><th>Application</th><th>Version</th><th>Status</th></tr></thead><tbody>${[...device.apps].sort((x, y) => (behind.has(y.name) - behind.has(x.name)) || x.name.localeCompare(y.name)).map((app) => {
+                const lag = behind.get(app.name);
+                return `<tr data-app-name="${escapeHtml(app.name.toLowerCase())}"><td>${escapeHtml(app.name)}</td><td class="num">${escapeHtml(app.version || "—")}</td><td>${lag ? `${pstSevTag(lag.severity)} <span class="item-sub">→ ${escapeHtml(lag.target_version)}</span>` : `<span class="pst-status"><i class="pst-dot" style="background:var(--sev-healthy)"></i>Current</span>`}</td></tr>`;
+              }).join("")}</tbody></table>` : `<div class="pst-empty">No application inventory for this device. Install the PatchOps agent or enable app inventory in Intune or Jamf.</div>`;
+        const rawHtml = `${(device.extension_attributes ?? []).length ? `<div><h3>Jamf extension attributes (${device.extension_attributes.length})</h3><table class="pst-app-table"><tbody>${device.extension_attributes.map((attribute) => `<tr><td>${escapeHtml(attribute.name)}</td><td>${escapeHtml(attribute.value || "—")}</td></tr>`).join("")}</tbody></table></div>` : ""}
+            ${Object.keys(device.raw ?? {}).length ? `<div><h3>Raw data from each source</h3>${Object.entries(device.raw).map(([source, record]) => `<details class="pst-raw"><summary>${escapeHtml(PST_SOURCES[source]?.[1] ?? source)} · ${Object.keys(record).length} fields</summary><pre class="ds-json">${escapeHtml(JSON.stringify(record, null, 2))}</pre></details>`).join("")}</div>` : ""}`;
+        const topIssues = device.issues.slice(0, 3);
         drawer.innerHTML = `
-          <div class="pst-drawer-head">
-            <div><h2>${escapeHtml(device.hostname)}</h2><p>${pstSevTag(device.risk_level)} &nbsp;Risk score ${device.risk_score} / 100${device.sample ? " · sample device" : ""}</p></div>
-            <button class="ghost-btn" type="button" data-pst-close>Close</button>
+          <div class="dv-head">
+            <div class="dv-title">
+              <span class="dv-os ${device.platform === "macos" ? "mac" : "win"}" aria-hidden="true">${device.platform === "macos" ? "Mac" : "Win"}</span>
+              <div><h2>${escapeHtml(device.hostname)}</h2><p>${escapeHtml([device.user.name || device.user.email, device.model, pstOsLabel(device.os, device.platform)].filter(Boolean).join(" · "))}</p></div>
+              <button class="icon-btn dv-close" type="button" data-pst-close aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+            </div>
+            <div class="dv-stats">
+              ${stat(device.risk_score, `Risk score · ${escapeHtml(device.risk_level)}`, riskTone)}
+              ${stat(device.issues.length, device.issues.length === 1 ? "Open issue" : "Open issues", device.issues.length ? "warn" : "good")}
+              ${vulns ? stat(vulns.length, exploited ? `Vulnerabilities · ${exploited} exploited` : "Vulnerabilities", exploited ? "bad" : vulns.length ? "warn" : "good") : ""}
+              ${stat(device.apps_behind.length, "Apps outdated", device.apps_behind.length ? "warn" : "good")}
+            </div>
+            <div class="dv-sources">${seenBy.map(([key, [, label]]) => `<span class="dv-src" title="Checked in ${escapeHtml(pstAgo(device.sources[key].last_check_in))}"><i></i>${escapeHtml(label)}</span>`).join("")}${device.sample ? `<span class="dv-src sample">Sample device</span>` : ""}<span class="dv-seen">Last check-in ${escapeHtml(pstAgo(device.last_check_in))}</span></div>
+            <div class="dv-tabs" role="tablist">${tabs.map(([key, label, count], index) => `<button type="button" role="tab" class="dv-tab" aria-selected="${index === 0}" data-dv-tab="${key}">${label}${count === null ? "" : `<span>${count.toLocaleString()}</span>`}</button>`).join("")}</div>
           </div>
           <div class="pst-drawer-body">
-            <div class="pst-facts">${facts.map(([label, value]) => `<div><span>${label}</span>${escapeHtml(value)}</div>`).join("")}</div>
-            <div><h3>Seen by</h3><div class="pst-facts">${Object.entries(PST_SOURCES).map(([key, [, label]]) => `<div><span>${label}</span>${device.sources[key] ? `Checked in ${escapeHtml(pstAgo(device.sources[key].last_check_in))}` : "Not present"}</div>`).join("")}</div></div>
-            <div><h3>Issues (${device.issues.length})</h3><div style="display:grid;gap:8px">${device.issues.length ? device.issues.map((issue) => `<div class="pst-issue"><i style="background:${PST_SEVERITY[issue.severity].color}"></i><div><strong>${escapeHtml(issue.title)}</strong> ${pstSevTag(issue.severity)}<p>${escapeHtml(issue.detail)}</p></div></div>`).join("") : `<div class="pst-empty">No open issues.</div>`}</div></div>
-            ${Array.isArray(device.vulnerabilities) ? `<div><h3>Open vulnerabilities (${device.vulnerabilities.length}) <span class="item-sub">from Apple / Microsoft security data and CrowdStrike</span></h3>${device.vulnerabilities.length ? `<table class="pst-app-table"><thead><tr><th>CVE</th><th>Severity</th><th>Product</th><th>Fix</th></tr></thead><tbody>${[...device.vulnerabilities].sort((a, b) => Number(b.kev || b.exploit === "Actively used") - Number(a.kev || a.exploit === "Actively used") || (b.score ?? 0) - (a.score ?? 0)).slice(0, 40).map((vuln) => `<tr><td><strong>${escapeHtml(vuln.cve)}</strong>${vuln.kev || vuln.exploit === "Actively used" ? ` <span class="badge danger">Exploited</span>` : ""}<div>${(vuln.sources ?? [vuln.source ?? "crowdstrike"]).map((source) => `<span class="vx-src ${escapeHtml(source)}">${escapeHtml({ crowdstrike: "CrowdStrike", apple: "Apple", microsoft: "Microsoft" }[source] ?? source)}</span>`).join("")}</div></td><td>${pstSevTag(vuln.severity)} <span class="item-sub">${vuln.score ?? ""}</span></td><td>${escapeHtml(vuln.product || "—")}</td><td>${escapeHtml([...(vuln.kbs ?? []), ...(vuln.remediation ?? [])].slice(0, 1).join("") || "—")}</td></tr>`).join("")}</tbody></table>${device.vulnerabilities.length > 40 ? `<p class="item-sub">Showing 40 of ${device.vulnerabilities.length}. See all on the Vulnerabilities page.</p>` : ""}` : `<div class="pst-empty">No open vulnerabilities.</div>`}</div>` : ""}
-            <div><h3>Installed applications (${device.apps.length})${device.apps_source ? ` <span class="item-sub">from ${escapeHtml(PST_SOURCES[device.apps_source]?.[1] ?? device.apps_source)}</span>` : ""}</h3>
-              ${device.apps.length ? `<input type="search" class="select" style="width:100%;margin-bottom:8px" placeholder="Filter applications" data-pst-app-filter />
-              <table class="pst-app-table"><thead><tr><th>Application</th><th>Version</th><th>Status</th></tr></thead><tbody>${[...device.apps].sort((a, b) => (behind.has(b.name) - behind.has(a.name)) || a.name.localeCompare(b.name)).map((app) => {
-                const lag = behind.get(app.name);
-                return `<tr data-app-name="${escapeHtml(app.name.toLowerCase())}"><td>${escapeHtml(app.name)}</td><td>${escapeHtml(app.version || "—")}</td><td>${lag ? `${pstSevTag(lag.severity)} <span class="item-sub">→ ${escapeHtml(lag.target_version)}</span>` : `<span class="pst-status"><i class="pst-dot" style="background:var(--sev-healthy)"></i>Current</span>`}</td></tr>`;
-              }).join("")}</tbody></table>` : `<div class="pst-empty">No application inventory for this device. Install the PatchOps agent or enable app inventory in Intune / Jamf.</div>`}
-            </div>
-            ${(device.extension_attributes ?? []).length ? `<div><h3>Jamf extension attributes (${device.extension_attributes.length})</h3><table class="pst-app-table"><tbody>${device.extension_attributes.map((attribute) => `<tr><td>${escapeHtml(attribute.name)}</td><td>${escapeHtml(attribute.value || "—")}</td></tr>`).join("")}</tbody></table></div>` : ""}
-            ${Object.keys(device.raw ?? {}).length ? `<div><h3>Raw data from each source</h3>${Object.entries(device.raw).map(([source, record]) => `<details class="pst-raw"><summary>${escapeHtml(PST_SOURCES[source]?.[1] ?? source)} · ${Object.keys(record).length} fields</summary><pre class="ds-json">${escapeHtml(JSON.stringify(record, null, 2))}</pre></details>`).join("")}</div>` : ""}
+            <section class="dv-panel" data-dv-panel="overview">
+              ${topIssues.length ? `<div><h3>Most important</h3><div style="display:grid;gap:8px">${topIssues.map((issue) => `<div class="pst-issue"><i style="background:${PST_SEVERITY[issue.severity].color}"></i><div><strong>${escapeHtml(issue.title)}</strong> ${pstSevTag(issue.severity)}<p>${escapeHtml(issue.detail)}</p></div></div>`).join("")}</div></div>` : `<div class="pst-empty">This device has no open issues.</div>`}
+              <div><h3>Details</h3><div class="pst-facts">${facts.map(([label, value]) => `<div><span>${label}</span>${escapeHtml(value)}</div>`).join("")}</div></div>
+              <div><h3>Seen by</h3><div class="pst-facts">${Object.entries(PST_SOURCES).map(([key, [, label]]) => `<div><span>${label}</span>${device.sources[key] ? `Checked in ${escapeHtml(pstAgo(device.sources[key].last_check_in))}` : "Not present"}</div>`).join("")}</div></div>
+            </section>
+            <section class="dv-panel" data-dv-panel="issues" hidden>${issuesHtml}</section>
+            ${vulns ? `<section class="dv-panel" data-dv-panel="vulns" hidden>${vulnHtml}</section>` : ""}
+            <section class="dv-panel" data-dv-panel="apps" hidden>${appsHtml}</section>
+            <section class="dv-panel" data-dv-panel="raw" hidden>${rawHtml}</section>
           </div>`;
         const close = () => { backdrop.remove(); drawer.remove(); document.removeEventListener("keydown", onKey); pstHideTip(); };
         const onKey = (event) => { if (event.key === "Escape") close(); };
         backdrop.addEventListener("click", close);
         drawer.querySelector("[data-pst-close]").addEventListener("click", close);
+        drawer.querySelector(".dv-tabs").addEventListener("click", (event) => {
+          const tab = event.target.closest("[data-dv-tab]");
+          if (!tab) return;
+          drawer.querySelectorAll("[data-dv-tab]").forEach((item) => item.setAttribute("aria-selected", String(item === tab)));
+          drawer.querySelectorAll("[data-dv-panel]").forEach((panel) => { panel.hidden = panel.dataset.dvPanel !== tab.dataset.dvTab; });
+          drawer.querySelector(".pst-drawer-body").scrollTop = 0;
+        });
         drawer.querySelector("[data-pst-app-filter]")?.addEventListener("input", (event) => {
           const query = event.target.value.trim().toLowerCase();
           drawer.querySelectorAll("tr[data-app-name]").forEach((row) => { row.hidden = Boolean(query) && !row.dataset.appName.includes(query); });
@@ -5599,7 +5791,7 @@
           fxLastResult = { query, response };
           const max = Math.max(1, ...(response.groups ?? []).map((group) => group.count));
           results.innerHTML = `
-            <div class="fx-summary"><strong>${response.count}</strong><span class="pst-updated">of ${response.total} devices match${response.count > response.devices.length ? ` · showing ${response.devices.length}` : ""}</span></div>
+            <div class="fx-summary"><strong>${nf(response.count)}</strong><span class="pst-updated">of ${nf(response.total)} devices match${response.count > response.devices.length ? ` · showing ${nf(response.devices.length)}` : ""}</span></div>
             ${response.groups?.length ? `<article class="panel" style="margin-bottom:14px"><div class="fd-bars">${response.groups.slice(0, 15).map((group) => `<${fdRefinable(groupBy, group.label) ? `button type="button" data-fx-refine="${escapeHtml(`${query.trim()} f/ ${groupBy} = ${fdQuote(group.label)}`)}"` : `div style="cursor:default"`} class="fd-bar"><span>${escapeHtml(groupBy === "Platform" ? fdPlatformLabel(group.label) : group.label)}</span><span class="fd-bar-track"><span style="width:${(group.count / max) * 100}%"></span></span><strong>${group.count}</strong></${fdRefinable(groupBy, group.label) ? "button" : "div"}>`).join("")}</div></article>` : ""}
             <div class="table-panel"><table><thead><tr><th>Device</th><th>OS</th><th>Sources</th><th>Last check-in</th><th>Risk</th><th class="pst-hide-sm">Top issue</th></tr></thead><tbody>
             ${response.devices.map((device) => `<tr data-pst-device="${escapeHtml(device.id)}" style="cursor:pointer">
@@ -5958,10 +6150,10 @@
         const cves = data.cves;
         const exploited = cves.filter((cve) => cve.kev || cve.exploit === "Actively used");
         const kpis = [
-          ["Unique open CVEs", data.summary.unique, `${data.summary.total} device findings`],
-          ["Actively exploited", exploited.length, `${exploited.reduce((sum, cve) => sum + cve.devices, 0)} devices exposed`],
-          ["Critical", cves.filter((cve) => cve.severity === "critical").length, `${cves.filter((cve) => cve.severity === "critical").reduce((sum, cve) => sum + cve.devices, 0)} device findings`],
-          ["High", cves.filter((cve) => cve.severity === "high").length, `${cves.filter((cve) => cve.severity === "high").reduce((sum, cve) => sum + cve.devices, 0)} device findings`],
+          ["Unique open CVEs", data.summary.unique, `${nf(data.summary.total)} device findings`],
+          ["Actively exploited", exploited.length, `${nf(exploited.reduce((sum, cve) => sum + cve.devices, 0))} devices exposed`],
+          ["Critical", cves.filter((cve) => cve.severity === "critical").length, `${cves.filter((cve) => cve.severity === "critical").reduce((sum, cve) => sum + cve.devices, 0).toLocaleString()} device findings`],
+          ["High", cves.filter((cve) => cve.severity === "high").length, `${cves.filter((cve) => cve.severity === "high").reduce((sum, cve) => sum + cve.devices, 0).toLocaleString()} device findings`],
           ["Devices covered", data.summary.devices_reporting, "with vulnerability data"]
         ];
         document.getElementById("vx-kpis").innerHTML = kpis.map(([label, value, sub]) => `<article class="panel pst-kpi"><span class="pst-kpi-label">${label}</span><span class="pst-kpi-value">${value.toLocaleString()}</span><span class="pst-kpi-sub">${escapeHtml(sub)}</span></article>`).join("");
@@ -6733,6 +6925,143 @@
           fdOpenModal("Delete update plan", `<p class="fr-help" style="margin:0">Delete <strong>${escapeHtml(plan.name)}</strong> and its progress history? Devices and apps are not affected.</p>`, { saveLabel: "Delete", onSave: async (root, close) => { await fleetApi(`/fleet/update-plans/${encodeURIComponent(plan.id)}`, { method: "DELETE" }); close(); await loadUpdatePlans(); } });
         }
       });
+
+      // ---------- Top bar: fleet status, search, attention, account ----------
+      function topStatusText() {
+        const data = (() => { try { return pstState.data; } catch { return null; } })();
+        if (!data) return null;
+        const syncedTimes = Object.values(data.sources ?? {}).map((source) => Date.parse(source.received_at ?? source.synced_at ?? "")).filter(Number.isFinite);
+        const newest = syncedTimes.length ? Math.max(...syncedTimes) : Date.parse(data.generated_at);
+        const when = Number.isFinite(newest) ? new Date(newest).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" }) : "";
+        return `${Number(data.summary?.devices ?? 0).toLocaleString()} devices${when ? ` · data from ${when}` : ""}`;
+      }
+
+      // Popovers in the top bar: one open at a time, Escape or a click elsewhere closes.
+      function topPopover(toggleId, panelId, onOpen) {
+        const toggle = document.getElementById(toggleId);
+        const panel = document.getElementById(panelId);
+        const setOpen = (open) => {
+          if (open) document.querySelectorAll(".topbar .ap-panel:not([hidden])").forEach((other) => { if (other !== panel) other.hidden = true; });
+          panel.hidden = !open;
+          toggle.setAttribute("aria-expanded", String(open));
+          if (open) onOpen?.();
+        };
+        toggle.addEventListener("click", (event) => { event.stopPropagation(); setOpen(panel.hidden); });
+        document.addEventListener("click", (event) => { if (!panel.hidden && !event.composedPath().some((node) => node === panel || node === toggle)) setOpen(false); });
+        document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !panel.hidden) { setOpen(false); toggle.focus(); } });
+        return setOpen;
+      }
+      topPopover("acct-toggle", "acct-panel");
+
+      // Needs attention: what someone should look at today, built from data PatchOps already has.
+      const attState = { plans: null };
+      async function attItems() {
+        const items = [];
+        const data = (() => { try { return pstState.data; } catch { return null; } })();
+        if (data) {
+          for (const source of Object.values(data.sources ?? {})) {
+            if (source.error) items.push({ tone: "danger", title: `${source.label} sync failed`, detail: source.error, view: "fleet-sources" });
+            const relayedAt = Date.parse(source.received_at ?? "");
+            if (source.state === "relayed" && Number.isFinite(relayedAt) && Date.now() - relayedAt > 6 * 3_600_000) items.push({ tone: "warn", title: `${source.label} data is ${Math.round((Date.now() - relayedAt) / 3_600_000)} hours old`, detail: "The PatchOps that relays it hasn't uploaded since then.", view: "fleet-sources" });
+          }
+          for (const risk of (data.top_risks ?? []).filter((item) => item.severity === "critical").slice(0, 3)) {
+            items.push({ tone: "danger", title: risk.title, detail: `${Number(risk.count).toLocaleString()} device${risk.count === 1 ? "" : "s"}`, issue: risk.id, issueLabel: risk.title });
+          }
+        }
+        if (attState.plans) {
+          for (const plan of attState.plans) for (const ring of plan.rings.filter((item) => item.state === "overdue")) {
+            items.push({ tone: "warn", title: `${plan.name}: ${ring.name} is overdue`, detail: `${ring.counts.pending.toLocaleString()} device${ring.counts.pending === 1 ? "" : "s"} still to update, ${-ring.days_left} day${ring.days_left === -1 ? "" : "s"} past the deadline`, view: "fleet-updates" });
+          }
+        }
+        return items;
+      }
+      async function attRefresh({ withPlans = false } = {}) {
+        if (withPlans && dashboardToken && apiBaseUrl) { try { attState.plans = (await fleetApi("/fleet/update-plans")).plans; } catch { /* plans unavailable */ } }
+        const items = await attItems();
+        const badge = document.getElementById("att-count");
+        badge.hidden = !items.length;
+        badge.textContent = items.length > 9 ? "9+" : String(items.length);
+        document.getElementById("att-panel").innerHTML = `<h3>Needs attention</h3>${items.length ? `<div class="att-list">${items.map((item, index) => `<button type="button" class="att-item ${item.tone}" data-att="${index}"><i></i><span><strong>${escapeHtml(item.title)}</strong><em>${escapeHtml(item.detail ?? "")}</em></span></button>`).join("")}</div>` : `<p class="att-empty">Nothing needs attention right now.</p>`}`;
+        attState.items = items;
+      }
+      topPopover("att-toggle", "att-panel", () => attRefresh({ withPlans: true }));
+      document.getElementById("att-panel").addEventListener("click", (event) => {
+        const button = event.target.closest("[data-att]");
+        if (!button) return;
+        const item = attState.items[Number(button.dataset.att)];
+        document.getElementById("att-panel").hidden = true;
+        if (item.issue) { showView("posture"); pstSetFilter({ kind: "issue", id: item.issue, label: item.issueLabel }); document.getElementById("pst-devices")?.scrollIntoView({ behavior: "smooth", block: "start" }); return; }
+        showView(item.view);
+        if (item.view === "fleet-sources") loadDataSources();
+        if (item.view === "fleet-updates") loadUpdatePlans();
+      });
+
+      // Global search: pages, devices, apps, plans, rules and CVE numbers, from data already loaded.
+      const GS_PAGES = [...document.querySelectorAll(".nav-btn[data-view]")].map((button) => ({ view: button.dataset.view, label: button.querySelector("span")?.textContent.trim() ?? button.dataset.view }));
+      const gsState = { results: [], active: 0 };
+      function gsSearch(text) {
+        const query = text.trim().toLowerCase();
+        if (!query) return [];
+        const results = [];
+        const cve = /^cve-\d{4}-\d{3,}$/i.exec(text.trim());
+        if (cve) results.push({ group: "Vulnerability", label: cve[0].toUpperCase(), detail: "Devices affected by this CVE", run: () => openExplore(`e/ Device r/ ( e/ Vulnerability f/ CVE = ${cve[0].toUpperCase()} )`) });
+        for (const page of GS_PAGES) if (page.label.toLowerCase().includes(query)) results.push({ group: "Page", label: page.label, run: () => document.querySelector(`.nav-btn[data-view="${page.view}"]`).click() });
+        const data = (() => { try { return pstState.data; } catch { return null; } })();
+        let devices = 0;
+        for (const device of data?.devices ?? []) {
+          if (devices >= 6) break;
+          const haystack = `${device.hostname} ${device.serial_number ?? ""} ${device.user?.name ?? ""} ${device.user?.email ?? ""}`.toLowerCase();
+          if (!haystack.includes(query)) continue;
+          devices += 1;
+          results.push({ group: "Device", label: device.hostname, detail: [device.user?.name || device.user?.email, pstOsLabel(device.os, device.platform)].filter(Boolean).join(" · "), run: () => openPostureDevice(device.id) });
+        }
+        const seenApps = new Set();
+        for (const app of data?.apps ?? []) {
+          if (seenApps.size >= 5) break;
+          if (!app.name.toLowerCase().includes(query) || seenApps.has(app.name)) continue;
+          seenApps.add(app.name);
+          results.push({ group: "App", label: app.name, detail: `${Number(app.installs).toLocaleString()} installs${app.behind ? ` · ${Number(app.behind).toLocaleString()} outdated` : ""}`, run: () => openExplore(`e/ Device r/ ( e/ Software f/ Name = "${app.name.replace(/"/g, "")}" )`) });
+        }
+        for (const plan of (() => { try { return upState.data?.plans ?? []; } catch { return []; } })()) if (plan.name.toLowerCase().includes(query)) results.push({ group: "Update plan", label: plan.name, detail: plan.totals.pct === null ? "" : `${Math.round(plan.totals.pct)}% updated`, run: () => { showView("fleet-updates"); loadUpdatePlans(); } });
+        for (const rule of fdState.config?.software_rules ?? []) if (rule.name.toLowerCase().includes(query)) results.push({ group: "Rule", label: rule.name, detail: rule.kind === "os" ? "OS rule" : rule.mode === "required" ? "Must be installed" : "Must be removed", run: () => { showView("fleet-rules"); loadFleetRules(); } });
+        if (!cve && query.length >= 2) results.push({ group: "Explore", label: `Devices with software named "${text.trim()}"`, run: () => openExplore(`e/ Device r/ ( e/ Software f/ Name contains "${text.trim().replace(/"/g, "")}" )`) });
+        return results.slice(0, 14);
+      }
+      function gsRender() {
+        const box = document.getElementById("gs-results");
+        const input = document.getElementById("gs-input");
+        box.hidden = !gsState.results.length;
+        input.setAttribute("aria-expanded", String(!box.hidden));
+        let lastGroup = "";
+        box.innerHTML = gsState.results.map((result, index) => {
+          const header = result.group !== lastGroup ? `<div class="gs-group">${escapeHtml(result.group)}</div>` : "";
+          lastGroup = result.group;
+          return `${header}<button type="button" role="option" class="gs-item ${index === gsState.active ? "on" : ""}" aria-selected="${index === gsState.active}" data-gs="${index}"><strong>${escapeHtml(result.label)}</strong>${result.detail ? `<span>${escapeHtml(result.detail)}</span>` : ""}</button>`;
+        }).join("");
+      }
+      function gsRun(index) {
+        const result = gsState.results[index];
+        if (!result) return;
+        const input = document.getElementById("gs-input");
+        input.value = "";
+        gsState.results = [];
+        gsRender();
+        input.blur();
+        result.run();
+      }
+      (() => {
+        const input = document.getElementById("gs-input");
+        input.addEventListener("input", () => { gsState.results = gsSearch(input.value); gsState.active = 0; gsRender(); });
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); if (!gsState.results.length) return; gsState.active = (gsState.active + (event.key === "ArrowDown" ? 1 : -1) + gsState.results.length) % gsState.results.length; gsRender(); }
+          if (event.key === "Enter") { event.preventDefault(); gsRun(gsState.active); }
+          if (event.key === "Escape") { input.value = ""; gsState.results = []; gsRender(); input.blur(); }
+        });
+        input.addEventListener("blur", () => setTimeout(() => { gsState.results = []; gsRender(); }, 150));
+        document.getElementById("gs-results").addEventListener("mousedown", (event) => { const item = event.target.closest("[data-gs]"); if (item) { event.preventDefault(); gsRun(Number(item.dataset.gs)); } });
+        document.addEventListener("keydown", (event) => { if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") { event.preventDefault(); input.focus(); input.select(); } });
+        if (!/Mac|iPhone|iPad/.test(navigator.platform)) document.querySelector(".gs-kbd").textContent = "Ctrl K";
+      })();
     </script>
   </body>
 </html>
